@@ -176,3 +176,9 @@ class WebToPay {
 
 }
 
+
+
+class WebToPayException extends Exception {
+
+}
+
