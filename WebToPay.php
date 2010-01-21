@@ -27,6 +27,18 @@
 class WebToPay {
 
     /**
+     * WebToPay Library version.
+     */
+    public static $VERSION = '1.0';
+
+
+    /**
+     * Server URL where all requests should go.
+     */
+    public static $PAYMENT_SERVER_URL = 'https://www.mokejimai.lt/pay/';
+
+
+    /**
      * Returns list of supported payment types.
      *
      * Array structure:
@@ -142,6 +154,38 @@ class WebToPay {
 
 
     /**
+     * Returns specification array for request.
+     */
+    public static function getRequestSpec() {
+        // name, maxlen, required, match
+        return array(
+            array('merchantid',     11,     true,   '/^\d+$/'),
+            array('orderid',        40,     true,   '/^\d+$/'),
+            array('lang',           3,      false,  '/^[a-z]{3}$/i'),
+            array('amount',         11,     false,  '/^\d+$/'),
+            array('currency',       3,      false,  '/^[a-z]{3}$/i'),
+            array('accepturl',      255,    true,   ''),
+            array('cancelurl',      255,    true,   ''),
+            array('callbackurl',    255,    true,   ''),
+            array('payment',        20,     false,  ''),
+            array('country',        2,      false,  '/^[a-z]{2}$/i'),
+            array('paytext',        70,     false,  ''),
+            array('logo',           0,      false,  ''),
+            array('p_firstname',    255,    false,  ''),
+            array('p_lastname',     255,    false,  ''),
+            array('p_email',        255,    false,  ''),
+            array('p_street',       255,    false,  ''),
+            array('p_city',         255,    false,  ''),
+            array('p_state',        20,     false,  ''),
+            array('p_zip',          20,     false,  ''),
+            array('p_countrycode',  3,      false,  '/^[a-z]{3}$/i'),
+            array('sign',           255,    false,  ''),
+            array('test',           1,      false,  '/^[01]$/'),
+        );
+    }
+
+
+    /**
      * Builds form data array.
      *
      * This method checks all parameters and generates safe array with correct
@@ -155,6 +199,7 @@ class WebToPay {
      * @return array
      */
     public static function getFormData($data) {
+        $rspec = self::getRequestSpec();
     }
 
     /**

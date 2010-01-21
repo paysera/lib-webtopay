@@ -35,5 +35,20 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
         }
     }
 
+
+    public function testRequestSpec() {
+        $specs = WebToPay::getRequestSpec();
+        foreach ($specs as $spec) {
+            $this->assertEquals(4, sizeof($spec));
+
+            list(
+                    $name, $maxlen, $required, $match
+                ) = $spec;
+
+            $this->assertTrue(is_int($maxlen));
+            $this->assertTrue(is_bool($required));
+        }
+    }
+
 }
 
