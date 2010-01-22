@@ -23,19 +23,45 @@
  * @link       http://www.webtopay.com/
  */
 
-
 class WebToPay {
 
     /**
      * WebToPay Library version.
      */
-    public static $VERSION = '1.0';
+    const VERSION = '1.0';
 
 
     /**
      * Server URL where all requests should go.
      */
-    public static $PAYMENT_SERVER_URL = 'https://www.mokejimai.lt/pay/';
+    const PAY_URL = 'https://www.mokejimai.lt/pay/';
+
+
+    /**
+     *
+     */
+    public static function throwResponseError($code) {
+        $errors = array(
+                '0x1'   => self::_('Mokėjimo suma per maža'),
+                '0x2'   => self::_('Mokėjimo suma per didelė'),
+                '0x3'   => self::_('Nurodyta valiuta neaptarnaujama'),
+                '0x4'   => self::_('Nėra sumos arba valiutos'),
+                '0x6'   => self::_('Neįrašytas merchantID arba tokio ID neegzistuoja'),
+                '0x7'   => self::_('Išjungtas testavimo rėžimas'),
+                '0x8'   => self::_('Jūs uždraudėte šį mokėjimo būdą'),
+                '0x9'   => self::_('Blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
+                '0x10'  => self::_('Tuščias arba neteisingai užpildytas "orderID"'),
+            );
+
+        if (isset($errors[$code])) {
+            $msg = $errors[$code];
+        }
+        else {
+            $msg = self::_('Nenumatyta klaida');
+        }
+
+        throw new WebToPayException($msg);
+    }
 
 
     /**
@@ -155,68 +181,302 @@ class WebToPay {
 
     /**
      * Returns specification array for request.
-     */
-    public static function getRequestSpec() {
-        // name, maxlen, required, match
-        return array(
-            array('merchantid',     11,     true,   '/^\d+$/'),
-            array('orderid',        40,     true,   '/^\d+$/'),
-            array('lang',           3,      false,  '/^[a-z]{3}$/i'),
-            array('amount',         11,     false,  '/^\d+$/'),
-            array('currency',       3,      false,  '/^[a-z]{3}$/i'),
-            array('accepturl',      255,    true,   ''),
-            array('cancelurl',      255,    true,   ''),
-            array('callbackurl',    255,    true,   ''),
-            array('payment',        20,     false,  ''),
-            array('country',        2,      false,  '/^[a-z]{2}$/i'),
-            array('paytext',        70,     false,  ''),
-            array('logo',           0,      false,  ''),
-            array('p_firstname',    255,    false,  ''),
-            array('p_lastname',     255,    false,  ''),
-            array('p_email',        255,    false,  ''),
-            array('p_street',       255,    false,  ''),
-            array('p_city',         255,    false,  ''),
-            array('p_state',        20,     false,  ''),
-            array('p_zip',          20,     false,  ''),
-            array('p_countrycode',  3,      false,  '/^[a-z]{3}$/i'),
-            array('sign',           255,    false,  ''),
-            array('test',           1,      false,  '/^[01]$/'),
-        );
-    }
-
-
-    /**
-     * Builds form data array.
      *
-     * This method checks all parameters and generates safe array with correct
-     * form data or raises WebToPayException.
-     *
-     * Method accepts single parameter of array type. All possible array keys
-     * are described here:
-     * https://www.mokejimai.lt/makro_specifikacija.html
-     *
-     * @param array $data Information about current payment request.
      * @return array
      */
-    public static function getFormData($data) {
-        $rspec = self::getRequestSpec();
+    public static function getRequestSpec() {
+        // Array structure:
+        //  * name      – request item name
+        //  * maxlen    – max allowed value for item
+        //  * required  – is this item is required
+        //  * user      – if true, user can set value of this item, if false
+        //                item value is generated
+        //  * isrequest – if true, item will be included in request array, if
+        //                false, item only be used internaly and will not be
+        //                included in outgoing request array.
+        //  * regexp    – regexp to test item value
+        return array(
+                array('merchantid',     11,     true,   true,   true,   '/^\d+$/'),
+                array('orderid',        40,     true,   true,   true,   '/^\d+$/'),
+                array('lang',           3,      false,  true,   true,   '/^[a-z]{3}$/i'),
+                array('amount',         11,     false,  true,   true,   '/^\d+$/'),
+                array('currency',       3,      false,  true,   true,   '/^[a-z]{3}$/i'),
+                array('accepturl',      255,    true,   true,   true,   ''),
+                array('cancelurl',      255,    true,   true,   true,   ''),
+                array('callbackurl',    255,    true,   true,   true,   ''),
+                array('payment',        20,     false,  true,   true,   ''),
+                array('country',        2,      false,  true,   true,   '/^[a-z]{2}$/i'),
+                array('paytext',        70,     false,  true,   true,   ''),
+                array('logo',           0,      false,  true,   true,   ''),
+                array('p_firstname',    255,    false,  true,   true,   ''),
+                array('p_lastname',     255,    false,  true,   true,   ''),
+                array('p_email',        255,    false,  true,   true,   ''),
+                array('p_street',       255,    false,  true,   true,   ''),
+                array('p_city',         255,    false,  true,   true,   ''),
+                array('p_state',        20,     false,  true,   true,   ''),
+                array('p_zip',          20,     false,  true,   true,   ''),
+                array('p_countrycode',  3,      false,  true,   true,   '/^[a-z]{3}$/i'),
+                array('sign',           255,    false,  false,  true,   ''),
+                array('sign_password',  255,    true,   true,   false,  ''),
+                array('test',           1,      false,  true,   true,   '/^[01]$/'),
+            );
+    }
+
+
+    /**
+     * Returns specification array for response.
+     *
+     * @return array
+     */
+    public static function getResponseSpec() {
+        // Array structure:
+        //  * name      – request item name
+        //  * maxlen    – max allowed value for item
+        //  * required  – is this item is required
+        //  * mustcheck – this item must be checked by user
+        //  * regexp    – regexp to test item value
+        return array(
+                array('merchantid',     11,     true,   true,   '/^\d+$/'),
+                array('orderid',        40,     true,   true,   '/^\d+$/'),
+                array('lang',           3,      false,  false,  '/^[a-z]{3}$/i'),
+                array('amount',         11,     true,   true,   '/^\d+$/'),
+                array('currency',       3,      true,   true,   '/^[a-z]{3}$/i'),
+                array('payment',        20,     false,  false,  ''),
+                array('country',        2,      false,  false,  '/^[a-z]{2}$/i'),
+                array('paytext',        70,     false,  false,  ''),
+                array('_ss2',           0,      true,   false,  ''),
+                array('_ss1',           0,      false,  false,  ''),
+                array('transaction',    255,    false,  false,  ''),
+                array('transaction2',   255,    false,  false,  ''),
+                array('name',           255,    false,  false,  ''),
+                array('surename',       255,    false,  false,  ''),
+                array('status',         255,    false,  false,  ''),
+                array('error',          20,     false,  false,  ''),
+                array('test',           1,      false,  false,  '/^[01]$/'),
+            );
     }
 
     /**
-     * Checks and validates callback parameters.
+     * Checks user given request data array.
+     * 
+     * If any errors occurs, WebToPayException will be raised.
      *
-     * First parameter mostly should by $_GET array.
+     * This method returns validated request array. Returned array contains
+     * only those items from $data, that is needed.
      *
-     * Description of $data parametre can be found here:
+     * @param array     $data
+     * @return array
+     */
+    public static function checkRequestData($data) {
+        $request = array();
+        $specs = self::getRequestSpec();
+        foreach ($specs as $spec) {
+            list($name, $maxlen, $required, $user, $isrequest, $regexp) = $spec;
+            if (!$user) continue;
+            if ($required && !isset($data[$name])) {
+                throw new WebToPayException(
+                    self::_("'%s' is required but missing.", $name),
+                    WebToPayException::E_REQ_MISSING);
+            }
+
+            if (!empty($data[$name])) {
+                if ($maxlen && strlen($data[$name]) > $maxlen) {
+                    throw new WebToPayException(
+                        self::_("'%s' value '%s' is invalid.", $name, $data[$name]),
+                        WebToPayException::E_REQ_INVALID);
+                }
+
+                if ('' != $regexp && !preg_match($regexp, $data[$name])) {
+                    throw new WebToPayException(
+                        self::_("'%s' value '%s' is invalid.", $name, $data[$name]),
+                        WebToPayException::E_REQ_INVALID);
+                }
+            }
+
+            if ($isrequest && isset($data[$name])) {
+                $request[$name] = $data[$name];
+            }
+        }
+
+        return $request;
+    }
+
+
+    /**
+     * Puts signature on request data array.
+     */
+    public static function signRequest($request, $password) {
+        $data = '';
+        foreach ($request as $key => $val) {
+            if (trim($val) != '') {
+                $data .= sprintf("%03d", strlen($val)) . strtolower($val);
+            }
+        }
+        $request['sign'] = md5($data . $password);
+
+        return $request;
+    }
+
+
+    /**
+     * Builds request data array.
+     *
+     * This method checks all given data and generates correct request data
+     * array or raises WebToPayException.
+     *
+     * Method accepts single parameter $data of array type. All possible array
+     * keys are described here:
      * https://www.mokejimai.lt/makro_specifikacija.html
      *
-     * Return value is true if all validations are ok and false if something
-     * went wrong.
-     *
-     * @param array $request Request array.
-     * @param bool
+     * @param array     $data       Information about current payment request.
+     * @return array
      */
-    public static function checkTransactionData($request, $data) {
+    public static function buildRequest($data) {
+        $request = self::checkRequestData($data);
+        $request = self::signRequest($request, $data['sign_password']);
+        return $request;
+    }
+
+
+	public static function getCert($cert = null) {
+		$fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
+		if (!$fp) {
+            throw new WebToPayException(
+                self::_('Payment check: Can\'t get cert from '.
+                        'downloads.webtopay.com/download/%s',
+                        ($cert ? $cert : 'public.key')),
+                WebToPayException::E_RESP_INVALID);
+            return false;
+        }
+
+        $out = "GET /download/" . ($cert ? $cert : 'public.key') . " HTTP/1.1\r\n";
+        $out .= "Host: downloads.webtopay.com\r\n";
+        $out .= "Connection: Close\r\n\r\n";
+    
+        $content = '';
+        
+        fwrite($fp, $out);
+        while (!feof($fp)) $content .= fgets($fp, 8192);
+        fclose($fp);
+        
+        list($header, $content) = explode("\r\n\r\n", $content, 2);
+
+        return $content;
+	}
+
+
+	public static function checkResponseCert($response, $cert=null) {
+		$pKeyP = self::getCert($cert);
+		if (!$pKeyP) {
+            return false;
+        }
+
+		$pKey = openssl_pkey_get_public($pKeyP);
+		if (!$pKey) {
+            throw new WebToPayException(
+                self::_('Can\'t get openssl public key for %s', $cert),
+                WebToPayException::E_RESP_INVALID);
+            return false;
+        }
+		        
+		$_SS2 = "";
+		foreach ($response As $key => $value) {
+            if ($key!='_ss2') $_SS2 .= "{$value}|";
+        }
+		$ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKey);
+
+        if ($ok !== 1) {
+            throw new WebToPayException(
+                self::_('Can\'t verify SS2 for %s', $cert),
+                WebToPayException::E_RESP_INVALID);
+        }
+	}
+
+    public static function checkResponseData($response, $mustcheck_data) {
+        $_response = array();
+        $specs = self::getResponseSpec();
+        foreach ($specs as $spec) {
+            list($name, $maxlen, $required, $mustcheck, $regexp) = $spec;
+            if ($required && !isset($response[$name])) {
+                throw new WebToPayException(
+                    self::_("'%s' is required but missing.", $name),
+                    WebToPayException::E_RESP_MISSING);
+            }
+
+            if ($mustcheck) {
+                if (!isset($mustcheck_data[$name])) {
+                    throw new WebToPayException(
+                        self::_("'%s' must exists in array of second parameter ".
+                                "of checkResponse() method.", $name),
+                        WebToPayException::E_USER_PARAMS);
+                }
+
+                if ($response[$name] != $mustcheck_data[$name]) {
+                    throw new WebToPayException(
+                        self::_("'%s' yours and requested value is not ".
+                                "equal ('%s' != '%s') ",
+                                $name, $mustcheck_data[$name], $response[$name]),
+                        WebToPayException::E_RESP_INVALID);
+                }
+            }
+
+            if (!empty($response[$name])) {
+                if ($maxlen && strlen($response[$name]) > $maxlen) {
+                    throw new WebToPayException(
+                        self::_("'%s' value '%s' is invalid.", $name, $response[$name]),
+                        WebToPayException::E_RESP_INVALID);
+                }
+
+                if ('' != $regexp && !preg_match($regexp, $response[$name])) {
+                    throw new WebToPayException(
+                        self::_("'%s' value '%s' is invalid.", $name, $response[$name]),
+                        WebToPayException::E_RESP_INVALID);
+                }
+            }
+
+            if (isset($response[$name])) {
+                $_response[$name] = $response[$name];
+            }
+        }
+
+        return $_response;
+    }
+
+
+    /**
+     * Checks and validates respons from WebToPay server.
+     *
+     * First parameter usualy should by $_GET array.
+     *
+     * Description about response can be found here:
+     * https://www.mokejimai.lt/makro_specifikacija.html
+     *
+     * If respons is not correct, WebToPayException will be raised.
+     *
+     * @param array     $response       Response array.
+     * @param array     $keys
+     * @return void
+     */
+    public static function checkResponse($response, $mustcheck_data) {
+        return (
+                self::checkResponseData($response, $mustcheck_data) &&
+                self::checkResponseCert($response) &&
+                self::checkResponseCert($response, 'public_old.key')
+            );
+    }
+
+
+    /**
+     * I18n support.
+     */
+    public static function _() {
+        $args = func_get_args();
+        if (sizeof($args) > 1) {
+            return call_user_func_array('sprintf', $args);
+        }
+        else {
+            return $args[0];
+        }
     }
 
 }
@@ -224,6 +484,31 @@ class WebToPay {
 
 
 class WebToPayException extends Exception {
+
+    /**
+     * Missing request variable.
+     */
+    const E_REQ_MISSING = 1;
+
+    /**
+     * Invalid request variable value.
+     */
+    const E_REQ_INVALID = 2;
+
+    /**
+     * Missing response variable.
+     */
+    const E_RESP_MISSING = 3;
+
+    /**
+     * Invalid response variable value.
+     */
+    const E_RESP_INVALID = 4;
+
+    /**
+     * Missing or invalid user given parameters.
+     */
+    const E_USER_PARAMS = 5;
 
 }
 
