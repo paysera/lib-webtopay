@@ -57,22 +57,6 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
         }
     }
 
-    public function testResponse() {
-        $response = array(
-                'merchantid'    => $this->merchantid,
-                'orderid'       => 1,
-                'amount'        => 10,
-                'currency'      => 'LTL',
-                '_ss2'           => '0564856786nitaurar',
-            );
-        WebToPay::checkResponse($response, array(
-                'merchantid'    => $this->merchantid,
-                'orderid'       => 1,
-                'amount'        => 10,
-                'currency'      => 'LTL',
-            ));
-    }
-
     public function testPaymentTypes() {
         $types = WebToPay::getPaymentTypes();
         foreach ($types as $type) {
