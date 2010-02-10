@@ -1,0 +1,30 @@
+label {
+    font-weight: bold;
+}
+input.text-input {
+    display: block;
+    margin-bottom: 10px;
+    width: 100%;
+}
+div.input-preview {
+    margin-bottom: 10px;
+    background: #FFF;
+    border: 1px solid #000;
+    font-family: monospace;
+    padding: 4px;
+}
+input[type=submit] {
+    margin: 16px;
+    font-weight: bold;
+    font-size: 120%;
+    float: right;
+}
+legend {
+    font-size: 150%;
+    font-weight: bold;
+}
+div.error {
+    border: 2px solid #F00;
+    padding: 8px;
+    margin: 16px 0;
+}

@@ -1,0 +1,6 @@
+syntax: regexp
+^demo/var/(?!__empty__).*
+
+syntax: glob
+*.swp
+

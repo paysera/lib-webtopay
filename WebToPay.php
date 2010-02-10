@@ -236,23 +236,32 @@ class WebToPay {
         //  * mustcheck – this item must be checked by user
         //  * regexp    – regexp to test item value
         return array(
-                array('merchantid',     11,     true,   true,   '/^\d+$/'),
-                array('orderid',        40,     true,   true,   '/^\d+$/'),
-                array('lang',           3,      false,  false,  '/^[a-z]{3}$/i'),
-                array('amount',         11,     true,   true,   '/^\d+$/'),
-                array('currency',       3,      true,   true,   '/^[a-z]{3}$/i'),
-                array('payment',        20,     false,  false,  ''),
-                array('country',        2,      false,  false,  '/^[a-z]{2}$/i'),
-                array('paytext',        70,     false,  false,  ''),
-                array('_ss2',           0,      true,   false,  ''),
-                array('_ss1',           0,      false,  false,  ''),
-                array('transaction',    255,    false,  false,  ''),
-                array('transaction2',   255,    false,  false,  ''),
-                array('name',           255,    false,  false,  ''),
-                array('surename',       255,    false,  false,  ''),
-                array('status',         255,    false,  false,  ''),
-                array('error',          20,     false,  false,  ''),
-                array('test',           1,      false,  false,  '/^[01]$/'),
+                'merchantid'    => array(11,     true,   true,   '/^\d+$/'),
+                'orderid'       => array(40,     true,   true,   '/^\d+$/'),
+                'lang'          => array(3,      false,  false,  '/^[a-z]{3}$/i'),
+                'amount'        => array(11,     true,   true,   '/^\d+$/'),
+                'currency'      => array(3,      true,   true,   '/^[a-z]{3}$/i'),
+                'payment'       => array(20,     false,  false,  ''),
+                'country'       => array(2,      false,  false,  '/^[a-z]{2}$/i'),
+                'paytext'       => array(0,     false,  false,  ''),
+                '_ss2'          => array(0,      false,   false,  ''),
+                '_ss1'          => array(0,      false,  false,  ''),
+                'transaction'   => array(255,    false,  false,  ''),
+                'transaction2'  => array(255,    false,  false,  ''),
+                'name'          => array(255,    false,  false,  ''),
+                'surename'      => array(255,    false,  false,  ''),
+                'status'        => array(255,    false,  false,  ''),
+                'error'         => array(20,     false,  false,  ''),
+                'test'          => array(1,      false,  false,  '/^[01]$/'),
+
+                'siteurl'       => array(0,      false,  false,  ''),
+                'sign'          => array(0,      false,  false,  ''),
+                'pay_hash'      => array(0,      false,  false,  ''),
+                'm_email_pay'   => array(0,      false,  false,  ''),
+                'p_email'       => array(0,      false,  false,  ''),
+                'type'          => array(0,      false,  false,  ''),
+                'payamount'     => array(0,      false,  false,  ''),
+                'paycurrency'   => array(0,      false,  false,  ''),
             );
     }
 
@@ -339,18 +348,18 @@ class WebToPay {
     }
 
 
-	public static function getCert($cert = null) {
+	public static function getCert($cert) {
 		$fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
 		if (!$fp) {
             throw new WebToPayException(
                 self::_('Payment check: Can\'t get cert from '.
                         'downloads.webtopay.com/download/%s',
-                        ($cert ? $cert : 'public.key')),
+                        $cert),
                 WebToPayException::E_RESP_INVALID);
             return false;
         }
 
-        $out = "GET /download/" . ($cert ? $cert : 'public.key') . " HTTP/1.1\r\n";
+        $out = "GET /download/" . $cert . " HTTP/1.1\r\n";
         $out .= "Host: downloads.webtopay.com\r\n";
         $out .= "Connection: Close\r\n\r\n";
     
@@ -366,22 +375,22 @@ class WebToPay {
 	}
 
 
-	public static function checkResponseCert($response, $cert=null) {
+	public static function checkResponseCert($response, $cert='public.key') {
 		$pKeyP = self::getCert($cert);
 		if (!$pKeyP) {
             return false;
         }
+
 
 		$pKey = openssl_pkey_get_public($pKeyP);
 		if (!$pKey) {
             throw new WebToPayException(
                 self::_('Can\'t get openssl public key for %s', $cert),
                 WebToPayException::E_RESP_INVALID);
-            return false;
         }
 		        
-		$_SS2 = "";
-		foreach ($response As $key => $value) {
+		$_SS2 = '';
+		foreach ($response as $key => $value) {
             if ($key!='_ss2') $_SS2 .= "{$value}|";
         }
 		$ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKey);
@@ -391,13 +400,24 @@ class WebToPay {
                 self::_('Can\'t verify SS2 for %s', $cert),
                 WebToPayException::E_RESP_INVALID);
         }
+
+        return true;
 	}
 
     public static function checkResponseData($response, $mustcheck_data) {
         $_response = array();
+        $_specs = array();
+
+        // Get specs and preserve response order
         $specs = self::getResponseSpec();
-        foreach ($specs as $spec) {
-            list($name, $maxlen, $required, $mustcheck, $regexp) = $spec;
+        foreach (array_keys($response) as $key) {
+            if (isset($specs[$key])) {
+                $_specs[$key] = $specs[$key];
+            }
+        }
+
+        foreach ($_specs as $name => $spec) {
+            list($maxlen, $required, $mustcheck, $regexp) = $spec;
             if ($required && !isset($response[$name])) {
                 throw new WebToPayException(
                     self::_("'%s' is required but missing.", $name),
@@ -424,7 +444,8 @@ class WebToPay {
             if (!empty($response[$name])) {
                 if ($maxlen && strlen($response[$name]) > $maxlen) {
                     throw new WebToPayException(
-                        self::_("'%s' value '%s' is invalid.", $name, $response[$name]),
+                        self::_("'%s' value '%s' is too long, %d characters allowed.",
+                                $name, $response[$name], $maxlen),
                         WebToPayException::E_RESP_INVALID);
                 }
 
@@ -459,11 +480,14 @@ class WebToPay {
      * @return void
      */
     public static function checkResponse($response, $mustcheck_data) {
-        return (
-                self::checkResponseData($response, $mustcheck_data) &&
-                self::checkResponseCert($response) &&
-                self::checkResponseCert($response, 'public_old.key')
-            );
+        $_response = self::checkResponseData($response, $mustcheck_data);
+
+        try {
+            return self::checkResponseCert($_response);
+        }
+        catch (WebToPayException $e) {
+            return self::checkResponseCert($_response, 'public_old.key');
+        }
     }
 
 
