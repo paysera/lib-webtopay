@@ -282,7 +282,8 @@ class WebToPay {
             if (!empty($data[$name])) {
                 if ($maxlen && strlen($data[$name]) > $maxlen) {
                     throw new WebToPayException(
-                        self::_("'%s' value '%s' is invalid.", $name, $data[$name]),
+                        self::_("'%s' value '%s' is too long, %d characters allowed.",
+                                $name, $data[$name], $maxlen),
                         WebToPayException::E_REQ_INVALID);
                 }
 
