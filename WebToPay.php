@@ -255,8 +255,8 @@ class WebToPay {
                 'currency'      => array(3,      true,   true,   '/^[a-z]{3}$/i'),
                 'payment'       => array(20,     false,  false,  ''),
                 'country'       => array(2,      false,  false,  '/^[a-z]{2}$/i'),
-                'paytext'       => array(0,     false,  false,  ''),
-                '_ss2'          => array(0,      false,   false,  ''),
+                'paytext'       => array(0,      false,  false,  ''),
+                '_ss2'          => array(0,      true,   false,  ''),
                 '_ss1'          => array(0,      false,  false,  ''),
                 'transaction'   => array(255,    false,  false,  ''),
                 'transaction2'  => array(255,    false,  false,  ''),
@@ -417,18 +417,9 @@ class WebToPay {
 	}
 
     public static function checkResponseData($response, $mustcheck_data) {
-        $_response = array();
-        $_specs = array();
-
-        // Get specs and preserve response order
+        $resp_keys = array();
         $specs = self::getResponseSpec();
-        foreach (array_keys($response) as $key) {
-            if (isset($specs[$key])) {
-                $_specs[$key] = $specs[$key];
-            }
-        }
-
-        foreach ($_specs as $name => $spec) {
+        foreach ($specs as $name => $spec) {
             list($maxlen, $required, $mustcheck, $regexp) = $spec;
             if ($required && !isset($response[$name])) {
                 throw new WebToPayException(
@@ -469,7 +460,15 @@ class WebToPay {
             }
 
             if (isset($response[$name])) {
-                $_response[$name] = $response[$name];
+                $resp_keys[] = $name;
+            }
+        }
+
+        // Filter only parameters passed from webtopay
+        $_response = array();
+        foreach (array_keys($response) as $key) {
+            if (in_array($key, $resp_keys)) {
+                $_response[$key] = $response[$key];
             }
         }
 
