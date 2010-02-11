@@ -12,6 +12,7 @@ div.input-preview {
     border: 1px solid #000;
     font-family: monospace;
     padding: 4px;
+    overflow: auto;
 }
 input[type=submit] {
     margin: 16px;

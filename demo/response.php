@@ -7,7 +7,8 @@ $answer = isset($_GET['answer']) ? $_GET['answer'] : 'cancel';
 
 if ('callback' == $answer) {
     $meta = array(
-            'time'  => date('Y-m-d H:i:s'),
+            'time'      => date('Y-m-d H:i:s'),
+            'verified'  => 'none',
         );
 
     try {
@@ -26,12 +27,16 @@ if ('callback' == $answer) {
             ));
 
         $meta['status'] = 'OK';
+        $meta['verified'] = WebToPay::$verified;
         save_response_data($_GET, $meta);
 
         echo 'OK';
     }
     catch (Exception $e) {
         $meta['status'] = get_class($e).': '.$e->getMessage();
+        if (WebToPay::$verified) {
+            $meta['verified'] = WebToPay::$verified;
+        }
         save_response_data($_GET, $meta);
     }
 }

@@ -38,6 +38,18 @@ class WebToPay {
 
 
     /**
+     * Idetifies what verification method was used.
+     *
+     * Values can be:
+     *  - false     not verified
+     *  - RESPONSE  only response parameters are verified
+     *  - SS1       SS1 verification
+     *  - SS2       SS2 verification
+     */
+    public static $verified = false;
+
+
+    /**
      *
      */
     public static function throwResponseError($code) {
@@ -480,14 +492,25 @@ class WebToPay {
      * @return void
      */
     public static function checkResponse($response, $mustcheck_data) {
+        self::$verified = false;
+
         $_response = self::checkResponseData($response, $mustcheck_data);
+        self::$verified = 'RESPONSE';
 
         try {
-            return self::checkResponseCert($_response);
+            if (self::checkResponseCert($_response)) {
+                self::$verified = 'SS2 public.key';
+                return true;
+            }
         }
         catch (WebToPayException $e) {
-            return self::checkResponseCert($_response, 'public_old.key');
+            if (self::checkResponseCert($_response, 'public_old.key')) {
+                self::$verified = 'SS2 public_old.key';
+                return true;
+            }
         }
+
+        return false;
     }
 
 
