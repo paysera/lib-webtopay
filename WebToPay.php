@@ -218,7 +218,7 @@ class WebToPay {
                 array('callbackurl',    255,    true,   true,   true,   ''),
                 array('payment',        20,     false,  true,   true,   ''),
                 array('country',        2,      false,  true,   true,   '/^[a-z]{2}$/i'),
-                array('paytext',        70,     false,  true,   true,   ''),
+                array('paytext',        0,     false,  true,   true,   ''),
                 array('logo',           0,      false,  true,   true,   ''),
                 array('p_firstname',    255,    false,  true,   true,   ''),
                 array('p_lastname',     255,    false,  true,   true,   ''),
