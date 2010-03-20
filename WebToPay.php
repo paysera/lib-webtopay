@@ -295,23 +295,29 @@ class WebToPay {
             list($name, $maxlen, $required, $user, $isrequest, $regexp) = $spec;
             if (!$user) continue;
             if ($required && !isset($data[$name])) {
-                throw new WebToPayException(
+                $e = new WebToPayException(
                     self::_("'%s' is required but missing.", $name),
-                    WebToPayException::E_REQ_MISSING);
+                    WebToPayException::E_MISSING);
+                $e->setField($name);
+                throw $e;
             }
 
             if (!empty($data[$name])) {
                 if ($maxlen && strlen($data[$name]) > $maxlen) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' value '%s' is too long, %d characters allowed.",
                                 $name, $data[$name], $maxlen),
-                        WebToPayException::E_REQ_INVALID);
+                        WebToPayException::E_MAXLEN);
+                    $e->setField($name);
+                    throw $e;
                 }
 
                 if ('' != $regexp && !preg_match($regexp, $data[$name])) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' value '%s' is invalid.", $name, $data[$name]),
-                        WebToPayException::E_REQ_INVALID);
+                        WebToPayException::E_REGEXP);
+                    $e->setField($name);
+                    throw $e;
                 }
             }
 
@@ -367,7 +373,7 @@ class WebToPay {
                 self::_('Payment check: Can\'t get cert from '.
                         'downloads.webtopay.com/download/%s',
                         $cert),
-                WebToPayException::E_RESP_INVALID);
+                WebToPayException::E_INVALID);
             return false;
         }
 
@@ -398,7 +404,7 @@ class WebToPay {
 		if (!$pKey) {
             throw new WebToPayException(
                 self::_('Can\'t get openssl public key for %s', $cert),
-                WebToPayException::E_RESP_INVALID);
+                WebToPayException::E_INVALID);
         }
 		        
 		$_SS2 = '';
@@ -410,7 +416,7 @@ class WebToPay {
         if ($ok !== 1) {
             throw new WebToPayException(
                 self::_('Can\'t verify SS2 for %s', $cert),
-                WebToPayException::E_RESP_INVALID);
+                WebToPayException::E_INVALID);
         }
 
         return true;
@@ -422,40 +428,50 @@ class WebToPay {
         foreach ($specs as $name => $spec) {
             list($maxlen, $required, $mustcheck, $regexp) = $spec;
             if ($required && !isset($response[$name])) {
-                throw new WebToPayException(
+                $e = new WebToPayException(
                     self::_("'%s' is required but missing.", $name),
-                    WebToPayException::E_RESP_MISSING);
+                    WebToPayException::E_MISSING);
+                $e->setField($name);
+                throw $e;
             }
 
             if ($mustcheck) {
                 if (!isset($mustcheck_data[$name])) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' must exists in array of second parameter ".
                                 "of checkResponse() method.", $name),
                         WebToPayException::E_USER_PARAMS);
+                    $e->setField($name);
+                    throw $e;
                 }
 
                 if ($response[$name] != $mustcheck_data[$name]) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' yours and requested value is not ".
                                 "equal ('%s' != '%s') ",
                                 $name, $mustcheck_data[$name], $response[$name]),
-                        WebToPayException::E_RESP_INVALID);
+                        WebToPayException::E_INVALID);
+                    $e->setField($name);
+                    throw $e;
                 }
             }
 
             if (!empty($response[$name])) {
                 if ($maxlen && strlen($response[$name]) > $maxlen) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' value '%s' is too long, %d characters allowed.",
                                 $name, $response[$name], $maxlen),
-                        WebToPayException::E_RESP_INVALID);
+                        WebToPayException::E_MAXLEN);
+                    $e->setField($name);
+                    throw $e;
                 }
 
                 if ('' != $regexp && !preg_match($regexp, $response[$name])) {
-                    throw new WebToPayException(
+                    $e = new WebToPayException(
                         self::_("'%s' value '%s' is invalid.", $name, $response[$name]),
-                        WebToPayException::E_RESP_INVALID);
+                        WebToPayException::E_REGEXP);
+                    $e->setField($name);
+                    throw $e;
                 }
             }
 
@@ -533,29 +549,41 @@ class WebToPay {
 class WebToPayException extends Exception {
 
     /**
-     * Missing request variable.
+     * Missing field.
      */
-    const E_REQ_MISSING = 1;
+    const E_MISSING = 1;
 
     /**
-     * Invalid request variable value.
+     * Invalid field value.
      */
-    const E_REQ_INVALID = 2;
+    const E_INVALID = 2;
 
     /**
-     * Missing response variable.
+     * Max length exceeded.
      */
-    const E_RESP_MISSING = 3;
+    const E_MAXLEN = 3;
 
     /**
-     * Invalid response variable value.
+     * Regexp for field value doesn't match.
      */
-    const E_RESP_INVALID = 4;
+    const E_REGEXP = 4;
 
     /**
      * Missing or invalid user given parameters.
      */
     const E_USER_PARAMS = 5;
+
+
+
+    protected $field_name = false;
+
+    public function setField($field_name) {
+        $this->field_name = $field_name;
+    }
+
+    public function getField() {
+        return $this->field_name;
+    }
 
 }
 

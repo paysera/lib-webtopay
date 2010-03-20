@@ -27,7 +27,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             $this->fail('WebToPayException expected.');
         }
         catch (WebToPayException $e) {
-            $this->assertEquals(WebToPayException::E_REQ_MISSING, $e->getCode());
+            $this->assertEquals(WebToPayException::E_MISSING, $e->getCode());
         }
 
         try {
@@ -37,7 +37,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             $this->fail('WebToPayException expected.');
         }
         catch (WebToPayException $e) {
-            $this->assertEquals(WebToPayException::E_REQ_INVALID, $e->getCode());
+            $this->assertEquals(WebToPayException::E_MAXLEN, $e->getCode());
         }
 
         try {
@@ -53,7 +53,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             $this->fail('WebToPayException expected.');
         }
         catch (WebToPayException $e) {
-            $this->assertEquals(WebToPayException::E_REQ_INVALID, $e->getCode());
+            $this->assertEquals(WebToPayException::E_MAXLEN, $e->getCode());
         }
     }
 
