@@ -25,8 +25,8 @@ function redirect_to($url) {
 function get_request_data_file($data) {
     $items = array(
             'var/data',
-            $request['merchantid'],
-            $request['orderid'],
+            $data['merchantid'],
+            $data['orderid'],
         );
     return implode('-', $items).'.php';
 }
