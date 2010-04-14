@@ -6,13 +6,13 @@ require_once 'PHPUnit/Framework.php';
 class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     // Here you can set your real data to test
-    public $merchantid      = 1;
+    public $projectid      = 1;
     public $callbackurl     = '/callback';
 
 
     public function testRequest() {
         $form_data = WebToPay::buildRequest(array(
-                'merchantid'    => $this->merchantid,
+                'projectid'    => $this->projectid,
                 'orderid'       => 1,
                 'accepturl'     => '/accept',
                 'cancelurl'     => '/cancel',
@@ -32,7 +32,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
         try {
             WebToPay::buildRequest(array(
-                    'merchantid'    => str_repeat('32', '9'),
+                    'projectid'    => str_repeat('32', '9'),
                 ));
             $this->fail('WebToPayException expected.');
         }
@@ -42,7 +42,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
         try {
             WebToPay::buildRequest(array(
-                    'merchantid'    => $this->merchantid,
+                    'projectid'    => $this->projectid,
                     'orderid'       => 1,
                     'accepturl'     => '/accept',
                     'cancelurl'     => '/cancel',
@@ -67,7 +67,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
                     $min_amount, $max_amount, $describtion
                 ) = $type;
 
-            if ('' != $country_code) {
+            if ('' != $country_code && 'VISOS' != $country_code) {
                 $this->assertEquals(2, strlen($country_code));
             }
             $this->assertTrue(is_int($min_amount));

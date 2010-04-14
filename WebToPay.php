@@ -28,7 +28,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.0';
+    const VERSION = '1.1';
 
 
     /**
@@ -58,11 +58,14 @@ class WebToPay {
                 '0x2'   => self::_('Mokėjimo suma per didelė'),
                 '0x3'   => self::_('Nurodyta valiuta neaptarnaujama'),
                 '0x4'   => self::_('Nėra sumos arba valiutos'),
-                '0x6'   => self::_('Neįrašytas merchantID arba tokio ID neegzistuoja'),
+                '0x6'   => self::_('Nebenaudojamas'),
                 '0x7'   => self::_('Išjungtas testavimo rėžimas'),
                 '0x8'   => self::_('Jūs uždraudėte šį mokėjimo būdą'),
                 '0x9'   => self::_('Blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
-                '0x10'  => self::_('Tuščias arba neteisingai užpildytas "orderID"'),
+                '0x10'  => self::_('Tuščias arba neteisingai užpildytas "orderid"'),
+                '0x11'  => self::_('mokėjimas negalimas, kol projektas nepatvirtintas arba jeigu jis yra blokuotas'),
+                '0x12'  => self::_('negautas projectid parametras, nors jis yra privalomas'),
+                '0x13'  => self::_('accepturl, cancellurl arba callbacurl skiriasi nuo projekte patvirtintų adresų'),
             );
 
         if (isset($errors[$code])) {
@@ -173,19 +176,13 @@ class WebToPay {
                     'būdą jus turite pasirašyti Mikro mokėjimų sutartį.'
                 ),
             array(
-                    '', 'sms', 1, 15000,
-                    'Atsiskaitymas padidinto tarifo trumposiomis žinutėmis (SMS '.
-                    'Bank).  Norėdami naudoti ši mokėjimo būda jus turite '.
-                    'pasirašyti Mikro mokėjimų sutartį.'
+                    'LT', 'lthand', 3000, 0,
+                    'Atsiskaitymas grynaisiais, mokėjimo kvitu, bet kuriame Lietuvos banke.'
                 ),
             array(
-                    'LT', 'EME', 1, 0,
-                    'Atsiskaitymas virtualiais mokėjimai.lt dovanų pinigais '.
-                    '(jau greitai)'
-                ),
-            array(
-                    'LT', 'coupon', 1, 0,
-                    'Atsiskaitymas mokėjimai.lt dovanų kuponais'
+                    'VISOS', 'smsbank', 1, 15000,
+                    'Atsiskaitymas padidinto tarifo trumposiomis žinutėmis (SMS Bank). Naudotojui kaina bus didesnė, nei jūs užrašėte. <u>Norėdami naudoti šį mokėjimo būdą jus turite pasirašyti <a href="https://www.mokejimai.lt/lit/Mikro_mokejimu_sutarti/154">Mikro mokėjimų sutartį</a>.</u>
+                    '
                 ),
         );
     }
@@ -208,7 +205,7 @@ class WebToPay {
         //                included in outgoing request array.
         //  * regexp    – regexp to test item value
         return array(
-                array('merchantid',     11,     true,   true,   true,   '/^\d+$/'),
+                array('projectid',      11,     true,   true,   true,   '/^\d+$/'),
                 array('orderid',        40,     true,   true,   true,   '/^\d+$/'),
                 array('lang',           3,      false,  true,   true,   '/^[a-z]{3}$/i'),
                 array('amount',         11,     false,  true,   true,   '/^\d+$/'),
@@ -218,7 +215,7 @@ class WebToPay {
                 array('callbackurl',    255,    true,   true,   true,   ''),
                 array('payment',        20,     false,  true,   true,   ''),
                 array('country',        2,      false,  true,   true,   '/^[a-z]{2}$/i'),
-                array('paytext',        0,     false,  true,   true,   ''),
+                array('paytext',        255,    false,  true,   true,   ''),
                 array('logo',           0,      false,  true,   true,   ''),
                 array('p_firstname',    255,    false,  true,   true,   ''),
                 array('p_lastname',     255,    false,  true,   true,   ''),
@@ -244,36 +241,39 @@ class WebToPay {
         // Array structure:
         //  * name      – request item name
         //  * maxlen    – max allowed value for item
-        //  * required  – is this item is required
+        //  * required  – is this item is required in response
         //  * mustcheck – this item must be checked by user
+        //  * isresponse – if false, item must not be included in response array
         //  * regexp    – regexp to test item value
         return array(
-                'merchantid'    => array(11,     true,   true,   '/^\d+$/'),
-                'orderid'       => array(40,     true,   true,   '/^\d+$/'),
-                'lang'          => array(3,      false,  false,  '/^[a-z]{3}$/i'),
-                'amount'        => array(11,     true,   true,   '/^\d+$/'),
-                'currency'      => array(3,      true,   true,   '/^[a-z]{3}$/i'),
-                'payment'       => array(20,     false,  false,  ''),
-                'country'       => array(2,      false,  false,  '/^[a-z]{2}$/i'),
-                'paytext'       => array(0,      false,  false,  ''),
-                '_ss2'          => array(0,      true,   false,  ''),
-                '_ss1'          => array(0,      false,  false,  ''),
-                'transaction'   => array(255,    false,  false,  ''),
-                'transaction2'  => array(255,    false,  false,  ''),
-                'name'          => array(255,    false,  false,  ''),
-                'surename'      => array(255,    false,  false,  ''),
-                'status'        => array(255,    false,  false,  ''),
-                'error'         => array(20,     false,  false,  ''),
-                'test'          => array(1,      false,  false,  '/^[01]$/'),
+                'projectid'     => array(11,     true,   true,   true,  '/^\d+$/'),
+                'orderid'       => array(40,     true,   true,   true,  '/^\d+$/'),
+                'lang'          => array(3,      false,  false,  true,  '/^[a-z]{3}$/i'),
+                'amount'        => array(11,     true,   true,   true,  '/^\d+$/'),
+                'currency'      => array(3,      true,   true,   true,  '/^[a-z]{3}$/i'),
+                'payment'       => array(20,     false,  false,  true,  ''),
+                'country'       => array(2,      false,  false,  true,  '/^[a-z]{2}$/i'),
+                'paytext'       => array(0,      false,  false,  true,  ''),
+                '_ss2'          => array(0,      true,   false,  true,  ''),
+                '_ss1'          => array(0,      false,  false,  true,  ''),
+                'transaction'   => array(255,    false,  false,  true,  ''),
+                'transaction2'  => array(255,    false,  false,  true,  ''),
+                'name'          => array(255,    false,  false,  true,  ''),
+                'surename'      => array(255,    false,  false,  true,  ''),
+                'status'        => array(255,    false,  false,  true,  ''),
+                'error'         => array(20,     false,  false,  true,  ''),
+                'test'          => array(1,      false,  false,  true,  '/^[01]$/'),
 
-                'siteurl'       => array(0,      false,  false,  ''),
-                'sign'          => array(0,      false,  false,  ''),
-                'pay_hash'      => array(0,      false,  false,  ''),
-                'm_email_pay'   => array(0,      false,  false,  ''),
-                'p_email'       => array(0,      false,  false,  ''),
-                'type'          => array(0,      false,  false,  ''),
-                'payamount'     => array(0,      false,  false,  ''),
-                'paycurrency'   => array(0,      false,  false,  ''),
+                'siteurl'       => array(0,      false,  false,  true,  ''),
+                'sign'          => array(0,      false,  false,  true,  ''),
+                'pay_hash'      => array(0,      false,  false,  true,  ''),
+                'm_email_pay'   => array(0,      false,  false,  true,  ''),
+                'p_email'       => array(0,      false,  false,  true,  ''),
+                'type'          => array(0,      false,  false,  true,  ''),
+                'payamount'     => array(0,      false,  false,  true,  ''),
+                'paycurrency'   => array(0,      false,  false,  true,  ''),
+                                                                         
+                'sign_password' => array(0,      false,  true,   false, ''),
             );
     }
 
@@ -426,7 +426,7 @@ class WebToPay {
         $resp_keys = array();
         $specs = self::getResponseSpec();
         foreach ($specs as $name => $spec) {
-            list($maxlen, $required, $mustcheck, $regexp) = $spec;
+            list($maxlen, $required, $mustcheck, $is_response, $regexp) = $spec;
             if ($required && !isset($response[$name])) {
                 $e = new WebToPayException(
                     self::_("'%s' is required but missing.", $name),
@@ -445,14 +445,16 @@ class WebToPay {
                     throw $e;
                 }
 
-                if ($response[$name] != $mustcheck_data[$name]) {
-                    $e = new WebToPayException(
-                        self::_("'%s' yours and requested value is not ".
-                                "equal ('%s' != '%s') ",
-                                $name, $mustcheck_data[$name], $response[$name]),
-                        WebToPayException::E_INVALID);
-                    $e->setField($name);
-                    throw $e;
+                if ($is_response) {
+                    if ($response[$name] != $mustcheck_data[$name]) {
+                        $e = new WebToPayException(
+                            self::_("'%s' yours and requested value is not ".
+                                    "equal ('%s' != '%s') ",
+                                    $name, $mustcheck_data[$name], $response[$name]),
+                            WebToPayException::E_INVALID);
+                        $e->setField($name);
+                        throw $e;
+                    }
                 }
             }
 
@@ -493,6 +495,29 @@ class WebToPay {
 
 
     /**
+     * Check for SS1, which is not depend on openssl functions.
+     *
+     * @param array     $response
+     * @return bool
+     */
+    public function checkSS1($response) {
+		$_SS1 = array(
+                md5($response['sign_password']),
+                $response['orderid'],
+                intval($response['test']),
+                1
+            );
+
+        if ($response['_ss1'] != md5($_SS1)) {
+            throw new WebToPayException(
+                self::_('Can\'t verify SS1'),
+                WebToPayException::E_INVALID);
+        }
+
+        return true; 
+    }
+
+    /**
      * Checks and validates respons from WebToPay server.
      *
      * First parameter usualy should by $_GET array.
@@ -503,26 +528,31 @@ class WebToPay {
      * If respons is not correct, WebToPayException will be raised.
      *
      * @param array     $response       Response array.
-     * @param array     $keys
+     * @param array     $user_data
      * @return void
      */
-    public static function checkResponse($response, $mustcheck_data) {
+    public static function checkResponse($response, $user_data) {
         self::$verified = false;
 
-        $_response = self::checkResponseData($response, $mustcheck_data);
+        $_response = self::checkResponseData($response, $user_data);
         self::$verified = 'RESPONSE';
 
-        try {
+        if (function_exists('openssl_pkey_get_public')) {
             if (self::checkResponseCert($_response)) {
                 self::$verified = 'SS2 public.key';
                 return true;
             }
         }
-        catch (WebToPayException $e) {
-            if (self::checkResponseCert($_response, 'public_old.key')) {
-                self::$verified = 'SS2 public_old.key';
-                return true;
-            }
+        else if (self::checkSS1($_response)) {
+            self::$verified = 'SS1';
+            return true;
+        }
+
+        if ('1' != $_response['status']) {
+            throw new WebToPayException(
+                self::_('Returned transaction status is %d, successful status '.
+                        'should be 1.', $_response['status']),
+                WebToPayException::E_INVALID);
         }
 
         return false;

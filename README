@@ -4,6 +4,15 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.2 - 2010-04-14
+
+    * introduced library versioning
+
+Version 1.1 - 2010-04-14
+
+    * merchantid is deprecated, projectid should be used instead
+    * SS1 checking added
+
 Version 1.0 - 2010-01-21
 
     * Initial release
