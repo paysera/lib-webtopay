@@ -21,7 +21,9 @@ catch (WebToPayException $e) {
     redirect_to($base_url);
 }
 
-save_request_data($request);
+save_request_data(array_merge($request, array(
+        'account_password'  => $_POST['account_password'],
+    )));
 
 $form = array();
 $form['title'] = 'Ruquest form';

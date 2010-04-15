@@ -20,10 +20,11 @@ if ('callback' == $answer) {
         $request = $data['request'];
 
         WebToPay::checkResponse($_GET, array(
-                'merchantid'    => $request['merchantid'],
+                'projectid'     => $request['projectid'],
                 'orderid'       => $request['orderid'],
                 'amount'        => $request['amount'],
                 'currency'      => $request['currency'],
+                'account_password' => $request['account_password'],
             ));
 
         $meta['status'] = 'OK';
@@ -33,6 +34,7 @@ if ('callback' == $answer) {
         echo 'OK';
     }
     catch (Exception $e) {
+        var_dump($e->getMessage());
         $meta['status'] = get_class($e).': '.$e->getMessage();
         if (WebToPay::$verified) {
             $meta['verified'] = WebToPay::$verified;

@@ -227,6 +227,7 @@ class WebToPay {
                 array('p_countrycode',  3,      false,  true,   true,   '/^[a-z]{3}$/i'),
                 array('sign',           255,    false,  false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
+                array('account_password', 255,  true,   true,   false,  ''),
                 array('test',           1,      false,  true,   true,   '/^[01]$/'),
             );
     }
@@ -273,7 +274,7 @@ class WebToPay {
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
                                                                          
-                'sign_password' => array(0,      false,  true,   false, ''),
+                'account_password' => array(0,   false,  true,   false, ''),
             );
     }
 
@@ -500,14 +501,15 @@ class WebToPay {
      * @param array     $response
      * @return bool
      */
-    public function checkSS1($response) {
+    public function checkSS1($response, $passwd) {
 		$_SS1 = array(
-                md5($response['sign_password']),
+                md5($passwd),
                 $response['orderid'],
                 intval($response['test']),
                 1
             );
 
+        $_SS1 = implode('|', $_SS1);
         if ($response['_ss1'] != md5($_SS1)) {
             throw new WebToPayException(
                 self::_('Can\'t verify SS1'),
@@ -516,6 +518,9 @@ class WebToPay {
 
         return true; 
     }
+
+
+
 
     /**
      * Checks and validates respons from WebToPay server.
@@ -537,15 +542,18 @@ class WebToPay {
         $_response = self::checkResponseData($response, $user_data);
         self::$verified = 'RESPONSE';
 
-        if (function_exists('openssl_pkey_get_public')) {
+        if (0 && function_exists('openssl_pkey_get_public')) {
             if (self::checkResponseCert($_response)) {
                 self::$verified = 'SS2 public.key';
                 return true;
             }
         }
-        else if (self::checkSS1($_response)) {
+        else if (self::checkSS1($_response, $user_data['account_password'])) {
             self::$verified = 'SS1';
             return true;
+        }
+        else {
+            return false;
         }
 
         if ('1' != $_response['status']) {

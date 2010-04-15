@@ -6,13 +6,14 @@ $form = array();
 $form['title'] = 'Fill test order form';
 $form['action'] = dirname($_SERVER['SCRIPT_NAME']).'/request.php';
 $form['data'] = array(
-        'merchantid'    => 1,
+        'projectid'    => 1,
         'orderid'       => 1,
         'amount'        => '10000', // 100.00 LTL
         'currency'      => 'LTL',
         'paytext'       => 'Test payment',
         'country'       => 'lt',
         'sign_password' => 'secret',
+        'account_password' => 'secret',
     );
 
 if (isset($_SESSION['posted'])) {
