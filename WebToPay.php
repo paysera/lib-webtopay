@@ -28,7 +28,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.1';
+    const VERSION = '1.2';
 
 
     /**
@@ -228,6 +228,7 @@ class WebToPay {
                 array('sign',           255,    false,  false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
                 array('test',           1,      false,  true,   true,   '/^[01]$/'),
+                array('version',        5,      true,   false,  true,   '/^\d+\.\d+$/'),
             );
     }
 
@@ -272,8 +273,10 @@ class WebToPay {
                 'type'          => array(0,      false,  false,  true,  ''),
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
+
+                'version'       => array(5,      true,   false,  true,  '/^\d+\.\d+$/'),
                                                                          
-                'account_password' => array(0,   false,  true,   false, ''),
+                'account_password' => array(40,   false,  true,   false, ''),
             );
     }
 
@@ -362,6 +365,7 @@ class WebToPay {
     public static function buildRequest($data) {
         $request = self::checkRequestData($data);
         $request = self::signRequest($request, $data['sign_password']);
+        $request['version'] = self::VERSION;
         return $request;
     }
 
@@ -540,6 +544,15 @@ class WebToPay {
 
         $_response = self::checkResponseData($response, $user_data);
         self::$verified = 'RESPONSE';
+
+        if ($_response['version'] != self::VERSION) {
+            throw new WebToPayException(
+                self::_('Incompatible library and response versions: ' .
+                        'libwebtopay %s, response %s', self::VERSION, $_response['version']),
+                WebToPayException::E_INVALID);
+        }
+
+        self::$verified = 'RESPONSE VERSION '.$_response['version'].' OK';
 
         if (function_exists('openssl_pkey_get_public')) {
             if (self::checkResponseCert($_response)) {
