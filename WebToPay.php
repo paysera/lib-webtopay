@@ -227,7 +227,6 @@ class WebToPay {
                 array('p_countrycode',  3,      false,  true,   true,   '/^[a-z]{3}$/i'),
                 array('sign',           255,    false,  false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
-                array('account_password', 255,  true,   true,   false,  ''),
                 array('test',           1,      false,  true,   true,   '/^[01]$/'),
             );
     }
@@ -542,7 +541,7 @@ class WebToPay {
         $_response = self::checkResponseData($response, $user_data);
         self::$verified = 'RESPONSE';
 
-        if (0 && function_exists('openssl_pkey_get_public')) {
+        if (function_exists('openssl_pkey_get_public')) {
             if (self::checkResponseCert($_response)) {
                 self::$verified = 'SS2 public.key';
                 return true;

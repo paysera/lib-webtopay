@@ -32,10 +32,9 @@ function get_request_data_file($data) {
 }
 
 function save_request_data($request) {
-    $data = array('request' => $request);
-    $data = serialize($data);
+    $data = serialize($request);
 
-    $file = get_request_data_file($request);
+    $file = get_request_data_file($request['request']);
 
     $fp = fopen($file, 'w');
     fwrite($fp, $data);
