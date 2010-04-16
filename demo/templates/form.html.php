@@ -9,11 +9,7 @@
         <?php foreach ($data as $key => $val): ?>
         <label>
             <?php echo $key; ?>
-            <?php if ('account_password' == $key): ?>
-            <input class="text-input" name="<?php echo $key ?>" value="<?php echo addslashes($val); ?>" type="password" />
-            <?php else: ?>
             <input class="text-input" name="<?php echo $key ?>" value="<?php echo addslashes($val); ?>" />
-            <?php endif; ?>
         </label>
         <?php endforeach; ?>
     </fieldset>

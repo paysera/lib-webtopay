@@ -5,7 +5,28 @@ require_once('../WebToPay.php');
 
 $answer = isset($_GET['answer']) ? $_GET['answer'] : 'cancel';
 
-if ('callback' == $answer) {
+if ('sms' == $answer) {
+    try {
+        WebToPay::checkResponse($_GET, array(
+                'sign_password' => '526a3c835fc3a39e1369fa7446b3537f',
+                'log' => '/tmp/mokejimai.log',
+            ));
+
+        $meta['status'] = 'OK';
+        $meta['verified'] = WebToPay::$verified;
+
+        echo 'OK ';
+    }
+    catch (Exception $e) {
+        $meta['status'] = get_class($e).': '.$e->getMessage();
+        if (WebToPay::$verified) {
+            $meta['verified'] = WebToPay::$verified;
+        }
+        echo 'FAIL '.WebToPay::$verified;
+        echo '<p>'.$meta['status'].'</p>';
+    }
+}
+elseif ('callback' == $answer) {
     $meta = array(
             'time'      => date('Y-m-d H:i:s'),
             'verified'  => 'none',
@@ -24,7 +45,7 @@ if ('callback' == $answer) {
                 'orderid'       => $request['orderid'],
                 'amount'        => $request['amount'],
                 'currency'      => $request['currency'],
-                'account_password' => $data['account_password'],
+                'sign_password' => $data['sign_password'],
             ));
 
         $meta['status'] = 'OK';

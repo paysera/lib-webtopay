@@ -23,7 +23,7 @@ catch (WebToPayException $e) {
 
 save_request_data(array(
         'request'           => $request,
-        'account_password'  => $_POST['account_password'],
+        'sign_password'     => $_POST['sign_password'],
     ));
 
 $form = array();

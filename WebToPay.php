@@ -80,115 +80,6 @@ class WebToPay {
 
 
     /**
-     * Returns list of supported payment types.
-     *
-     * Array structure:
-     *     0 - Country code
-     *     1 - Payment type code
-     *     2 - Minimal possible amount that can be transfered in cents.
-     *     3 - Maximal possible amount that can be transfered in cents.
-     *     4 - Human readable description.
-     *
-     * Min/max amount equal to 0 means unlimited.
-     *
-     * @return array
-     */
-    public static function getPaymentTypes() {
-        return array(
-            array(
-                    'LT', 'hanza', 200, 0,
-                    'Swedbanko el. banko sistema. (swedbank.lt)'
-                ),
-            array(
-                    'LT', 'vb2', 500, 0,
-                    'SEB banko el. banko sistema'
-                ),
-            array(
-                    'LT', 'nord', 500, 0,
-                    'DnB Nord banko el. banko sistema. (I-linija)'
-                ),
-            array(
-                    'LT', 'snoras', 100, 0,
-                    'Snoras banko el. banko sistema (Bankas Internetu+)'
-                ),
-            array(
-                    'LT', 'sampo', 100, 0,
-                    'Danske banko el. banko sistema'
-                ),
-            array(
-                    'LT', 'parex', 100, 0,
-                    'Parex banko el.banko sistema'
-                ),
-            array(
-                    'LT', 'ukio', 100, 0,
-                    'Ūkio banko el. banko sistema Eta Bankas'
-                ),
-            array(
-                    'LV', 'nordealv', 100, 0,
-                    'Nordea Bank Filnland Plc Internetinės bankininkystės '.
-                    'sistema.'
-                ),
-            array(
-                    'LT', 'nordealt', 100, 0,
-                    'Nordea Bank Filnland Plc Internetinės bankininkystės '.
-                    'sistema.'
-                ),
-            array(
-                    'LT', 'sb', 100, 0,
-                    'Šiaulių banko SB Linija'
-                ),
-            array(
-                    'LT', 'barcode', 1000, 200000,
-                    'Apmokėjimas Lietuvos spaudos kioskuose'
-                ),
-            array(
-                    'LV', 'hanzalv', 800, 0,
-                    'Swedbanko el. banko sistema Latvijoje'
-                ),
-            array(
-                    'EE', 'nordeaee', 100, 0,
-                    'Nordea banko Net bank sistema Estijoje'
-                ),
-            array(
-                    'EE', 'hanzaee', 1200, 0,
-                    'Swedbanko el. banko sistema Estijoje'
-                ),
-            array(
-                    'LT', 'maximalt', 100, 1000000,
-                    'Atsiskaitymas visose Maxima parduotuvių kasose Lietuvoje'
-                ),
-            array(
-                    'LV', 'maximalv', 100, 1000000,
-                    'Atsiskaitymas visose Maxima parduotuvių kasose Latvijoje '.
-                    '(jau greitai)'
-                ),
-            array(
-                    '', 'paypal', 5000, 1000000,
-                    'Paypal sistema (tik pagal atskirą susitarimą)'
-                ),
-            array(
-                    '', 'webmoney', 100, 0,
-                    'Atsiskaitymas virtualių pinigų sistema webmoney.ru'
-                ),
-            array(
-                    'LT', 'wap', 100, 1000,
-                    'Atsiskaitymas wap svetainėse. Norėdami naudoti šį mokėjimo '.
-                    'būdą jus turite pasirašyti Mikro mokėjimų sutartį.'
-                ),
-            array(
-                    'LT', 'lthand', 3000, 0,
-                    'Atsiskaitymas grynaisiais, mokėjimo kvitu, bet kuriame Lietuvos banke.'
-                ),
-            array(
-                    'VISOS', 'smsbank', 1, 15000,
-                    'Atsiskaitymas padidinto tarifo trumposiomis žinutėmis (SMS Bank). Naudotojui kaina bus didesnė, nei jūs užrašėte. <u>Norėdami naudoti šį mokėjimo būdą jus turite pasirašyti <a href="https://www.mokejimai.lt/lit/Mikro_mokejimu_sutarti/154">Mikro mokėjimų sutartį</a>.</u>
-                    '
-                ),
-        );
-    }
-
-
-    /**
      * Returns specification array for request.
      *
      * @return array
@@ -228,17 +119,17 @@ class WebToPay {
                 array('sign',           255,    false,  false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
                 array('test',           1,      false,  true,   true,   '/^[01]$/'),
-                array('version',        5,      true,   false,  true,   '/^\d+\.\d+$/'),
+                array('version',        9,      true,   false,  true,   '/^\d+\.\d+$/'),
             );
     }
 
 
     /**
-     * Returns specification array for response.
+     * Returns specification array for makro response.
      *
      * @return array
      */
-    public static function getResponseSpec() {
+    public static function getMakroResponseSpec() {
         // Array structure:
         //  * name      – request item name
         //  * maxlen    – max allowed value for item
@@ -257,8 +148,6 @@ class WebToPay {
                 'paytext'       => array(0,      false,  false,  true,  ''),
                 '_ss2'          => array(0,      true,   false,  true,  ''),
                 '_ss1'          => array(0,      false,  false,  true,  ''),
-                'transaction'   => array(255,    false,  false,  true,  ''),
-                'transaction2'  => array(255,    false,  false,  true,  ''),
                 'name'          => array(255,    false,  false,  true,  ''),
                 'surename'      => array(255,    false,  false,  true,  ''),
                 'status'        => array(255,    false,  false,  true,  ''),
@@ -274,9 +163,46 @@ class WebToPay {
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
 
-                'version'       => array(5,      true,   false,  true,  '/^\d+\.\d+$/'),
+                'version'       => array(9,      true,   false,  true,  '/^\d+\.\d+$/'),
                                                                          
-                'account_password' => array(40,   false,  true,   false, ''),
+                'sign_password' => array(255,   false,  true,   false, ''),
+            );
+    }
+
+
+
+    /**
+     * Returns specification array for mikro response.
+     *
+     * @return array
+     */
+    public static function getMikroResponseSpec() {
+        // Array structure:
+        //  * name      – request item name
+        //  * maxlen    – max allowed value for item
+        //  * required  – is this item is required in response
+        //  * mustcheck – this item must be checked by user
+        //  * isresponse – if false, item must not be included in response array
+        //  * regexp    – regexp to test item value
+        return array(
+                'to'            => array(0,      true,   false,  true,  ''),
+                'sms'           => array(0,      true,   false,  true,  ''),
+                'from'          => array(0,      true,   false,  true,  ''),
+                'operator'      => array(0,      true,   false,  true,  ''),
+                'amount'        => array(0,      true,   false,  true,  ''),
+                'currency'      => array(0,      true,   false,  true,  ''),
+                'country'       => array(0,      true,   false,  true,  ''),
+                'id'            => array(0,      true,   false,  true,  ''),
+                '_ss2'          => array(0,      true,   false,  true,  ''),
+                '_ss1'          => array(0,      true,   false,  true,  ''),
+                'test'          => array(0,      true,   false,  true,  ''),
+                'transaction'   => array(0,      true,   false,  true,  ''),
+                'transaction2'  => array(0,      true,   false,  true,  ''),
+                'status'        => array(0,      true,   false,  true,  ''),
+                'key'           => array(0,      true,   false,  true,  ''),
+                'provider'      => array(0,      true,   false,  true,  ''),
+                'operator'      => array(0,      true,   false,  true,  ''),
+                //'version'       => array(9,      true,   false,  true,  '/^\d+\.\d+$/'),
             );
     }
 
@@ -396,7 +322,6 @@ class WebToPay {
         return $content;
 	}
 
-
 	public static function checkResponseCert($response, $cert='public.key') {
 		$pKeyP = self::getCert($cert);
 		if (!$pKeyP) {
@@ -426,9 +351,8 @@ class WebToPay {
         return true;
 	}
 
-    public static function checkResponseData($response, $mustcheck_data) {
+    public static function checkResponseData($response, $mustcheck_data, $specs) {
         $resp_keys = array();
-        $specs = self::getResponseSpec();
         foreach ($specs as $name => $spec) {
             list($maxlen, $required, $mustcheck, $is_response, $regexp) = $spec;
             if ($required && !isset($response[$name])) {
@@ -504,10 +428,10 @@ class WebToPay {
      * @param array     $response
      * @return bool
      */
-    public function checkSS1($response, $passwd) {
+    public function checkSS1($response, $passwd, $orderid) {
 		$_SS1 = array(
-                md5($passwd),
-                $response['orderid'],
+                $passwd,
+                $orderid,
                 intval($response['test']),
                 1
             );
@@ -523,6 +447,30 @@ class WebToPay {
     }
 
 
+    /**
+     * Return type and specification of given response array.
+     *
+     * @param array     $response
+     * @return array($type, $specs)
+     */
+    public static function getSpecsForResponse($response) {
+        if (
+                isset($response['to']) &&
+                isset($response['from']) &&
+                isset($response['sms']) &&
+                !isset($response['projectid'])
+            )
+        {
+            $type = 'mikro';
+            $specs = self::getMikroResponseSpec();
+        }
+        else {
+            $type = 'makro';
+            $specs = self::getMakroResponseSpec();
+        }
+
+        return array($type, $specs);
+    }
 
 
     /**
@@ -539,43 +487,140 @@ class WebToPay {
      * @param array     $user_data
      * @return void
      */
-    public static function checkResponse($response, $user_data) {
+    public static function checkResponse($response, $user_data=array()) {
         self::$verified = false;
 
-        $_response = self::checkResponseData($response, $user_data);
+        // *get* response type (makro|mikro)
+        list($type, $specs) = self::getSpecsForResponse($response);
+        $_response = self::checkResponseData($response, $user_data, $specs);
         self::$verified = 'RESPONSE';
 
-        if ($_response['version'] != self::VERSION) {
-            throw new WebToPayException(
-                self::_('Incompatible library and response versions: ' .
-                        'libwebtopay %s, response %s', self::VERSION, $_response['version']),
-                WebToPayException::E_INVALID);
-        }
+        try {
 
-        self::$verified = 'RESPONSE VERSION '.$_response['version'].' OK';
-
-        if (function_exists('openssl_pkey_get_public')) {
-            if (self::checkResponseCert($_response)) {
-                self::$verified = 'SS2 public.key';
-                return true;
+            // *check* response
+            if ('makro' == $type && $_response['version'] != self::VERSION) {
+                throw new WebToPayException(
+                    self::_('Incompatible library and response versions: ' .
+                            'libwebtopay %s, response %s', self::VERSION, $_response['version']),
+                    WebToPayException::E_INVALID);
             }
+
+            if ('makro' == $type) {
+                self::$verified = 'RESPONSE VERSION '.$_response['version'].' OK';
+            }
+
+            $orderid = 'makro' == $type ? $_response['orderid'] : $_response['id'];
+            $password = $user_data['sign_password'];
+
+            // *check* SS2
+            if (function_exists('openssl_pkey_get_public')) {
+                $cert = 'makro' == $type ? 'public.key' : 'public_old.key';
+                if (self::checkResponseCert($_response, $cert)) {
+                    self::$verified = 'SS2 public.key';
+                }
+            }
+
+            // *check* SS1
+            else if (self::checkSS1($_response, $password, $orderid)) {
+                self::$verified = 'SS1';
+            }
+
+            // *check* status
+            if ('makro' == $type && '1' != $_response['status']) {
+                throw new WebToPayException(
+                    self::_('Returned transaction status is %d, successful status '.
+                            'should be 1.', $_response['status']),
+                    WebToPayException::E_INVALID);
+            }
+
         }
-        else if (self::checkSS1($_response, $user_data['account_password'])) {
-            self::$verified = 'SS1';
-            return true;
+
+        catch (WebToPayException $e) {
+            if (isset($user_data['log'])) {
+                self::log('ERR', 
+                    self::responseToLog($type, $_response) .
+                    ' ('. get_class($e).': '. $e->getMessage().')',
+                    $user_data['log']);
+            }
+            throw $e;
+        }
+
+        if (isset($user_data['log'])) {
+            self::log('OK', self::responseToLog($type, $_response), $user_data['log']);
+        }
+
+        return true;
+    }
+
+    public static function responseToLog($type, $req) {
+        if ('mikro' == $type) {
+            return self::mikroResponseToLog($req);
         }
         else {
+            return self::makroResponseToLog($req);
+        }
+    }
+
+    public static function mikroResponseToLog($req) {
+        $ret = array();
+        foreach (array('to', 'from', 'id', 'sms') as $key) {
+            $ret[] = $key.':"'.$req[$key].'"';
+        }
+
+        return 'MIKRO '.implode(', ', $ret);
+    }
+
+    public static function makroResponseToLog($req) {
+        $ret = array();
+        foreach (array('projectid', 'orderid', 'payment') as $key) {
+            $ret[] = $key.':"'.$req[$key].'"';
+        }
+
+        return 'MAKRO '.implode(', ', $ret);
+    }
+
+    public static function log($type, $msg, $logfile=null) {
+        if (!isset($logfile)) {
             return false;
         }
 
-        if ('1' != $_response['status']) {
+        $fp = @fopen($logfile, 'a');
+        if (!$fp) {
             throw new WebToPayException(
-                self::_('Returned transaction status is %d, successful status '.
-                        'should be 1.', $_response['status']),
-                WebToPayException::E_INVALID);
+                self::_('Can\'t write to logfile: %s', $logfile), WebToPayException::E_LOG);
         }
 
-        return false;
+        $logline = array();
+
+        // *log* type
+        $logline[] = $type;
+        
+        // *log* REMOTE_ADDR
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $logline[] = $_SERVER['REMOTE_ADDR'];
+        }
+        else {
+            $logline[] = '-';
+        }
+
+        // *log* datetime
+        $logline[] = date('[Y-m-d H:i:s O]');
+
+        // *log* version
+        $logline[] = 'v'.self::VERSION.':';
+
+        // *log* message
+        $logline[] = $msg;
+
+        $logline = implode(' ', $logline)."\n";
+        fwrite($fp, $logline);
+        fclose($fp);
+
+        // clear big log file
+        if (filesize($logfile) > 1024 * 1024 * pi()) {
+            copy($logfile, $logfile.'.old');
+            unlink($logfile);
+        }
     }
 
 
@@ -622,6 +667,11 @@ class WebToPayException extends Exception {
      * Missing or invalid user given parameters.
      */
     const E_USER_PARAMS = 5;
+
+    /**
+     * Logging errors
+     */
+    const E_LOG = 6;
 
 
 

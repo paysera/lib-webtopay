@@ -13,7 +13,6 @@ $form['data'] = array(
         'paytext'       => 'Test payment',
         'country'       => 'lt',
         'sign_password' => 'secret',
-        'account_password' => '',
     );
 
 if (isset($_SESSION['posted'])) {
