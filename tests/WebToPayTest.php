@@ -2,6 +2,8 @@
 
 require_once 'WebToPay.php';
 
+date_default_timezone_set('Europe/Vilnius');
+
 require_once 'PHPUnit/Framework.php';
 class WebToPayTest extends PHPUnit_Framework_TestCase {
 
@@ -57,25 +59,6 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
         }
     }
 
-    public function testPaymentTypes() {
-        $types = WebToPay::getPaymentTypes();
-        foreach ($types as $type) {
-            $this->assertEquals(5, sizeof($type));
-
-            list(
-                    $country_code, $payment_code,
-                    $min_amount, $max_amount, $describtion
-                ) = $type;
-
-            if ('' != $country_code && 'VISOS' != $country_code) {
-                $this->assertEquals(2, strlen($country_code));
-            }
-            $this->assertTrue(is_int($min_amount));
-            $this->assertTrue(is_int($max_amount));
-        }
-    }
-
-
     public function testRequestSpec() {
         $specs = WebToPay::getRequestSpec();
         foreach ($specs as $spec) {
@@ -89,6 +72,21 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             $this->assertTrue(is_bool($required));
             $this->assertTrue(is_bool($user));
             $this->assertTrue(is_bool($isrequest));
+        }
+    }
+
+
+    public function testSmsAnswer() {
+        try {
+            WebToPay::smsAnswer(array(
+                    'id'            => 0,
+                    'msg'           => 'msg',
+                    'sign_password' => 'secret',
+                ));
+            $this->fail('WebToPayException expected.');
+        }
+        catch (WebToPayException $e) {
+            $this->assertEquals('Error: Wrong id', $e->getMessage());
         }
     }
 

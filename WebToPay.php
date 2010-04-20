@@ -19,7 +19,7 @@
  * @package    WebToPay
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.0
+ * @version    1.2
  * @link       http://www.webtopay.com/
  */
 
@@ -35,6 +35,12 @@ class WebToPay {
      * Server URL where all requests should go.
      */
     const PAY_URL = 'https://www.mokejimai.lt/pay/';
+
+
+    /**
+     * SMS answer url.
+     */
+    const SMS_ANSWER_URL = 'https://www.mokejimai.lt/psms/respond/';
 
 
     /**
@@ -579,6 +585,15 @@ class WebToPay {
         return 'MAKRO '.implode(', ', $ret);
     }
 
+    public static function mikroAnswerToLog($answer) {
+        $ret = array();
+        foreach (array('id', 'msg') as $key) {
+            $ret[] = $key.':"'.$answer[$key].'"';
+        }
+
+        return 'MIKRO [answer] '.implode(', ', $ret);
+    }
+
     public static function log($type, $msg, $logfile=null) {
         if (!isset($logfile)) {
             return false;
@@ -621,6 +636,76 @@ class WebToPay {
             copy($logfile, $logfile.'.old');
             unlink($logfile);
         }
+    }
+
+
+    /**
+     * Sends SMS answer.
+     *
+     * @param array     $answer
+     * @return void
+     */
+    public function smsAnswer($answer) {
+        $url = parse_url(self::SMS_ANSWER_URL);
+        if ('https' == $url['scheme']) {
+            $host = 'ssl://'.$url['host'];
+            $port = 443;
+        }
+        else {
+            $host = $url['host'];
+            $port = 80;
+        }
+
+        try {
+            $fp = fsockopen($host, $port, $errno, $errstr, 30);
+            if (!$fp) {
+                throw new WebToPayException(
+                    self::_('Can\'t conncet to %s', self::SMS_ANSWER_URL),
+                    WebToPayException::E_SMS_ANSWER);
+            }
+
+            $data = array(
+                    'id'            => $answer['id'],
+                    'msg'           => $answer['msg'],
+                    'transaction'   => md5($answer['sign_password'].'|'.$answer['id']),
+                );
+
+            $query = $url['path'].'?'.http_build_query($data);
+
+            $out = "GET " . $query . " HTTP/1.1\r\n";
+            $out .= "Host: ".$url['host']."\r\n";
+            $out .= "Connection: Close\r\n\r\n";
+
+            $content = '';
+            
+            fwrite($fp, $out);
+            while (!feof($fp)) $content .= fgets($fp, 8192);
+            fclose($fp);
+            
+            list($header, $content) = explode("\r\n\r\n", $content, 2);
+
+            $content = trim($content);
+            if (strpos($content, 'OK') !== 0) {
+                throw new WebToPayException(
+                    self::_('Error: %s', $content),
+                    WebToPayException::E_SMS_ANSWER);
+            }
+        }
+
+        catch (WebToPayException $e) {
+            if (isset($answer['log'])) {
+                self::log('ERR', 
+                    self::mikroAnswerToLog($answer).
+                    ' ('. get_class($e).': '. $e->getMessage().')',
+                    $answer['log']);
+            }
+            throw $e;
+        }
+
+        if (isset($answer['log'])) {
+            self::log('OK', self::mikroAnswerToLog($answer), $answer['log']);
+        }
+
     }
 
 
@@ -672,6 +757,11 @@ class WebToPayException extends Exception {
      * Logging errors
      */
     const E_LOG = 6;
+
+    /**
+     * SMS answer errors
+     */
+    const E_SMS_ANSWER = 7;
 
 
 
