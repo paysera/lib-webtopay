@@ -60,15 +60,15 @@ class WebToPay {
      */
     public static function throwResponseError($code) {
         $errors = array(
-                '0x1'   => self::_('Mokėjimo suma per maža'),
-                '0x2'   => self::_('Mokėjimo suma per didelė'),
-                '0x3'   => self::_('Nurodyta valiuta neaptarnaujama'),
-                '0x4'   => self::_('Nėra sumos arba valiutos'),
-                '0x6'   => self::_('Nebenaudojamas'),
-                '0x7'   => self::_('Išjungtas testavimo rėžimas'),
-                '0x8'   => self::_('Jūs uždraudėte šį mokėjimo būdą'),
-                '0x9'   => self::_('Blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
-                '0x10'  => self::_('Tuščias arba neteisingai užpildytas "orderid"'),
+                '0x1'   => self::_('mokėjimo suma per maža'),
+                '0x2'   => self::_('mokėjimo suma per didelė'),
+                '0x3'   => self::_('nurodyta valiuta neaptarnaujama'),
+                '0x4'   => self::_('nėra sumos arba valiutos'),
+                '0x6'   => self::_('nebenaudojamas'),
+                '0x7'   => self::_('išjungtas testavimo rėžimas'),
+                '0x8'   => self::_('jūs uždraudėte šį mokėjimo būdą'),
+                '0x9'   => self::_('blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
+                '0x10'  => self::_('tuščias arba neteisingai užpildytas "orderid"'),
                 '0x11'  => self::_('mokėjimas negalimas, kol projektas nepatvirtintas arba jeigu jis yra blokuotas'),
                 '0x12'  => self::_('negautas projectid parametras, nors jis yra privalomas'),
                 '0x13'  => self::_('accepturl, cancellurl arba callbacurl skiriasi nuo projekte patvirtintų adresų'),
@@ -171,7 +171,7 @@ class WebToPay {
 
                 'version'       => array(9,      true,   false,  true,  '/^\d+\.\d+$/'),
                                                                          
-                'sign_password' => array(255,   false,  true,   false, ''),
+                'sign_password' => array(255,    false,  true,   false, ''),
             );
     }
 
