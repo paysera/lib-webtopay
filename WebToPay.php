@@ -494,10 +494,11 @@ class WebToPay {
 
         // *get* response type (makro|mikro)
         list($type, $specs) = self::getSpecsForResponse($response);
-        $_response = self::checkResponseData($response, $user_data, $specs);
-        self::$verified = 'RESPONSE';
 
         try {
+
+            $_response = self::checkResponseData($response, $user_data, $specs);
+            self::$verified = 'RESPONSE';
 
             // *check* response
             if ('makro' == $type && $_response['version'] != self::VERSION) {
