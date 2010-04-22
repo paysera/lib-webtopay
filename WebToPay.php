@@ -541,7 +541,7 @@ class WebToPay {
         catch (WebToPayException $e) {
             if (isset($user_data['log'])) {
                 self::log('ERR', 
-                    self::responseToLog($type, $_response) .
+                    self::responseToLog($type, $response) .
                     ' ('. get_class($e).': '. $e->getMessage().')',
                     $user_data['log']);
             }
