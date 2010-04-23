@@ -207,7 +207,6 @@ class WebToPay {
                 '_ss2'          => array(0,      true,   false,  true,  ''),
                 '_ss1'          => array(0,      true,   false,  true,  ''),
                 'test'          => array(0,      true,   false,  true,  ''),
-                'status'        => array(0,      true,   false,  true,  ''),
                 'key'           => array(0,      true,   false,  true,  ''),
                 //'version'       => array(9,      true,   false,  true,  '/^\d+\.\d+$/'),
             );
