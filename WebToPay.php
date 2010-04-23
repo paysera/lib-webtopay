@@ -167,10 +167,7 @@ class WebToPay {
 
                 'siteurl'       => array(0,      false,  false,  true,  ''),
                 'sign'          => array(0,      false,  false,  true,  ''),
-                'pay_hash'      => array(0,      false,  false,  true,  ''),
-                'm_email_pay'   => array(0,      false,  false,  true,  ''),
                 'p_email'       => array(0,      false,  false,  true,  ''),
-                'type'          => array(0,      false,  false,  true,  ''),
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
 
