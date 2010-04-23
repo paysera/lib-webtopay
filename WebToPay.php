@@ -44,6 +44,11 @@ class WebToPay {
 
 
     /**
+     * Prefix for callback data.
+     */
+    const PREFIX = 'wp_';
+
+    /**
      * Idetifies what verification method was used.
      *
      * Values can be:
@@ -431,6 +436,10 @@ class WebToPay {
      * @return bool
      */
     public function checkSS1($response, $passwd, $orderid) {
+	    if (32 != strlen($passwd)) {
+	        $passwd = md5($passwd);
+        }
+
 		$_SS1 = array(
                 $passwd,
                 $orderid,
@@ -475,6 +484,17 @@ class WebToPay {
     }
 
 
+    public static function getPrefixed($data, $prefix) {
+        $ret = array();
+        foreach ($data as $key => $val) {
+            if (strpos($key, $prefix) === 0 && strlen($key) > 3) {
+                $ret[substr($key, 3)] = $val;
+            }
+        }
+        return $ret;
+    }
+
+
     /**
      * Checks and validates respons from WebToPay server.
      *
@@ -492,47 +512,49 @@ class WebToPay {
     public static function checkResponse($response, $user_data=array()) {
         self::$verified = false;
 
+        $response = self::getPrefixed($response, self::PREFIX);
+
         // *get* response type (makro|mikro)
         list($type, $specs) = self::getSpecsForResponse($response);
 
         try {
 
-            $_response = self::checkResponseData($response, $user_data, $specs);
+            self::checkResponseData($response, $user_data, $specs);
             self::$verified = 'RESPONSE';
 
             // *check* response
-            if ('makro' == $type && $_response['version'] != self::VERSION) {
+            if ('makro' == $type && $response['version'] != self::VERSION) {
                 throw new WebToPayException(
                     self::_('Incompatible library and response versions: ' .
-                            'libwebtopay %s, response %s', self::VERSION, $_response['version']),
+                            'libwebtopay %s, response %s', self::VERSION, $response['version']),
                     WebToPayException::E_INVALID);
             }
 
             if ('makro' == $type) {
-                self::$verified = 'RESPONSE VERSION '.$_response['version'].' OK';
+                self::$verified = 'RESPONSE VERSION '.$response['version'].' OK';
             }
 
-            $orderid = 'makro' == $type ? $_response['orderid'] : $_response['id'];
+            $orderid = 'makro' == $type ? $response['orderid'] : $response['id'];
             $password = $user_data['sign_password'];
 
             // *check* SS2
             if (function_exists('openssl_pkey_get_public')) {
-                $cert = 'makro' == $type ? 'public.key' : 'public_old.key';
-                if (self::checkResponseCert($_response, $cert)) {
+                $cert = 'public.key';
+                if (self::checkResponseCert($response, $cert)) {
                     self::$verified = 'SS2 public.key';
                 }
             }
 
             // *check* SS1
-            else if (self::checkSS1($_response, $password, $orderid)) {
+            else if (self::checkSS1($response, $password, $orderid)) {
                 self::$verified = 'SS1';
             }
 
             // *check* status
-            if ('makro' == $type && '1' != $_response['status']) {
+            if ('makro' == $type && '1' != $response['status']) {
                 throw new WebToPayException(
                     self::_('Returned transaction status is %d, successful status '.
-                            'should be 1.', $_response['status']),
+                            'should be 1.', $response['status']),
                     WebToPayException::E_INVALID);
             }
 
@@ -549,10 +571,10 @@ class WebToPay {
         }
 
         if (isset($user_data['log'])) {
-            self::log('OK', self::responseToLog($type, $_response), $user_data['log']);
+            self::log('OK', self::responseToLog($type, $response), $user_data['log']);
         }
 
-        return true;
+        return $response;
     }
 
     public static function responseToLog($type, $req) {

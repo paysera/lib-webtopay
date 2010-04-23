@@ -9,13 +9,13 @@ if ('sms' == $answer) {
     try {
         WebToPay::checkResponse($_GET, array(
                 'sign_password' => '526a3c835fc3a39e1369fa7446b3537f',
-                'log' => '/tmp/mokejimai.log',
+                'log' => 'var/mokejimai.log',
             ));
 
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
 
-        echo 'OK ';
+        echo 'OK boo';
     }
     catch (Exception $e) {
         $meta['status'] = get_class($e).': '.$e->getMessage();
