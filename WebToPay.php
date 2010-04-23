@@ -270,10 +270,17 @@ class WebToPay {
      * Puts signature on request data array.
      */
     public static function signRequest($request, $password) {
+        $fields = array(
+                'projectid', 'orderid', 'lang', 'amount', 'currency',
+                'accepturl', 'cancelurl', 'callbackurl', 'payment', 'country',
+                'logo', 'p_firstname', 'p_lastname', 'p_email', 'p_street',
+                'p_city', 'p_state', 'p_zip', 'p_countrycode', 'test',
+                'version'
+            );
         $data = '';
-        foreach ($request as $key => $val) {
-            if (trim($val) != '') {
-                $data .= sprintf("%03d", strlen($val)) . strtolower($val);
+        foreach ($fields as $key) {
+            if (isset($request[$key]) && trim($request[$key]) != '') {
+                $data .= sprintf("%03d", strlen($request[$key])) . strtolower($request[$key]);
             }
         }
         $request['sign'] = md5($data . $password);
@@ -297,8 +304,8 @@ class WebToPay {
      */
     public static function buildRequest($data) {
         $request = self::checkRequestData($data);
-        $request = self::signRequest($request, $data['sign_password']);
         $request['version'] = self::VERSION;
+        $request = self::signRequest($request, $data['sign_password']);
         return $request;
     }
 

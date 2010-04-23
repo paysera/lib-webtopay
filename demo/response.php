@@ -15,7 +15,7 @@ if ('sms' == $answer) {
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
 
-        echo 'OK boo';
+        echo 'OK ok';
     }
     catch (Exception $e) {
         $meta['status'] = get_class($e).': '.$e->getMessage();
@@ -33,7 +33,8 @@ elseif ('callback' == $answer) {
         );
 
     try {
-        $data = load_request_data($_GET);
+        $data = WebToPay::getPrefixed($_GET, WebToPay::PREFIX);
+        $data = load_request_data($data);
         if (false === $data) {
             throw new Exception('Missing requested data.');
         }
