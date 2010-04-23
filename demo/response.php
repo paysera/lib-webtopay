@@ -51,7 +51,7 @@ elseif ('callback' == $answer) {
 
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
-        save_response_data($_GET, $meta);
+        save_response_data($request, $meta);
 
         echo 'OK';
     }
@@ -60,7 +60,7 @@ elseif ('callback' == $answer) {
         if (WebToPay::$verified) {
             $meta['verified'] = WebToPay::$verified;
         }
-        save_response_data($_GET, $meta);
+        save_response_data($request, $meta);
     }
 }
 
