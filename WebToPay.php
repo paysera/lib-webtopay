@@ -165,8 +165,6 @@ class WebToPay {
                 'error'         => array(20,     false,  false,  true,  ''),
                 'test'          => array(1,      false,  false,  true,  '/^[01]$/'),
 
-                'siteurl'       => array(0,      false,  false,  true,  ''),
-                'sign'          => array(0,      false,  false,  true,  ''),
                 'p_email'       => array(0,      false,  false,  true,  ''),
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
