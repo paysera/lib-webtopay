@@ -69,7 +69,7 @@ class WebToPay {
                 '0x2'   => self::_('mokėjimo suma per didelė'),
                 '0x3'   => self::_('nurodyta valiuta neaptarnaujama'),
                 '0x4'   => self::_('nėra sumos arba valiutos'),
-                '0x6'   => self::_('nebenaudojamas'),
+                '0x6'   => self::_('klaidos kodas nebenaudojamas'),
                 '0x7'   => self::_('išjungtas testavimo rėžimas'),
                 '0x8'   => self::_('jūs uždraudėte šį mokėjimo būdą'),
                 '0x9'   => self::_('blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
@@ -118,7 +118,6 @@ class WebToPay {
                 array('payment',        20,     false,  true,   true,   ''),
                 array('country',        2,      false,  true,   true,   '/^[a-z]{2}$/i'),
                 array('paytext',        255,    false,  true,   true,   ''),
-                array('logo',           0,      false,  true,   true,   ''),
                 array('p_firstname',    255,    false,  true,   true,   ''),
                 array('p_lastname',     255,    false,  true,   true,   ''),
                 array('p_email',        255,    false,  true,   true,   ''),
@@ -267,7 +266,7 @@ class WebToPay {
         $fields = array(
                 'projectid', 'orderid', 'lang', 'amount', 'currency',
                 'accepturl', 'cancelurl', 'callbackurl', 'payment', 'country',
-                'logo', 'p_firstname', 'p_lastname', 'p_email', 'p_street',
+                'p_firstname', 'p_lastname', 'p_email', 'p_street',
                 'p_city', 'p_state', 'p_zip', 'p_countrycode', 'test',
                 'version'
             );
