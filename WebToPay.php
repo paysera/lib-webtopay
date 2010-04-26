@@ -49,7 +49,7 @@ class WebToPay {
     const PREFIX = 'wp_';
 
     /**
-     * Idetifies what verification method was used.
+     * Identifies what verification method was used.
      *
      * Values can be:
      *  - false     not verified
@@ -61,7 +61,10 @@ class WebToPay {
 
 
     /**
+     * Throw exception
      *
+     * @param string $code
+     * @return void
      */
     public static function throwResponseError($code) {
         $errors = array(
@@ -70,13 +73,13 @@ class WebToPay {
                 '0x3'   => self::_('nurodyta valiuta neaptarnaujama'),
                 '0x4'   => self::_('nėra sumos arba valiutos'),
                 '0x6'   => self::_('klaidos kodas nebenaudojamas'),
-                '0x7'   => self::_('išjungtas testavimo rėžimas'),
+                '0x7'   => self::_('išjungtas testavimo režimas'),
                 '0x8'   => self::_('jūs uždraudėte šį mokėjimo būdą'),
                 '0x9'   => self::_('blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
                 '0x10'  => self::_('tuščias arba neteisingai užpildytas "orderid"'),
                 '0x11'  => self::_('mokėjimas negalimas, kol projektas nepatvirtintas arba jeigu jis yra blokuotas'),
-                '0x12'  => self::_('negautas projectid parametras, nors jis yra privalomas'),
-                '0x13'  => self::_('accepturl, cancellurl arba callbacurl skiriasi nuo projekte patvirtintų adresų'),
+                '0x12'  => self::_('negautas "projectid" parametras, nors jis yra privalomas'),
+                '0x13'  => self::_('"accepturl", "cancellurl" arba "callbacurl" skiriasi nuo projekte patvirtintų adresų'),
             );
 
         if (isset($errors[$code])) {
@@ -212,7 +215,7 @@ class WebToPay {
      * If any errors occurs, WebToPayException will be raised.
      *
      * This method returns validated request array. Returned array contains
-     * only those items from $data, that is needed.
+     * only those items from $data, that are needed.
      *
      * @param array     $data
      * @return array
@@ -261,6 +264,9 @@ class WebToPay {
 
     /**
      * Puts signature on request data array.
+     *
+     * @param string $request
+     * @param string $password
      */
     public static function signRequest($request, $password) {
         $fields = array(
@@ -286,7 +292,7 @@ class WebToPay {
      * Builds request data array.
      *
      * This method checks all given data and generates correct request data
-     * array or raises WebToPayException.
+     * array or raises WebToPayException on failure.
      *
      * Method accepts single parameter $data of array type. All possible array
      * keys are described here:
