@@ -303,9 +303,9 @@ class WebToPay {
     }
 
 
-	public static function getCert($cert) {
-		$fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
-		if (!$fp) {
+    public static function getCert($cert) {
+        $fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
+        if (!$fp) {
             throw new WebToPayException(
                 self::_('Payment check: Can\'t get cert from '.
                         'downloads.webtopay.com/download/%s',
@@ -327,27 +327,27 @@ class WebToPay {
         list($header, $content) = explode("\r\n\r\n", $content, 2);
 
         return $content;
-	}
+    }
 
-	public static function checkResponseCert($response, $cert='public.key') {
-		$pKeyP = self::getCert($cert);
-		if (!$pKeyP) {
+    public static function checkResponseCert($response, $cert='public.key') {
+        $pKeyP = self::getCert($cert);
+        if (!$pKeyP) {
             return false;
         }
 
 
-		$pKey = openssl_pkey_get_public($pKeyP);
-		if (!$pKey) {
+        $pKey = openssl_pkey_get_public($pKeyP);
+        if (!$pKey) {
             throw new WebToPayException(
                 self::_('Can\'t get openssl public key for %s', $cert),
                 WebToPayException::E_INVALID);
         }
-		        
-		$_SS2 = '';
-		foreach ($response as $key => $value) {
+                
+        $_SS2 = '';
+        foreach ($response as $key => $value) {
             if ($key!='_ss2') $_SS2 .= "{$value}|";
         }
-		$ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKey);
+        $ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKey);
 
         if ($ok !== 1) {
             throw new WebToPayException(
@@ -356,7 +356,7 @@ class WebToPay {
         }
 
         return true;
-	}
+    }
 
     public static function checkResponseData($response, $mustcheck_data, $specs) {
         $resp_keys = array();
@@ -436,11 +436,11 @@ class WebToPay {
      * @return bool
      */
     public function checkSS1($response, $passwd, $orderid) {
-	    if (32 != strlen($passwd)) {
-	        $passwd = md5($passwd);
+        if (32 != strlen($passwd)) {
+            $passwd = md5($passwd);
         }
 
-		$_SS1 = array(
+        $_SS1 = array(
                 $passwd,
                 $orderid,
                 intval($response['test']),
