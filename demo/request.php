@@ -6,15 +6,18 @@ require_once('../WebToPay.php');
 $base_url = get_address() . dirname($_SERVER['SCRIPT_NAME']);
 $response_url = $base_url . '/response.php';
 
-$_SESSION['posted'] = $_POST;
+$post = array();
+foreach ($_POST as $key => $val) {
+    $val = trim($val);
+    if (!empty($val)) {
+        $post[$key] = $val;
+    }
+}
+
+$_SESSION['posted'] = $post;
 
 try {
-    $request = WebToPay::buildRequest(array_merge(array(
-            'accepturl'     => $response_url.'?answer=accept',
-            'cancelurl'     => $response_url.'?answer=cancel',
-            'callbackurl'   => $response_url.'?answer=callback',
-            'test'          => 1,
-        ), $_POST));
+    $request = WebToPay::buildRequest($post);
 }
 catch (WebToPayException $e) {
     $_SESSION['error'] = $e->getMessage();
@@ -23,7 +26,7 @@ catch (WebToPayException $e) {
 
 save_request_data(array(
         'request'           => $request,
-        'sign_password'     => $_POST['sign_password'],
+        'sign_password'     => $post['sign_password'],
     ));
 
 $form = array();
