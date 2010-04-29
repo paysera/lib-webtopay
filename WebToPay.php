@@ -128,7 +128,7 @@ class WebToPay {
                 array('p_city',         255,    false,  true,   true,   ''),
                 array('p_state',        20,     false,  true,   true,   ''),
                 array('p_zip',          20,     false,  true,   true,   ''),
-                array('p_countrycode',  3,      false,  true,   true,   '/^[a-z]{3}$/i'),
+                array('p_countrycode',  2,      false,  true,   true,   '/^[a-z]{2}$/i'),
                 array('sign',           255,    false,  false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
                 array('test',           1,      false,  true,   true,   '/^[01]$/'),
