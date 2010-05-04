@@ -520,10 +520,13 @@ class WebToPay {
     /**
      * Checks and validates response from WebToPay server.
      *
+     * This function accepts both mikro and makro responses.
+     *
      * First parameter usualy should by $_GET array.
      *
      * Description about response can be found here:
-     * https://www.mokejimai.lt/makro_specifikacija.html
+     * makro: https://www.mokejimai.lt/makro_specifikacija.html
+     * mikro: https://www.mokejimai.lt/mikro_mokejimu_specifikacija_SMS.html
      *
      * If response is not correct, WebToPayException will be raised.
      *

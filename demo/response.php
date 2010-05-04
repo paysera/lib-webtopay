@@ -33,8 +33,8 @@ elseif ('callback' == $answer) {
         );
 
     try {
-        $bank_data = WebToPay::getPrefixed($_GET, WebToPay::PREFIX);
-        $data = load_request_data($bank_data);
+        $response = WebToPay::getPrefixed($_GET, WebToPay::PREFIX);
+        $data = load_request_data($response);
         if (false === $data) {
             throw new Exception('Missing requested data.');
         }
@@ -51,7 +51,7 @@ elseif ('callback' == $answer) {
 
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
-        save_response_data($bank_data, $meta);
+        save_response_data($response, $meta);
 
         echo 'OK';
     }
@@ -60,7 +60,7 @@ elseif ('callback' == $answer) {
         if (WebToPay::$verified) {
             $meta['verified'] = WebToPay::$verified;
         }
-        save_response_data($bank_data, $meta);
+        save_response_data($response, $meta);
     }
 }
 
