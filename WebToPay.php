@@ -14,10 +14,11 @@
  * See the GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * @package    WebToPay
  * @author     Mantas Zimnickas <mantas@evp.lt>
+ * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
  * @version    1.2
  * @link       http://www.webtopay.com/
@@ -61,9 +62,9 @@ class WebToPay {
 
 
     /**
-     * Throw exception
+     * Throw exception.
      *
-     * @param string $code
+     * @param  string $code
      * @return void
      */
     public static function throwResponseError($code) {
@@ -100,15 +101,15 @@ class WebToPay {
      */
     public static function getRequestSpec() {
         // Array structure:
-        //  * name      – request item name
-        //  * maxlen    – max allowed value for item
-        //  * required  – is this item is required
+        //  * name      – request item name.
+        //  * maxlen    – max allowed value for item.
+        //  * required  – is this item is required.
         //  * user      – if true, user can set value of this item, if false
-        //                item value is generated
+        //                item value is generated.
         //  * isrequest – if true, item will be included in request array, if
         //                false, item only be used internaly and will not be
         //                included in outgoing request array.
-        //  * regexp    – regexp to test item value
+        //  * regexp    – regexp to test item value.
         return array(
                 array('projectid',      11,     true,   true,   true,   '/^\d+$/'),
                 array('orderid',        40,     true,   true,   true,   '/^\d+$/'),
@@ -144,12 +145,12 @@ class WebToPay {
      */
     public static function getMakroResponseSpec() {
         // Array structure:
-        //  * name      – request item name
-        //  * maxlen    – max allowed value for item
-        //  * required  – is this item is required in response
-        //  * mustcheck – this item must be checked by user
-        //  * isresponse – if false, item must not be included in response array
-        //  * regexp    – regexp to test item value
+        //  * name       – request item name.
+        //  * maxlen     – max allowed value for item.
+        //  * required   – is this item is required in response.
+        //  * mustcheck  – this item must be checked by user.
+        //  * isresponse – if false, item must not be included in response array.
+        //  * regexp     – regexp to test item value.
         return array(
                 'projectid'     => array(11,     true,   true,   true,  '/^\d+$/'),
                 'orderid'       => array(40,     true,   true,   true,  '/^\d+$/'),
@@ -186,12 +187,12 @@ class WebToPay {
      */
     public static function getMikroResponseSpec() {
         // Array structure:
-        //  * name      – request item name
-        //  * maxlen    – max allowed value for item
-        //  * required  – is this item is required in response
-        //  * mustcheck – this item must be checked by user
-        //  * isresponse – if false, item must not be included in response array
-        //  * regexp    – regexp to test item value
+        //  * name       – request item name.
+        //  * maxlen     – max allowed value for item.
+        //  * required   – is this item is required in response.
+        //  * mustcheck  – this item must be checked by user.
+        //  * isresponse – if false, item must not be included in response array.
+        //  * regexp     – regexp to test item value.
         return array(
                 'to'            => array(0,      true,   false,  true,  ''),
                 'sms'           => array(0,      true,   false,  true,  ''),
@@ -217,7 +218,7 @@ class WebToPay {
      * This method returns validated request array. Returned array contains
      * only those items from $data, that are needed.
      *
-     * @param array     $data
+     * @param  array $data
      * @return array
      */
     public static function checkRequestData($data) {
@@ -265,8 +266,9 @@ class WebToPay {
     /**
      * Puts signature on request data array.
      *
-     * @param string $request
-     * @param string $password
+     * @param  string  $request
+     * @param  string  $password
+     * @return string
      */
     public static function signRequest($request, $password) {
         $fields = array(
@@ -298,7 +300,7 @@ class WebToPay {
      * keys are described here:
      * https://www.mokejimai.lt/makro_specifikacija.html
      *
-     * @param array     $data       Information about current payment request.
+     * @param  array $data Information about current payment request.
      * @return array
      */
     public static function buildRequest($data) {
@@ -308,7 +310,12 @@ class WebToPay {
         return $request;
     }
 
-
+    /**
+     * Download certificate from webtopay.com.
+     *
+     * @param  string $cert
+     * @return string
+     */
     public static function getCert($cert) {
         $fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
         if (!$fp) {
@@ -335,6 +342,13 @@ class WebToPay {
         return $content;
     }
 
+    /**
+     * Check is response certificate is valid
+     *
+     * @param  string $response
+     * @param  string $cert
+     * @return bool
+     */
     public static function checkResponseCert($response, $cert='public.key') {
         $pKeyP = self::getCert($cert);
         if (!$pKeyP) {
@@ -438,7 +452,9 @@ class WebToPay {
     /**
      * Check for SS1, which is not depend on openssl functions.
      *
-     * @param array     $response
+     * @param  array  $response
+     * @param  string $passwd
+     * @param  int    $orderid
      * @return bool
      */
     public function checkSS1($response, $passwd, $orderid) {
@@ -502,14 +518,14 @@ class WebToPay {
 
 
     /**
-     * Checks and validates respons from WebToPay server.
+     * Checks and validates response from WebToPay server.
      *
      * First parameter usualy should by $_GET array.
      *
      * Description about response can be found here:
      * https://www.mokejimai.lt/makro_specifikacija.html
      *
-     * If respons is not correct, WebToPayException will be raised.
+     * If response is not correct, WebToPayException will be raised.
      *
      * @param array     $response       Response array.
      * @param array     $user_data
@@ -685,7 +701,7 @@ class WebToPay {
             $fp = fsockopen($host, $port, $errno, $errstr, 30);
             if (!$fp) {
                 throw new WebToPayException(
-                    self::_('Can\'t conncet to %s', self::SMS_ANSWER_URL),
+                    self::_('Can\'t connect to %s', self::SMS_ANSWER_URL),
                     WebToPayException::E_SMS_ANSWER);
             }
 

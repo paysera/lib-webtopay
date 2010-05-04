@@ -12,5 +12,5 @@
         </label>
         <?php endforeach; ?>
     </fieldset>
-    <input type="submit" />
+    <input type="submit" value="Submit" />
 </form>

@@ -11,7 +11,7 @@
             <?php if (empty($response)): ?>
             <fieldset>
                 <legend>Response</legend>
-                Waithing for callback...
+                Waiting for callback...
             </fieldset>
             <?php else: ?>
             <?php echo template('preview.html', array(

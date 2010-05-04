@@ -30,7 +30,7 @@ save_request_data(array(
     ));
 
 $form = array();
-$form['title'] = 'Ruquest form';
+$form['title'] = 'Request form';
 $form['action'] = WebToPay::PAY_URL;
 $form['data'] = $request;
 

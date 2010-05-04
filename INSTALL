@@ -9,7 +9,7 @@ You must have PHP version 5.0 or higher.
 Installing
 ==========
 
-Place file WebToPay.php to any PHP include_path directory start using this
+Place file WebToPay.php to any PHP include_path directory. Start using this
 library from your application like this:
 
     <?php
