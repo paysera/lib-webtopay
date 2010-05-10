@@ -4,17 +4,24 @@ This is WebToPay library package.
 Version history
 ===============
 
-Version 1.2 - 2010-04-14
+Version 1.2.1   - 2010-05-10
+
+    * orderid, amount and currency are not required in checkResponse()
+    * orderid no longer is restricted to only digits, now characters ar accepted
+    * posibility to toggle SS2 checking
+    * improved unit testing
+
+Version 1.2     - 2010-04-14
 
     * introduced library versioning
     * mikro payments support
 
-Version 1.1 - 2010-04-14
+Version 1.1     - 2010-04-14
 
     * merchantid is deprecated, projectid should be used instead
     * SS1 checking added
 
-Version 1.0 - 2010-01-21
+Version 1.0     - 2010-01-21
 
     * Initial release
 

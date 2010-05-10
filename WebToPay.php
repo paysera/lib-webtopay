@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2
+ * @version    1.2.1
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2';
+    const VERSION = '1.2.1';
 
 
     /**
@@ -59,6 +59,24 @@ class WebToPay {
      *  - SS2       SS2 verification
      */
     public static $verified = false;
+
+
+    /**
+     * If true, check SS2 if false, skip to SS1
+     */
+    private static $SS2 = true;
+
+
+    /**
+     * Toggle SS2 checking. Usualy you don't need to use this method, because
+     * by default first SS2 support are checked and if it doesn't work,
+     * fallback to SS1.
+     *
+     * Use this method if your server supports SS2, but you want to use SS1.
+     */
+    public static function toggleSS2($value) {
+        self::$SS2 = (bool) $value;
+    }
 
 
     /**
@@ -112,7 +130,7 @@ class WebToPay {
         //  * regexp    – regexp to test item value.
         return array(
                 array('projectid',      11,     true,   true,   true,   '/^\d+$/'),
-                array('orderid',        40,     true,   true,   true,   '/^\d+$/'),
+                array('orderid',        40,     true,   true,   true,   ''),
                 array('lang',           3,      false,  true,   true,   '/^[a-z]{3}$/i'),
                 array('amount',         11,     false,  true,   true,   '/^\d+$/'),
                 array('currency',       3,      false,  true,   true,   '/^[a-z]{3}$/i'),
@@ -153,10 +171,10 @@ class WebToPay {
         //  * regexp     – regexp to test item value.
         return array(
                 'projectid'     => array(11,     true,   true,   true,  '/^\d+$/'),
-                'orderid'       => array(40,     true,   true,   true,  '/^\d+$/'),
+                'orderid'       => array(40,     false,  false,  true,  ''),
                 'lang'          => array(3,      false,  false,  true,  '/^[a-z]{3}$/i'),
-                'amount'        => array(11,     true,   true,   true,  '/^\d+$/'),
-                'currency'      => array(3,      true,   true,   true,  '/^[a-z]{3}$/i'),
+                'amount'        => array(11,     false,  false,  true,  '/^\d+$/'),
+                'currency'      => array(3,      false,  false,  true,  '/^[a-z]{3}$/i'),
                 'payment'       => array(20,     false,  false,  true,  ''),
                 'country'       => array(2,      false,  false,  true,  '/^[a-z]{2}$/i'),
                 'paytext'       => array(0,      false,  false,  true,  ''),
@@ -563,7 +581,7 @@ class WebToPay {
             $password = $user_data['sign_password'];
 
             // *check* SS2
-            if (function_exists('openssl_pkey_get_public')) {
+            if (self::$SS2 && function_exists('openssl_pkey_get_public')) {
                 $cert = 'public.key';
                 if (self::checkResponseCert($response, $cert)) {
                     self::$verified = 'SS2 public.key';
