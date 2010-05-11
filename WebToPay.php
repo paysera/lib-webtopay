@@ -473,7 +473,7 @@ class WebToPay {
      *
      * @return bool
      */
-    public function useSS2() {
+    public static function useSS2() {
         if (!self::$SS2) return false;
         if (!defined('OPENSSL_VERSION_TEXT')) return false;
         if (!function_exists('openssl_pkey_get_public')) return false;
@@ -494,7 +494,7 @@ class WebToPay {
      * @param  int    $orderid
      * @return bool
      */
-    public function checkSS1($response, $passwd, $orderid) {
+    public static function checkSS1($response, $passwd, $orderid) {
         if (32 != strlen($passwd)) {
             $passwd = md5($passwd);
         }
@@ -728,7 +728,7 @@ class WebToPay {
      * @param array     $answer
      * @return void
      */
-    public function smsAnswer($answer) {
+    public static function smsAnswer($answer) {
         $url = parse_url(self::SMS_ANSWER_URL);
         if ('https' == $url['scheme']) {
             $host = 'ssl://'.$url['host'];
