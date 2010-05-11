@@ -78,9 +78,9 @@ else if ('accept' == $answer) {
         if (isset($data['response'])) {
             $respurl = array();
             foreach ($data['response'] as $key => $val) {
-                $respurl[] = $key.'='.urlencode($val);
+                $respurl[] = WebToPay::PREFIX.$key.'='.urlencode($val);
             }
-            $data['response_url'] = '?'.implode('&', $respurl);
+            $data['response_url'] = '?answer=callback&'.implode('&', $respurl);
         }
         else {
             $data['response_url'] = '';

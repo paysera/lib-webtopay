@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2.1
+ * @version    1.2.2
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.1';
+    const VERSION = '1.2.2';
 
 
     /**
@@ -323,7 +323,8 @@ class WebToPay {
      */
     public static function buildRequest($data) {
         $request = self::checkRequestData($data);
-        $request['version'] = self::VERSION;
+        $version = explode('.', self::VERSION);
+        $request['version'] = $version[0].'.'.$version[1];
         $request = self::signRequest($request, $data['sign_password']);
         return $request;
     }
@@ -468,6 +469,24 @@ class WebToPay {
 
 
     /**
+     * Check if SS2 checking is available and enabled.
+     *
+     * @return bool
+     */
+    public function useSS2() {
+        if (!self::$SS2) return false;
+        if (!defined('OPENSSL_VERSION_TEXT')) return false;
+        if (!function_exists('openssl_pkey_get_public')) return false;
+
+        $version = explode(' ', OPENSSL_VERSION_TEXT);
+        $version = $version[1];
+        if ($version < '0.9.8') return false;
+
+        return true;
+    }
+
+
+    /**
      * Check for SS1, which is not depend on openssl functions.
      *
      * @param  array  $response
@@ -566,7 +585,9 @@ class WebToPay {
             self::$verified = 'RESPONSE';
 
             // *check* response
-            if ('makro' == $type && $response['version'] != self::VERSION) {
+            $version = explode('.', self::VERSION);
+            $version = $version[0].'.'.$version[1];
+            if ('makro' == $type && $response['version'] != $version) {
                 throw new WebToPayException(
                     self::_('Incompatible library and response versions: ' .
                             'libwebtopay %s, response %s', self::VERSION, $response['version']),
@@ -581,7 +602,7 @@ class WebToPay {
             $password = $user_data['sign_password'];
 
             // *check* SS2
-            if (self::$SS2 && function_exists('openssl_pkey_get_public')) {
+            if (self::useSS2()) {
                 $cert = 'public.key';
                 if (self::checkResponseCert($response, $cert)) {
                     self::$verified = 'SS2 public.key';

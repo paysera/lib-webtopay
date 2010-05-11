@@ -4,6 +4,12 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.2.2   - 2010-05-11
+
+    * ignore third version number when comparing version numbers
+    * checks for openssl library version, use SS2 only with 0.9.8 and greather version of openssl
+    * demo response url fix
+
 Version 1.2.1   - 2010-05-10
 
     * orderid, amount and currency are not required in checkResponse()
