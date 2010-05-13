@@ -6,6 +6,7 @@ Version history
 
 Version 1.2.3   - 2010-05-13
 
+    * OpenSSL verification fixes to work correctly with different OpenSSL versions
     * PHP5 syntax fixes: non-static method changed to static as they should be
     * demo fixes to handle correctly magic quotes
 

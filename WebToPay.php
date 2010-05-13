@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2.2
+ * @version    1.2.3
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.2';
+    const VERSION = '1.2.3';
 
 
     /**
@@ -371,22 +371,16 @@ class WebToPay {
     public static function checkResponseCert($response, $cert='public.key') {
         $pKeyP = self::getCert($cert);
         if (!$pKeyP) {
-            return false;
-        }
-
-
-        $pKey = openssl_pkey_get_public($pKeyP);
-        if (!$pKey) {
             throw new WebToPayException(
                 self::_('Can\'t get openssl public key for %s', $cert),
                 WebToPayException::E_INVALID);
         }
-                
+
         $_SS2 = '';
         foreach ($response as $key => $value) {
             if ($key!='_ss2') $_SS2 .= "{$value}|";
         }
-        $ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKey);
+        $ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKeyP);
 
         if ($ok !== 1) {
             throw new WebToPayException(
@@ -475,13 +469,7 @@ class WebToPay {
      */
     public static function useSS2() {
         if (!self::$SS2) return false;
-        if (!defined('OPENSSL_VERSION_TEXT')) return false;
         if (!function_exists('openssl_pkey_get_public')) return false;
-
-        $version = explode(' ', OPENSSL_VERSION_TEXT);
-        $version = $version[1];
-        if ($version < '0.9.8') return false;
-
         return true;
     }
 
