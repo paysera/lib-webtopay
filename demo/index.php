@@ -31,7 +31,7 @@ foreach (WebToPay::getRequestSpec() as $item) {
             $form['data'][$key] = $data[$key];
         }
         else {
-        $form['data'][$key] = '';
+            $form['data'][$key] = '';
         }
     }
 }

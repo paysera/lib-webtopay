@@ -8,7 +8,7 @@
         <label>
             <?php echo $key; ?>
             <div class="input-preview"><?php echo htmlspecialchars($val); ?></div>
-            <input type="hidden" name="<?php echo $key ?>" value="<?php echo addslashes($val); ?>" />
+            <input type="hidden" name="<?php echo $key ?>" value="<?php echo htmlspecialchars($val); ?>" />
         </label>
         <?php endforeach; ?>
     </fieldset>

@@ -9,7 +9,7 @@
         <?php foreach ($data as $key => $val): ?>
         <label>
             <?php echo $key; ?>
-            <input class="text-input" name="<?php echo $key ?>" value="<?php echo addslashes($val); ?>" />
+            <input class="text-input" name="<?php echo $key ?>" value="<?php echo htmlspecialchars($val); ?>" />
         </label>
         <?php endforeach; ?>
     </fieldset>

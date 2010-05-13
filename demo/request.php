@@ -10,7 +10,12 @@ $post = array();
 foreach ($_POST as $key => $val) {
     $val = trim($val);
     if (!empty($val)) {
-        $post[$key] = $val;
+        if (get_magic_quotes_gpc()) {
+            $post[$key] = stripslashes($val);
+        }
+        else {
+            $post[$key] = $val;
+        }
     }
 }
 
