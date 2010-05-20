@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2.3
+ * @version    1.2.4
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.3';
+    const VERSION = '1.2.4';
 
 
     /**
@@ -99,6 +99,7 @@ class WebToPay {
                 '0x11'  => self::_('mokėjimas negalimas, kol projektas nepatvirtintas arba jeigu jis yra blokuotas'),
                 '0x12'  => self::_('negautas "projectid" parametras, nors jis yra privalomas'),
                 '0x13'  => self::_('"accepturl", "cancellurl" arba "callbacurl" skiriasi nuo projekte patvirtintų adresų'),
+                '0x14'  => self::_('blogai sugeneruotas paraštas ("sign" parametras)'),
             );
 
         if (isset($errors[$code])) {
@@ -532,6 +533,7 @@ class WebToPay {
 
 
     public static function getPrefixed($data, $prefix) {
+        if (empty($prefix)) return $data;
         $ret = array();
         foreach ($data as $key => $val) {
             if (strpos($key, $prefix) === 0 && strlen($key) > 3) {

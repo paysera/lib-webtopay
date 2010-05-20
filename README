@@ -4,6 +4,10 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.2.4   - 2010-05-20
+
+    * 0x14 error code added
+
 Version 1.2.3   - 2010-05-13
 
     * OpenSSL verification fixes to work correctly with different OpenSSL versions
