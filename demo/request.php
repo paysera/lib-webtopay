@@ -22,7 +22,13 @@ foreach ($_POST as $key => $val) {
 $_SESSION['posted'] = $post;
 
 try {
-    $request = WebToPay::buildRequest($post);
+    if (!empty($_GET['repeat'])) {
+        $base_url .= '/repeat.php';
+        $request = WebToPay::buildRepeatRequest($post);
+    }
+    else {
+        $request = WebToPay::buildRequest($post);
+    }
 }
 catch (WebToPayException $e) {
     $_SESSION['error'] = $e->getMessage();

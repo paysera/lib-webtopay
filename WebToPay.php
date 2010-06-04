@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2.4
+ * @version    1.3
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.4';
+    const VERSION = '1.3';
 
 
     /**
@@ -158,6 +158,33 @@ class WebToPay {
 
 
     /**
+     * Returns specification array for repeat request.
+     *
+     * @return array
+     */
+    public static function getRepeatRequestSpec() {
+        // Array structure:
+        //  * name      – request item name.
+        //  * maxlen    – max allowed value for item.
+        //  * required  – is this item is required.
+        //  * user      – if true, user can set value of this item, if false
+        //                item value is generated.
+        //  * isrequest – if true, item will be included in request array, if
+        //                false, item only be used internaly and will not be
+        //                included in outgoing request array.
+        //  * regexp    – regexp to test item value.
+        return array(
+                array('projectid',      11,     true,   true,   true,   '/^\d+$/'),
+                array('orderid',        40,     true,   true,   true,   ''),
+                array('sign',           255,    true,   false,  true,   ''),
+                array('sign_password',  255,    true,   true,   false,  ''),
+                array('repeat_request', 1,      true,   false,  true,   '/^1$/'),
+                array('version',        9,      true,   false,  true,   '/^\d+\.\d+$/'),
+            );
+    }
+
+
+    /**
      * Returns specification array for makro response.
      *
      * @return array
@@ -240,9 +267,8 @@ class WebToPay {
      * @param  array $data
      * @return array
      */
-    public static function checkRequestData($data) {
+    public static function checkRequestData($data, $specs) {
         $request = array();
-        $specs = self::getRequestSpec();
         foreach ($specs as $spec) {
             list($name, $maxlen, $required, $user, $isrequest, $regexp) = $spec;
             if (!$user) continue;
@@ -323,7 +349,32 @@ class WebToPay {
      * @return array
      */
     public static function buildRequest($data) {
-        $request = self::checkRequestData($data);
+        $specs = self::getRequestSpec();
+        $request = self::checkRequestData($data, $specs);
+        $version = explode('.', self::VERSION);
+        $request['version'] = $version[0].'.'.$version[1];
+        $request = self::signRequest($request, $data['sign_password']);
+        return $request;
+    }
+
+
+    /**
+     * Builds repeat request data array.
+     *
+     * This method checks all given data and generates correct request data
+     * array or raises WebToPayException on failure.
+     *
+     * Method accepts single parameter $data of array type. All possible array
+     * keys are described here:
+     * https://www.mokejimai.lt/makro_specifikacija.html
+     *
+     * @param  array $data Information about current payment request.
+     * @return array
+     */
+    public static function buildRepeatRequest($data) {
+        $specs = self::getRepeatRequestSpec();
+        $request = self::checkRequestData($data, $specs);
+        $request['repeat_request'] = '1';
         $version = explode('.', self::VERSION);
         $request['version'] = $version[0].'.'.$version[1];
         $request = self::signRequest($request, $data['sign_password']);

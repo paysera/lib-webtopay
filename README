@@ -4,6 +4,11 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.3   - 2010-05-26
+
+    * WebToPay::buildRepeatRequest() added
+    * more unit-tests added
+
 Version 1.2.4   - 2010-05-20
 
     * 0x14 error code added
