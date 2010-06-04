@@ -6,6 +6,7 @@ Version history
 
 Version 1.3   - 2010-05-26
 
+    * 'sign' parameter now supports utf-8
     * WebToPay::buildRepeatRequest() added
     * more unit-tests added
 
