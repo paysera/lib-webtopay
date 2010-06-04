@@ -326,7 +326,7 @@ class WebToPay {
         $data = '';
         foreach ($fields as $key) {
             if (isset($request[$key]) && trim($request[$key]) != '') {
-                $data .= sprintf("%03d", strlen($request[$key])) . strtolower($request[$key]);
+                $data .= $request[$key];
             }
         }
         $request['sign'] = md5($data . $password);
