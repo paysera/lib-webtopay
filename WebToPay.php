@@ -570,10 +570,6 @@ class WebToPay {
         list($type, $specs) = self::getSpecsForResponse($response);
 
         try {
-
-            self::checkResponseData($response, $user_data, $specs);
-            self::$verified = 'RESPONSE';
-
             // *check* response
             $version = explode('.', self::VERSION);
             $version = $version[0].'.'.$version[1];
