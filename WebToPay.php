@@ -20,7 +20,7 @@
  * @author     Mantas Zimnickas <mantas@evp.lt>
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.2.4
+ * @version    1.2.5
  * @link       http://www.webtopay.com/
  */
 
@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.4';
+    const VERSION = '1.2.5';
 
 
     /**
