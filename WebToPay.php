@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.5';
+    const VERSION = '1.2.6';
 
 
     /**
@@ -192,7 +192,7 @@ class WebToPay {
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
 
                 'version'       => array(9,      true,   false,  true,  '/^\d+\.\d+$/'),
-                                                                         
+
                 'sign_password' => array(255,    false,  true,   false, ''),
             );
     }
@@ -231,7 +231,7 @@ class WebToPay {
 
     /**
      * Checks user given request data array.
-     * 
+     *
      * If any errors occurs, WebToPayException will be raised.
      *
      * This method returns validated request array. Returned array contains
@@ -350,13 +350,13 @@ class WebToPay {
         $out = "GET /download/" . $cert . " HTTP/1.1\r\n";
         $out .= "Host: downloads.webtopay.com\r\n";
         $out .= "Connection: Close\r\n\r\n";
-    
+
         $content = '';
-        
+
         fwrite($fp, $out);
         while (!feof($fp)) $content .= fgets($fp, 8192);
         fclose($fp);
-        
+
         list($header, $content) = explode("\r\n\r\n", $content, 2);
 
         return $content;
@@ -502,7 +502,7 @@ class WebToPay {
                 WebToPayException::E_INVALID);
         }
 
-        return true; 
+        return true;
     }
 
 
@@ -584,6 +584,10 @@ class WebToPay {
                 self::$verified = 'RESPONSE VERSION '.$response['version'].' OK';
             }
 
+            if ('makro' == $type && $response['projectid'] == $user_data['projectid']) {
+            	self::$verified = 'Bad project id!';
+            }
+
             $orderid = 'makro' == $type ? $response['orderid'] : $response['id'];
             $password = $user_data['sign_password'];
 
@@ -612,7 +616,7 @@ class WebToPay {
 
         catch (WebToPayException $e) {
             if (isset($user_data['log'])) {
-                self::log('ERR', 
+                self::log('ERR',
                     self::responseToLog($type, $response) .
                     ' ('. get_class($e).': '. $e->getMessage().')',
                     $user_data['log']);
@@ -678,7 +682,7 @@ class WebToPay {
 
         // *log* type
         $logline[] = $type;
-        
+
         // *log* REMOTE_ADDR
         if (isset($_SERVER['REMOTE_ADDR'])) {
             $logline[] = $_SERVER['REMOTE_ADDR'];
@@ -746,11 +750,11 @@ class WebToPay {
             $out .= "Connection: Close\r\n\r\n";
 
             $content = '';
-            
+
             fwrite($fp, $out);
             while (!feof($fp)) $content .= fgets($fp, 8192);
             fclose($fp);
-            
+
             list($header, $content) = explode("\r\n\r\n", $content, 2);
 
             $content = trim($content);
@@ -763,7 +767,7 @@ class WebToPay {
 
         catch (WebToPayException $e) {
             if (isset($answer['log'])) {
-                self::log('ERR', 
+                self::log('ERR',
                     self::mikroAnswerToLog($answer).
                     ' ('. get_class($e).': '. $e->getMessage().')',
                     $answer['log']);

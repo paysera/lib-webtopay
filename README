@@ -4,6 +4,10 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.2.6   - 2010-08-06
+
+    * projectid is required in checkResponse()
+
 Version 1.2.5   - 2010-06-14
 
     * removed response checking by parameters specifications, now response is
