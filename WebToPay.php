@@ -580,12 +580,15 @@ class WebToPay {
                     WebToPayException::E_INVALID);
             }
 
-            if ('makro' == $type) {
-                self::$verified = 'RESPONSE VERSION '.$response['version'].' OK';
+           	if ('makro' == $type && $response['projectid'] != $user_data['projectid']) {
+                throw new WebToPayException(
+                    self::_('Bad projectid: ' .
+                            'libwebtopay %s, response %s', self::VERSION, $response['projectid']),
+                    WebToPayException::E_INVALID);
             }
 
-            if ('makro' == $type && $response['projectid'] == $user_data['projectid']) {
-            	self::$verified = 'Bad project id!';
+            if ('makro' == $type) {
+                self::$verified = 'RESPONSE VERSION '.$response['version'].' OK';
             }
 
             $orderid = 'makro' == $type ? $response['orderid'] : $response['id'];
