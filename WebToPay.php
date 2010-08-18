@@ -92,14 +92,14 @@ class WebToPay {
                 '0x3'   => self::_('nurodyta valiuta neaptarnaujama'),
                 '0x4'   => self::_('nėra sumos arba valiutos'),
                 '0x6'   => self::_('klaidos kodas nebenaudojamas'),
-                '0x7'   => self::_('išjungtas testavimo režimas'),
-                '0x8'   => self::_('jūs uždraudėte šį mokėjimo būdą'),
+                '0x7'   => self::_('i�jungtas testavimo režimas'),
+                '0x8'   => self::_('jūs uždraudėte �į mokėjimo būdą'),
                 '0x9'   => self::_('blogas "paytext" kintamojo kodavimas (turi būti utf-8)'),
-                '0x10'  => self::_('tuščias arba neteisingai užpildytas "orderid"'),
+                '0x10'  => self::_('tu�čias arba neteisingai užpildytas "orderid"'),
                 '0x11'  => self::_('mokėjimas negalimas, kol projektas nepatvirtintas arba jeigu jis yra blokuotas'),
                 '0x12'  => self::_('negautas "projectid" parametras, nors jis yra privalomas'),
                 '0x13'  => self::_('"accepturl", "cancellurl" arba "callbacurl" skiriasi nuo projekte patvirtintų adresų'),
-                '0x14'  => self::_('blogai sugeneruotas paraštas ("sign" parametras)'),
+                '0x14'  => self::_('blogai sugeneruotas para�tas ("sign" parametras)'),
             );
 
         if (isset($errors[$code])) {
