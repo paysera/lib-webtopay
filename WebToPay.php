@@ -29,7 +29,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.2.6';
+    const VERSION = '1.2.7';
 
 
     /**
@@ -139,7 +139,7 @@ class WebToPay {
                 array('cancelurl',      255,    true,   true,   true,   ''),
                 array('callbackurl',    255,    true,   true,   true,   ''),
                 array('payment',        20,     false,  true,   true,   ''),
-                array('country',        2,      false,  true,   true,   '/^[a-z]{2}$/i'),
+                array('country',        2,      false,  true,   true,   '/^[a-z_]{2}$/i'),
                 array('paytext',        255,    false,  true,   true,   ''),
                 array('p_firstname',    255,    false,  true,   true,   ''),
                 array('p_lastname',     255,    false,  true,   true,   ''),
@@ -177,7 +177,7 @@ class WebToPay {
                 'amount'        => array(11,     false,  false,  true,  '/^\d+$/'),
                 'currency'      => array(3,      false,  false,  true,  '/^[a-z]{3}$/i'),
                 'payment'       => array(20,     false,  false,  true,  ''),
-                'country'       => array(2,      false,  false,  true,  '/^[a-z]{2}$/i'),
+                'country'       => array(2,      false,  false,  true,  '/^[a-z_]{2}$/i'),
                 'paytext'       => array(0,      false,  false,  true,  ''),
                 '_ss2'          => array(0,      true,   false,  true,  ''),
                 '_ss1'          => array(0,      false,  false,  true,  ''),

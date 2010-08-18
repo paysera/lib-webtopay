@@ -4,6 +4,10 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.2.7   - 2010-08-06
+
+    * country validation fix (other location is '__')
+
 Version 1.2.6   - 2010-08-06
 
     * projectid is required in checkResponse()
