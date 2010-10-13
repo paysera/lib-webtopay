@@ -21,7 +21,7 @@
  * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
  * @author     Markas Krasovskis <markas@evp.lt>
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.3.2
+ * @version    1.3.3
  * @link       http://www.webtopay.com/
  */
 
@@ -30,7 +30,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.3.2';
+    const VERSION = '1.3.3';
 
 
     /**
@@ -632,10 +632,10 @@ class WebToPay {
                     WebToPayException::E_INVALID);
             }
 
-           	if ('makro' == $type && $response['projectid'] != $user_data['projectid']) {
+            if ('makro' == $type && $response['projectid'] != $user_data['projectid']) {
                 throw new WebToPayException(
                     self::_('Bad projectid: ' .
-                            'libwebtopay %s, response %s', self::VERSION, $response['projectid']),
+                            'libwebtopay %s, response %s', self::VERSION, $response['version']),
                     WebToPayException::E_INVALID);
             }
 
