@@ -4,3 +4,8 @@ syntax: regexp
 syntax: glob
 *.swp
 
+# Stuff from text editors and IDE's
+(^|/)tags$
+^\.cache$
+^\.settings$
+^\.project$

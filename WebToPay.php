@@ -101,6 +101,8 @@ class WebToPay {
                 '0x12'  => self::_('negautas "projectid" parametras, nors jis yra privalomas'),
                 '0x13'  => self::_('"accepturl", "cancellurl" arba "callbacurl" skiriasi nuo projekte patvirtintų adresų'),
                 '0x14'  => self::_('blogai sugeneruotas paraštas ("sign" parametras)'),
+                '0x15'  => self::_('klaidingi kai kurie iš perduotų parametrų'),
+                '0x15x0'  => self::_('neteisingas vienas iš šių parametrų: cancelurl, accepturl, callbackurl'),
             );
 
         if (isset($errors[$code])) {
