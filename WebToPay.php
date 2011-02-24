@@ -665,11 +665,11 @@ class WebToPay {
             }
 
             // *check* status
-            if ('makro' == $type && '1' != $response['status']) {
+            if ('makro' == $type && $response['status'] != '1') {
                 throw new WebToPayException(
                     self::_('Returned transaction status is %d, successful status '.
                             'should be 1.', $response['status']),
-                    WebToPayException::E_INVALID);
+                    WebToPayException::E_STATUS);
             }
 
         }
@@ -895,8 +895,11 @@ class WebToPayException extends Exception {
      * SMS answer errors
      */
     const E_SMS_ANSWER = 7;
-
-
+    
+    /**
+     * Macro answer errors
+     */
+    const E_STATUS = 8;
 
     protected $field_name = false;
 
@@ -907,6 +910,5 @@ class WebToPayException extends Exception {
     public function getField() {
         return $this->field_name;
     }
-
 }
 
