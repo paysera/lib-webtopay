@@ -17,9 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * @package    WebToPay
- * @author     Mantas Zimnickas <mantas@evp.lt>
- * @author     Remigijus Jarmalavičius <remigijus@evp.lt>
- * @author     Markas Krasovskis <markas@evp.lt>
+ * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
  * @version    1.3.3
  * @link       http://www.webtopay.com/
