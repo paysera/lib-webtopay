@@ -9,3 +9,9 @@ syntax: glob
 ^\.cache$
 ^\.settings$
 ^\.project$
+syntax: regexp
+^\.project$
+syntax: regexp
+^\.hgignore$
+syntax: regexp
+\.hgignore$
