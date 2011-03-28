@@ -179,7 +179,7 @@ class WebToPay {
         //  * regexp    – regexp to test item value.
         return array(
                 array('projectid',      11,     true,   true,   true,   '/^\d+$/'),
-                array('orderid',        40,     true,   true,   true,   ''),
+                array('requestid',      40,     true,   true,   true,   ''),
                 array('sign',           255,    true,   false,  true,   ''),
                 array('sign_password',  255,    true,   true,   false,  ''),
                 array('repeat_request', 1,      true,   false,  true,   '/^1$/'),
