@@ -19,7 +19,7 @@
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.3.3
+ * @version    1.4
  * @link       http://www.webtopay.com/
  */
 
@@ -28,7 +28,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.3.3';
+    const VERSION = '1.4';
 
 
     /**
@@ -219,6 +219,7 @@ class WebToPay {
                 'test'          => array(1,      false,  false,  true,  '/^[01]$/'),
 
                 'p_email'       => array(0,      false,  false,  true,  ''),
+                'requestid'     => array(40,     false,  false,  true,  ''),
                 'payamount'     => array(0,      false,  false,  true,  ''),
                 'paycurrency'   => array(0,      false,  false,  true,  ''),
 
