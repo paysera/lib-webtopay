@@ -15,3 +15,5 @@ syntax: regexp
 ^\.hgignore$
 syntax: regexp
 \.hgignore$
+syntax: regexp
+^\.project$
