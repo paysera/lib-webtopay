@@ -146,16 +146,14 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
                 ),
         );
 
-
     // Here you can put your callbackurls
     public $callbacks = array(
-            // Makro test callback url
-            'http://www.webtopay.com/?testwp_answer=callback&wp_projectid=13156&wp_orderid=1&wp_lang=lit&wp_amount=10000&wp_currency=LTL&wp_payment=maximalt&wp_country=LT&wp_p_firstname=Vardenis&wp_p_lastname=Pavardenis&wp_p_email=m.sprunskas%40evp.lt&wp_p_street=M%C4%97nulio+g.7&wp_p_city=Vilnius&wp_test=1&wp_version=1.4&wp_type=EMA&wp_paytext=U%C5%BEsakymas+nr%3A+1+http%3A%2F%2Ftest-project.local+projekte.+%28Pardav%C4%97jas%3A+Libwebtopay+Libwebtopay%29+%2813156%29&wp_receiverid=168328&wp__ss1=c72cffd0345f55fef6595a86e5c7caa6&wp_status=1&wp_requestid=16309376&wp_name=&wp_surename=&wp_payamount=10000&wp_paycurrency=LTL&wp__ss2=oSiHSlnin%2FSSJ7bGaTWZybtHzA6%2FNaZcPtS3f07KZMoTeJteL6rnuw7qfT%2FACGW5Hifu2ieNnCBpu2XLnsR10Ja8%2FxVM5X7j2mg9wBOO1Y0cefKBSBlFoZjLL2ciV32ETCD4Okxv2l%2FwH8tQhDQnJ6AOJkbh2ayKy8yTXOcE1zk%3D',
+        // Makro test callback url
+        'http://www.webtopay.com/?testwp_answer=callback&wp_projectid=13156&wp_orderid=1&wp_lang=lit&wp_amount=10000&wp_currency=LTL&wp_payment=maximalt&wp_country=LT&wp_p_firstname=Vardenis&wp_p_lastname=Pavardenis&wp_p_email=m.sprunskas%40evp.lt&wp_p_street=M%C4%97nulio+g.7&wp_p_city=Vilnius&wp_test=1&wp_version=1.4&wp_type=EMA&wp_paytext=U%C5%BEsakymas+nr%3A+1+http%3A%2F%2Ftest-project.local+projekte.+%28Pardav%C4%97jas%3A+Libwebtopay+Libwebtopay%29+%2813156%29&wp_receiverid=168328&wp__ss1=c72cffd0345f55fef6595a86e5c7caa6&wp_status=1&wp_requestid=16309376&wp_name=&wp_surename=&wp_payamount=10000&wp_paycurrency=LTL&wp__ss2=oSiHSlnin%2FSSJ7bGaTWZybtHzA6%2FNaZcPtS3f07KZMoTeJteL6rnuw7qfT%2FACGW5Hifu2ieNnCBpu2XLnsR10Ja8%2FxVM5X7j2mg9wBOO1Y0cefKBSBlFoZjLL2ciV32ETCD4Okxv2l%2FwH8tQhDQnJ6AOJkbh2ayKy8yTXOcE1zk%3D',
 
-            // Mikro test callback url
-            'http://www.webtopay.com/?wp_test=0&wp_country=LT&wp__ss1=a888c6ed50e1e5ab7d732eac91357efe&wp_amount=50&wp_currency=LTL&wp_id=9622828&wp_key=WTP14&wp_sms=WTP14&wp_from=%2B37000000000&wp_to=1679&wp_provider=test&wp_operator=test&wp_version=1.4&wp__ss2=Trsyyba5%2FyovvnSsrt%2FM290zy3bxmWGueMmlairO2HGAgsNb9CV%2FFoFQLpzKLZWUfHWxMjB9XHxt%2BvPaDMABx1pR975ASrvaWGp7StsgjRp01mIYHJP0k9gkvqtPxT4nRNEC2eUCLJCdkvAYQ6X8sm1rpptereaJoZ4CMuDGxoM%3D',
-        );
-
+        // Mikro test callback url
+        'http://www.webtopay.com/?wp_test=0&wp_country=LT&wp__ss1=a888c6ed50e1e5ab7d732eac91357efe&wp_amount=50&wp_currency=LTL&wp_id=9622828&wp_key=WTP14&wp_sms=WTP14&wp_from=%2B37000000000&wp_to=1679&wp_provider=test&wp_operator=test&wp_version=1.4&wp__ss2=Trsyyba5%2FyovvnSsrt%2FM290zy3bxmWGueMmlairO2HGAgsNb9CV%2FFoFQLpzKLZWUfHWxMjB9XHxt%2BvPaDMABx1pR975ASrvaWGp7StsgjRp01mIYHJP0k9gkvqtPxT4nRNEC2eUCLJCdkvAYQ6X8sm1rpptereaJoZ4CMuDGxoM%3D',
+    );
 
     public function testRequest() {
         $form_data = WebToPay::buildRequest(array(
@@ -167,6 +165,9 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
                 'sign_password' => $this->sign_password,
                 'test'          => $this->test,
             ));
+
+        $this->assertNotEmpty($form_data);
+        $this->assertArrayHasKey('sign', $form_data);
     }
 
     public function testRequestException() {
@@ -342,26 +343,26 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
                 WebToPay::toggleSS2(true);
                 $_data = WebToPay::checkResponse($data, array(
-                        'projectid'     => $this->projectid,
-                        'sign_password' => $this->sign_password,
-                    ));
+                    'projectid'     => $this->projectid,
+                    'sign_password' => $this->sign_password,
+                ));
                 $this->assertEquals($this->projectid, $_data['projectid']);
 
                 WebToPay::toggleSS2(false);
                 $_data = WebToPay::checkResponse($data, array(
-                        'projectid'     => $this->projectid,
-                        'sign_password' => $this->sign_password,
-                    ));
+                    'projectid'     => $this->projectid,
+                    'sign_password' => $this->sign_password,
+                ));
                 $this->assertEquals($this->projectid, $_data['projectid']);
 
                 WebToPay::toggleSS2(true);
                 $_data = WebToPay::checkResponse($data, array(
-                        'projectid'     => $this->projectid,
-                        'sign_password' => $this->sign_password,
-                        'orderid'       => $data[WebToPay::PREFIX.'orderid'],
-                        'amount'        => $data[WebToPay::PREFIX.'amount'],
-                        'currency'      => $data[WebToPay::PREFIX.'currency'],
-                    ));
+                    'projectid'     => $this->projectid,
+                    'sign_password' => $this->sign_password,
+                    'orderid'       => $data[WebToPay::PREFIX.'orderid'],
+                    'amount'        => $data[WebToPay::PREFIX.'amount'],
+                    'currency'      => $data[WebToPay::PREFIX.'currency'],
+                ));
                 $this->assertEquals($this->projectid, $_data['projectid']);
             }
 
@@ -369,14 +370,14 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             else {
                 WebToPay::toggleSS2(true);
                 $_data = WebToPay::checkResponse($data, array(
-                        'sign_password' => $this->sign_password,
-                    ));
+                    'sign_password' => $this->sign_password,
+                ));
                 $this->assertEquals($data[WebToPay::PREFIX.'sms'], $_data['sms']);
 
                 WebToPay::toggleSS2(false);
                 $_data = WebToPay::checkResponse($data, array(
-                        'sign_password' => $this->sign_password,
-                    ));
+                    'sign_password' => $this->sign_password,
+                ));
                 $this->assertEquals($data[WebToPay::PREFIX.'sms'], $_data['sms']);
             }
         }

@@ -399,29 +399,7 @@ class WebToPay {
      * @return string
      */
     public static function getCert($cert) {
-        $fp = fsockopen("downloads.webtopay.com", 80, $errno, $errstr, 30);
-        if (!$fp) {
-            throw new WebToPayException(
-                self::_('Payment check: Can\'t get cert from '.
-                        'downloads.webtopay.com/download/%s',
-                        $cert),
-                WebToPayException::E_INVALID);
-            return false;
-        }
-
-        $out = "GET /download/" . $cert . " HTTP/1.1\r\n";
-        $out .= "Host: downloads.webtopay.com\r\n";
-        $out .= "Connection: Close\r\n\r\n";
-
-        $content = '';
-
-        fwrite($fp, $out);
-        while (!feof($fp)) $content .= fgets($fp, 8192);
-        fclose($fp);
-
-        list($header, $content) = explode("\r\n\r\n", $content, 2);
-
-        return $content;
+        return self::getUrlContent('http://downloads.webtopay.com/download/'.$cert);
     }
 
     /**
@@ -572,7 +550,7 @@ class WebToPay {
      *
      * @param string	$payCurrency
      * @param int		$sum
-     * @param array     $currency 			array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
+     * @param array     $currency 			array ( '0' => array ('iso' => 'USD', 'rate' => 0.417391, ),);
      * @param string	$lang
      * @param int 		$projectID
      * @return array 	$filtered
@@ -601,22 +579,13 @@ class WebToPay {
      * @param int 		$projectID
      * @return string
      */
-    public static function getXML($projectID){
+    public static function getXML($projectID) {
+        $response = self::getUrlContent(self::XML_URL.$projectID.'/');
+        $response = str_replace(array("\r", "\r\n", "\n"), '', $response);
+        $response = str_replace('</payment_types_document>0','</payment_types_document>', $response);
+        $response = substr($response, strpos($response, '<?xml'));
 
-    	$url	= self::XML_URL.$projectID;
-		$ch 	= curl_init();
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		//curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false;
-		$output = curl_exec($ch);
-
-    	if(curl_exec($ch) === false){
-		    echo 'Curl error: ' . curl_error($ch);
-		}
-
-		curl_close($ch);
-    	$feed	= simplexml_load_string($output);
-
+        $feed = simplexml_load_string($response);
 		if($feed === false){
 			return false;
 		} else {
@@ -890,6 +859,49 @@ class WebToPay {
         return $ret;
     }
 
+    private static function getUrlContent($URL){
+        $url = parse_url($URL);
+        if ('https' == $url['scheme']) {
+            $host = 'ssl://'.$url['host'];
+            $port = 443;
+        } else {
+            $host = $url['host'];
+            $port = 80;
+        }
+
+        try {
+            $fp = fsockopen($host, $port, $errno, $errstr, 30);
+            if (!$fp) {
+                throw new WebToPayException(
+                    self::_('Can\'t connect to %s', $URL),
+                    WebToPayException::E_INVALID);
+            }
+
+            if(isset($url['query'])) {
+                $data = $url['path'].'?'.$url['query'];
+            } else {
+                $data = $url['path'];
+            }
+
+            $out = "GET " . $data . " HTTP/1.1\r\n";
+            $out .= "Host: ".$url['host']."\r\n";
+            $out .= "Connection: Close\r\n\r\n";
+
+            $content = '';
+
+            fwrite($fp, $out);
+            while (!feof($fp)) $content .= fgets($fp, 8192);
+            fclose($fp);
+
+            list($header, $content) = explode("\r\n\r\n", $content, 2);
+
+            return trim($content);
+
+        } catch (WebToPayException $e) {
+            throw new WebToPayException(self::_('fsockopen fail!', WebToPayException::E_INVALID));
+        }
+    }
+
 
     /**
      * Checks and validates response from WebToPay server.
@@ -1069,53 +1081,22 @@ class WebToPay {
      * @return void
      */
     public static function smsAnswer($answer) {
-        $url = parse_url(self::SMS_ANSWER_URL);
-        if ('https' == $url['scheme']) {
-            $host = 'ssl://'.$url['host'];
-            $port = 443;
-        }
-        else {
-            $host = $url['host'];
-            $port = 80;
-        }
 
+        $data = array(
+                'id'            => $answer['id'],
+                'msg'           => $answer['msg'],
+                'transaction'   => md5($answer['sign_password'].'|'.$answer['id']),
+            );
+
+        $url = self::SMS_ANSWER_URL.'?'.http_build_query($data);
         try {
-            $fp = fsockopen($host, $port, $errno, $errstr, 30);
-            if (!$fp) {
-                throw new WebToPayException(
-                    self::_('Can\'t connect to %s', self::SMS_ANSWER_URL),
-                    WebToPayException::E_SMS_ANSWER);
-            }
-
-            $data = array(
-                    'id'            => $answer['id'],
-                    'msg'           => $answer['msg'],
-                    'transaction'   => md5($answer['sign_password'].'|'.$answer['id']),
-                );
-
-            $query = $url['path'].'?'.http_build_query($data);
-
-            $out = "GET " . $query . " HTTP/1.1\r\n";
-            $out .= "Host: ".$url['host']."\r\n";
-            $out .= "Connection: Close\r\n\r\n";
-
-            $content = '';
-
-            fwrite($fp, $out);
-            while (!feof($fp)) $content .= fgets($fp, 8192);
-            fclose($fp);
-
-            list($header, $content) = explode("\r\n\r\n", $content, 2);
-
-            $content = trim($content);
+            $content = self::getUrlContent($url);
             if (strpos($content, 'OK') !== 0) {
                 throw new WebToPayException(
                     self::_('Error: %s', $content),
                     WebToPayException::E_SMS_ANSWER);
             }
-        }
-
-        catch (WebToPayException $e) {
+        } catch (WebToPayException $e) {
             if (isset($answer['log'])) {
                 self::log('ERR',
                     self::mikroAnswerToLog($answer).
