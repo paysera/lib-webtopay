@@ -581,9 +581,7 @@ class WebToPay {
      */
     public static function getXML($projectID) {
         $response = self::getUrlContent(self::XML_URL.$projectID.'/');
-        $response = str_replace(array("\r", "\r\n", "\n"), '', $response);
-        $response = str_replace('</payment_types_document>0','</payment_types_document>', $response);
-        $response = substr($response, strpos($response, '<?xml'));
+        $feed     = simplexml_load_string($response);
 
         $feed = simplexml_load_string($response);
 		if($feed === false){
@@ -883,7 +881,7 @@ class WebToPay {
                 $data = $url['path'];
             }
 
-            $out = "GET " . $data . " HTTP/1.1\r\n";
+            $out = "GET " . $data . " HTTP/1.0\r\n";
             $out .= "Host: ".$url['host']."\r\n";
             $out .= "Connection: Close\r\n\r\n";
 
