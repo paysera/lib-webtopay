@@ -592,6 +592,21 @@ class WebToPay {
 		}
     }
 
+
+    /**
+     * Returns payment url
+     *
+     * @param  string $language
+     * @return string $url
+     */
+    public static function getPaymentUrl($language) {
+        $url = self::PAY_URL;
+        if($language != 'LT') {
+           $url = str_replace('mokejimai.lt', 'webtopay.com', $url);
+        }
+        return $url;
+    }
+
     /**
      * Loads and unserializes xml data from file
      *

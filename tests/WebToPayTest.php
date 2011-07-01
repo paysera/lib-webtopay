@@ -382,5 +382,13 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             }
         }
     }
+
+    public function testGetPaymentUrl() {
+        $url = WebToPay::getPaymentUrl('LT');
+        $this->assertEquals($url, WebToPay::PAY_URL);
+        $url = WebToPay::getPaymentUrl('ENG');
+        $this->assertNotEquals($url, WebToPay::PAY_URL);
+        $this->assertEquals($url, 'https://www.webtopay.com/pay/');
+    }
 }
 
