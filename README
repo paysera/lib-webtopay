@@ -4,6 +4,26 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.4		- 2011-07-01
+
+	* added WebToPay::getPaymentUrl()
+
+Version 1.4		- 2011-06-15
+
+	* WebToPay::getXML() fix
+
+Version 1.4		- 2011-05-30
+
+	* small refactoring
+
+Version 1.4		- 2011-05-26
+
+	* added methods which enables user to download payment method list
+
+Version 1.4		- 2011-03-28
+
+	* added 'RequestID'
+
 Version 1.3.2   - 2010-08-18
 
     * country validation fix
