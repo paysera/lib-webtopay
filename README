@@ -4,6 +4,12 @@ This is WebToPay library package.
 Version history
 ===============
 
+Version 1.5		- 2011-10-13
+
+	* updated SS1 to SS1 v2 (SS1 obsolete and not available in 1.5)
+	* force to use SS2 if OpenSSL available
+	* added time_limit parameter
+
 Version 1.4		- 2011-07-01
 
 	* added WebToPay::getPaymentUrl()
