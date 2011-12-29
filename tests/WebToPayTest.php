@@ -20,19 +20,19 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     public $currencyArray    = array (
             '0' => array (
-                    'iso'   => USD,
+                    'iso'   => 'USD',
                     'rate'  => 0.417391,
                 ),
             '1' => array (
-                    'iso'   => EUR,
+                    'iso'   => 'EUR',
                     'rate'  => 0.289855,
                 ),
             '2' => array (
-                    'iso'   => LTL,
+                    'iso'   => 'LTL',
                     'rate'  => 1.000000,
                 ),
             '3' => array (
-                    'iso'   => GBP,
+                    'iso'   => 'GBP',
                     'rate'  => 0.252174,
                 ),
         );
