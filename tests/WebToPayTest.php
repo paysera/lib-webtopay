@@ -308,25 +308,6 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     }
 
-    public function testParseXML() {
-
-        $xmlObj = simplexml_load_string($this->XML);
-
-        try {
-            WebToPay::parseXML($xmlObj);
-        } catch (WebToPayException $e) {
-            echo get_class($e).': '.$e->getMessage();
-        }
-
-        $file   = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
-        $fh     = fopen($file, 'r');
-        $data   = unserialize(fread($fh,filesize($file)));
-        fclose($fh);
-
-        $this->assertEquals($this->parameterArray, $data['data']);
-
-    }
-
     public function testCallbacks() {
         foreach ($this->callbacks as $callback) {
             $callback = parse_url($callback);
