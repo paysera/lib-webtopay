@@ -20,57 +20,57 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     public $currencyArray    = array (
             '0' => array (
-                    'iso'	=> USD,
-                    'rate'	=> 0.417391,
+                    'iso'   => USD,
+                    'rate'  => 0.417391,
                 ),
             '1' => array (
-                    'iso'	=> EUR,
-                    'rate'	=> 0.289855,
+                    'iso'   => EUR,
+                    'rate'  => 0.289855,
                 ),
             '2' => array (
-                    'iso'	=> LTL,
-                    'rate'	=> 1.000000,
+                    'iso'   => LTL,
+                    'rate'  => 1.000000,
                 ),
             '3' => array (
-                    'iso'	=> GBP,
-                    'rate'	=> 0.252174,
+                    'iso'   => GBP,
+                    'rate'  => 0.252174,
                 ),
         );
 
     public $XML = '<?xml version="1.0" encoding="UTF-8"?>
                     <payment_types_document project_id="2753">
-                    	<country code="de">
-                    		<payment_group key="e-banking">
-                    			<title language="lt">Elektroninė bankininkystė</title>
-                    			<title language="en">Electronic banking</title>
-                    			<title language="ru">Эл. банковские системы</title>
-                    			<payment_type key="directeb">
-                    				<logo_url language="lt">https://www.mokejimai.lt/new/img/lt/banks/directeb.gif</logo_url>
-                    				<title language="lt">lt_directeb</title>
-                    				<logo_url language="en">https://www.mokejimai.lt/new/img/en/banks/directeb.gif</logo_url>
-                    				<title language="en">en_directeb</title>
-                    				<logo_url language="ru">https://www.mokejimai.lt/new/img/ru/banks/directeb.gif</logo_url>
-                    				<title language="ru">ru_directeb</title>
-                    				<min amount="345" currency="LTL"/>
-                    			</payment_type>
-                    		</payment_group>
-                    	</country>
-                    	<country code="ee">
-                    		<payment_group key="e-banking">
-                    			<title language="lt">Elektroninė bankininkystė</title>
-                    			<title language="en">Electronic banking</title>
-                    			<title language="ru">Эл. банковские системы</title>
-                    			<payment_type key="hanza">
-                    				<logo_url language="lt">https://www.mokejimai.lt/new/img/lt/banks/hanza.gif</logo_url>
-                    				<title language="lt">lt_hanza</title>
-                    				<logo_url language="en">https://www.mokejimai.lt/new/img/en/banks/hanza.gif</logo_url>
-                    				<title language="en">en_hanza</title>
-                    				<logo_url language="ru">https://www.mokejimai.lt/new/img/ru/banks/hanza.gif</logo_url>
-                    				<title language="ru">ru_hanza</title>
-                    				<max amount="200000" currency="LTL"/>
-                    			</payment_type>
-                    		</payment_group>
-                    	</country>
+                        <country code="de">
+                            <payment_group key="e-banking">
+                                <title language="lt">Elektroninė bankininkystė</title>
+                                <title language="en">Electronic banking</title>
+                                <title language="ru">Эл. банковские системы</title>
+                                <payment_type key="directeb">
+                                    <logo_url language="lt">https://www.mokejimai.lt/new/img/lt/banks/directeb.gif</logo_url>
+                                    <title language="lt">lt_directeb</title>
+                                    <logo_url language="en">https://www.mokejimai.lt/new/img/en/banks/directeb.gif</logo_url>
+                                    <title language="en">en_directeb</title>
+                                    <logo_url language="ru">https://www.mokejimai.lt/new/img/ru/banks/directeb.gif</logo_url>
+                                    <title language="ru">ru_directeb</title>
+                                    <min amount="345" currency="LTL"/>
+                                </payment_type>
+                            </payment_group>
+                        </country>
+                        <country code="ee">
+                            <payment_group key="e-banking">
+                                <title language="lt">Elektroninė bankininkystė</title>
+                                <title language="en">Electronic banking</title>
+                                <title language="ru">Эл. банковские системы</title>
+                                <payment_type key="hanza">
+                                    <logo_url language="lt">https://www.mokejimai.lt/new/img/lt/banks/hanza.gif</logo_url>
+                                    <title language="lt">lt_hanza</title>
+                                    <logo_url language="en">https://www.mokejimai.lt/new/img/en/banks/hanza.gif</logo_url>
+                                    <title language="en">en_hanza</title>
+                                    <logo_url language="ru">https://www.mokejimai.lt/new/img/ru/banks/hanza.gif</logo_url>
+                                    <title language="ru">ru_hanza</title>
+                                    <max amount="200000" currency="LTL"/>
+                                </payment_type>
+                            </payment_group>
+                        </country>
                     </payment_types_document>';
 
     public $parameterArray = array (
@@ -226,7 +226,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
         $request = WebToPay::buildRepeatRequest(array(
                 'projectid'     => $this->projectid,
                 'sign_password' => $this->sign_password,
-                'requestid'	    => 1,
+                'requestid'     => 1,
                 'foo'           => 'bar',
             ));
         $this->assertEquals('1', $request['repeat_request']);
@@ -318,10 +318,10 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
             echo get_class($e).': '.$e->getMessage();
         }
 
-		$file   = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
-		$fh     = fopen($file, 'r');
-		$data 	= unserialize(fread($fh,filesize($file)));
-		fclose($fh);
+        $file   = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
+        $fh     = fopen($file, 'r');
+        $data   = unserialize(fread($fh,filesize($file)));
+        fclose($fh);
 
         $this->assertEquals($this->parameterArray, $data['data']);
 
