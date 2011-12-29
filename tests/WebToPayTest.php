@@ -1,10 +1,10 @@
 <?php
 
 require_once 'WebToPay.php';
+require_once 'PHPUnit/Framework.php';
 
 date_default_timezone_set('Europe/Vilnius');
 
-require_once 'PHPUnit/Framework.php';
 class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     // Here you can set your real data to test
