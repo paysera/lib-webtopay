@@ -50,6 +50,11 @@ class WebToPay {
      */
     const PREFIX = 'wp_';
 
+    /**
+     * Cache file.
+     */
+    const CACHE_URL = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
+
 
     /**
      * Identifies what verification method was used.
@@ -553,35 +558,35 @@ class WebToPay {
     /**
      * Filters saved payment method cache by e-shop's order sum and language
      *
-     * @param string	$payCurrency
-     * @param int		$sum
-     * @param array     $currency 			array ( '0' => array ('iso' => 'USD', 'rate' => 0.417391, ),);
-     * @param string	$lang
-     * @param int 		$projectID
-     * @return array 	$filtered
+     * @param string    $payCurrency
+     * @param int       $sum
+     * @param array     $currency           array ( '0' => array ('iso' => 'USD', 'rate' => 0.417391, ),);
+     * @param string    $lang
+     * @param int       $projectID
+     * @return array    $filtered
      */
     public static function getPaymentMethods($payCurrency, $sum, $currency, $lang, $projectID) {
 
-    	$filtered    = array();
-    	$data        = self::loadXML();
-    	$lang        = strtolower($lang);
+        $filtered    = array();
+        $data        = self::loadXML();
+        $lang        = strtolower($lang);
 
-    	//jei xml senesnis nei para
-    	if((($data['ts']+3600*24) - time()) < 0 || $data == null) {
-    		self::getXML($projectID); //siunciam nauja
-    		$data = self::loadXML();  //vel uzloadinam
-    	}
+        //jei xml senesnis nei para
+        if((($data['ts']+3600*24) - time()) < 0 || $data == null) {
+            self::getXML($projectID); //siunciam nauja
+            $data = self::loadXML();  //vel uzloadinam
+        }
 
-    	$filtered = self::filterPayMethods($data['data'], $payCurrency, $sum, $currency, $lang);
+        $filtered = self::filterPayMethods($data['data'], $payCurrency, $sum, $currency, $lang);
 
-    	return $filtered;
+        return $filtered;
     }
 
 
     /**
      * Downloads xml data from webtopay.com
      *
-     * @param int 		$projectID
+     * @param int       $projectID
      * @return string
      */
     public static function getXML($projectID) {
@@ -589,12 +594,12 @@ class WebToPay {
         $feed     = simplexml_load_string($response);
 
         $feed = simplexml_load_string($response);
-		if($feed === false){
-			return false;
-		} else {
-			self::parseXML($feed);
-			return true;
-		}
+        if($feed === false){
+            return false;
+        } else {
+            self::parseXML($feed);
+            return true;
+        }
     }
 
 
@@ -619,224 +624,222 @@ class WebToPay {
      */
     private static function loadXML() {
 
-    	$data	= array();
-    	$file	= dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
+        $data   = array();
 
-		if (file_exists($file)) {
-			$fh		= fopen($file, 'r');
-			$data 	= unserialize(fread($fh,filesize($file)));
-			fclose($fh);
-			return $data;
-		} else {
-			return null;
-		}
+        if (file_exists(self::CACHE_URL)) {
+            $fh     = fopen(self::CACHE_URL, 'r');
+            $data   = unserialize(fread($fh,filesize(self::CACHE_URL)));
+            fclose($fh);
+            return $data;
+        } else {
+            return null;
+        }
     }
 
     /**
-     * Parses xml to array, serializes it and writes it to file /cache.php
+     * Parses xml to array, serializes it and writes it to file CACHE_URL
      *
-     * @param obj 	$xml
+     * @param obj   $xml
      */
     public static function parseXML($xml){
 
-    	$paydata	= array();
-    	$parsed		= array();
-    	$language	= array();
-    	$logo		= array();
-    	$qouta		= array();
-    	$title		= array();
-    	$cache		= array();
+        $paydata    = array();
+        $parsed     = array();
+        $language   = array();
+        $logo       = array();
+        $qouta      = array();
+        $title      = array();
+        $cache      = array();
 
-    	foreach($xml->country as $country){
-			$countries	= strtolower(trim((string)$country->attributes()));
-    		foreach($country->payment_group as $group){
-				$groups	= strtolower(trim((string)$group->attributes()));
-				foreach($group->title as $tit => $v){
-					$language[strtolower(trim((string)$v->attributes()))] = trim((string)$v);
-				}
-				$parsed[$countries][$groups]['translate'] = $language;
-    			foreach($group->payment_type as $type) {
-					$types = strtolower(trim((string)$type->attributes()));
-					foreach($type as $key => $value) {
-						if($key === 'logo_url'){
-							$logo[trim((string)$value->attributes())] = trim((string)$value);
-						}
-						if($key === 'title'){
-							$title[trim((string)$value->attributes())] = trim((string)$value);
-						}
-						if($key === 'max' || $key === 'min') {
-							foreach($value->attributes() as $k => $v){
-								$qouta[$key.'_amount'] = trim((string)$value->attributes());
-								$qouta[$key.'_amount_currency'] = trim((string)$v);
-							}
-						}
-						$paydata['logo']	= $logo;
-						$paydata['title']	= $title;
-						$paydata['amount']	= $qouta;
-						$parsed[$countries][$groups][$types] = $paydata;
-					}
-					//unset($qouta);
-					$qouta = null;
-				}
-			}
-		}
+        foreach($xml->country as $country){
+            $countries  = strtolower(trim((string)$country->attributes()));
+            foreach($country->payment_group as $group){
+                $groups = strtolower(trim((string)$group->attributes()));
+                foreach($group->title as $tit => $v){
+                    $language[strtolower(trim((string)$v->attributes()))] = trim((string)$v);
+                }
+                $parsed[$countries][$groups]['translate'] = $language;
+                foreach($group->payment_type as $type) {
+                    $types = strtolower(trim((string)$type->attributes()));
+                    foreach($type as $key => $value) {
+                        if($key === 'logo_url'){
+                            $logo[trim((string)$value->attributes())] = trim((string)$value);
+                        }
+                        if($key === 'title'){
+                            $title[trim((string)$value->attributes())] = trim((string)$value);
+                        }
+                        if($key === 'max' || $key === 'min') {
+                            foreach($value->attributes() as $k => $v){
+                                $qouta[$key.'_amount'] = trim((string)$value->attributes());
+                                $qouta[$key.'_amount_currency'] = trim((string)$v);
+                            }
+                        }
+                        $paydata['logo']    = $logo;
+                        $paydata['title']   = $title;
+                        $paydata['amount']  = $qouta;
+                        $parsed[$countries][$groups][$types] = $paydata;
+                    }
+                    //unset($qouta);
+                    $qouta = null;
+                }
+            }
+        }
 
-		$cache['ts']	= time();
-		$cache['data']	= $parsed;
+        $cache['ts']    = time();
+        $cache['data']  = $parsed;
 
         if (!is_writable(dirname(__FILE__))) {
-			throw new WebToPayException(self::_('Directory '.dirname(__FILE__).' is not writable.',WebToPayException::E_INVALID));
-		} else {
-            $file 	= serialize($cache);
-    		$path	= dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
-    		$fp 	= fopen($path, 'w') or die('error writing cache');
-    		fwrite($fp, $file);
-    		fclose($fp);
-		};
+            throw new WebToPayException(self::_('Directory '.dirname(__FILE__).' is not writable.',WebToPayException::E_INVALID));
+        } else {
+            $file   = serialize($cache);
+            $fp     = fopen(self::CACHE_URL, 'w+') or die('error writing cache');
+            fwrite($fp, $file);
+            fclose($fp);
+        };
     }
 
     /**
      * Converts money amount to e-shops base currency
      *
-     * @param int 		$sum
-     * @param string	$payCurrency
-     * @param string	$convertCurrency
-     * @param array     $currency 			array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @return int		$amount
+     * @param int       $sum
+     * @param string    $payCurrency
+     * @param string    $convertCurrency
+     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
+     * @return int      $amount
      */
     private static function toBaseCurrency($sum, $payCurrency, $convertCurrency, $currency){
-		$amount = 0;
-    	foreach($currency as $entry) {
-    		if($payCurrency == $entry['iso']) {
-    			$amount = $sum/$entry['rate']; //turim viska BASE valiuta
-    			foreach($currency as $entry) {
-    				if($convertCurrency == $entry['iso']) {
-						$amount *= $entry['rate'];
-    					return $amount;
-						break;
-    				}
-    			}
-    			break;
-    		}
-    	}
+        $amount = 0;
+        foreach($currency as $entry) {
+            if($payCurrency == $entry['iso']) {
+                $amount = $sum/$entry['rate']; //turim viska BASE valiuta
+                foreach($currency as $entry) {
+                    if($convertCurrency == $entry['iso']) {
+                        $amount *= $entry['rate'];
+                        return $amount;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 
 
     /**
      * Checks minimum amount of payment method
      *
-     * @param array		$data
-     * @param int 		$sum
-     * @param string	$payCurrency
-     * @param array     $currency 			array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
+     * @param array     $data
+     * @param int       $sum
+     * @param string    $payCurrency
+     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
      * @return bool
      */
     private static function checkMinAmount($data, $sum, $payCurrency, $currency){
-    	//jei apribotas min_amount
-    	if (array_key_exists('min_amount', $data) && $data['min_amount'] != null) {
-    		if ($payCurrency == $data['min_amount_currency']) {//kai sutampa valiutos
-    			return ($sum >= $data['min_amount']);
-    		} else {
-    		    //konvertuojam i base
-    			$amount = self::toBaseCurrency($sum, $payCurrency, $data['min_amount_currency'], $currency);
-    			return ($amount >= $data['min_amount']);
-    		}
-		}
-		return true;
+        //jei apribotas min_amount
+        if (array_key_exists('min_amount', $data) && $data['min_amount'] != null) {
+            if ($payCurrency == $data['min_amount_currency']) {//kai sutampa valiutos
+                return ($sum >= $data['min_amount']);
+            } else {
+                //konvertuojam i base
+                $amount = self::toBaseCurrency($sum, $payCurrency, $data['min_amount_currency'], $currency);
+                return ($amount >= $data['min_amount']);
+            }
+        }
+        return true;
     }
 
     /**
      * Checks maximum amount of payment method
      *
-     * @param array		$data
-     * @param int 		$sum
-     * @param string	$payCurrency
-     * @param array     $currency 			array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
+     * @param array     $data
+     * @param int       $sum
+     * @param string    $payCurrency
+     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
      * @return bool
      */
-	private static function checkMaxAmount($data, $sum, $payCurrency, $currency){
-		//jei apribotas max_amount
-    	if (array_key_exists('max_amount', $data) && $data['max_amount'] != null) {
-    		if ($payCurrency == $data['max_amount_currency']) {//kai sutampa valiutos
-    			return ($data['max_amount'] >= $sum);
-    		} else {
-    		    //konvertuojam i base
-    			$amount = self::toBaseCurrency($sum, $payCurrency, $data['max_amount_currency'], $currency);
-    			return ($data['max_amount'] >= $amount);
-    		}
-		}
-		return true;
-	}
+    private static function checkMaxAmount($data, $sum, $payCurrency, $currency){
+        //jei apribotas max_amount
+        if (array_key_exists('max_amount', $data) && $data['max_amount'] != null) {
+            if ($payCurrency == $data['max_amount_currency']) {//kai sutampa valiutos
+                return ($data['max_amount'] >= $sum);
+            } else {
+                //konvertuojam i base
+                $amount = self::toBaseCurrency($sum, $payCurrency, $data['max_amount_currency'], $currency);
+                return ($data['max_amount'] >= $amount);
+            }
+        }
+        return true;
+    }
 
-	/**
+    /**
      * Checks maximum amount of payment method
      *
-     * @param array		$payMethods 	- unserialized array with pay method data
-     * @param string	$payCurrency	-
-     * @param int		$sum
-     * @param string	$payCurrency
-     * @param array     $currency 			array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @param string	$lang
+     * @param array     $payMethods     - unserialized array with pay method data
+     * @param string    $payCurrency    -
+     * @param int       $sum
+     * @param string    $payCurrency
+     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
+     * @param string    $lang
      * @return array
      */
     public static function filterPayMethods($payMethods, $payCurrency, $sum, $currency, $lang) {
 
-    	$filtered	= array();
-    	$groupName	= array();
-    	$logo 		= null;
-	    $name 		= null;
+        $filtered   = array();
+        $groupName  = array();
+        $logo       = null;
+        $name       = null;
 
-    	foreach($payMethods as $key1 => $value1) {
-    		foreach($value1 as $key2 => $value2){
-	    		foreach($value2 as $key3 => $value3){
-	    			if($key3 === 'translate') {
-	    				foreach($value3 as $loc => $text) {
-	    					if($loc === 'en'){
-	    						$groupName = $text;
-	    					}
-	    					if($loc === $lang) {
-	    						$groupName = $text;
-	    						break;
-	    					}
-	    				}
-	    			} else {
-	    				foreach($value3 as $key4 => $value4) {
-	    					if($key4 === 'logo'){
-	    						foreach($value4 as $k => $v) {
-	    							if($k === 'en'){ //statom anglu kalba default jei nerasta vertimu
-	    								$logo = $v;
-	    							}
-	    							if($k === $lang) {
-	    								$logo = $v;
-	    								break;
-	    							}
-	    						}
-	    					}
-	    					if($key4 === 'title'){
-	    						foreach($value4 as $k => $v) {
-	    							if($k === 'en'){
-	    								$name = $v;
-	    							}
-	    							if($k === $lang) {
-	    								$name = $v;
-	    								break;
-	    							}
-	    						}
-	    					}
-	    					if($key4 === 'amount'){
-	    						$min = self::checkMinAmount($value4, $sum, $payCurrency, $currency);
-	    						$max = self::checkMaxAmount($value4, $sum, $payCurrency, $currency);
-	    						if($min && $max) { //jei praeina pagal min ir max irasom
-	    							$filtered[$key1][$groupName][$name] = array('name' => $key3,'logo' => $logo);
-	    						}
-	    					}
-	    				}
-	    			}
-	    		}
-    		}
-    	}
+        foreach($payMethods as $key1 => $value1) {
+            foreach($value1 as $key2 => $value2){
+                foreach($value2 as $key3 => $value3){
+                    if($key3 === 'translate') {
+                        foreach($value3 as $loc => $text) {
+                            if($loc === 'en'){
+                                $groupName = $text;
+                            }
+                            if($loc === $lang) {
+                                $groupName = $text;
+                                break;
+                            }
+                        }
+                    } else {
+                        foreach($value3 as $key4 => $value4) {
+                            if($key4 === 'logo'){
+                                foreach($value4 as $k => $v) {
+                                    if($k === 'en'){ //statom anglu kalba default jei nerasta vertimu
+                                        $logo = $v;
+                                    }
+                                    if($k === $lang) {
+                                        $logo = $v;
+                                        break;
+                                    }
+                                }
+                            }
+                            if($key4 === 'title'){
+                                foreach($value4 as $k => $v) {
+                                    if($k === 'en'){
+                                        $name = $v;
+                                    }
+                                    if($k === $lang) {
+                                        $name = $v;
+                                        break;
+                                    }
+                                }
+                            }
+                            if($key4 === 'amount'){
+                                $min = self::checkMinAmount($value4, $sum, $payCurrency, $currency);
+                                $max = self::checkMaxAmount($value4, $sum, $payCurrency, $currency);
+                                if($min && $max) { //jei praeina pagal min ir max irasom
+                                    $filtered[$key1][$groupName][$name] = array('name' => $key3,'logo' => $logo);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-    	return $filtered;
+        return $filtered;
     }
 
 
