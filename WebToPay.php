@@ -50,6 +50,11 @@ class WebToPay {
      */
     const PREFIX = 'wp_';
 
+    /**
+     * Cache file.
+     */
+    const CACHE_URL = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
+
 
     /**
      * Identifies what verification method was used.
@@ -620,11 +625,10 @@ class WebToPay {
     private static function loadXML() {
 
         $data   = array();
-        $file   = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
 
-        if (file_exists($file)) {
-            $fh     = fopen($file, 'r');
-            $data   = unserialize(fread($fh,filesize($file)));
+        if (file_exists(self::CACHE_URL)) {
+            $fh     = fopen(self::CACHE_URL, 'r');
+            $data   = unserialize(fread($fh,filesize(self::CACHE_URL)));
             fclose($fh);
             return $data;
         } else {
@@ -633,7 +637,7 @@ class WebToPay {
     }
 
     /**
-     * Parses xml to array, serializes it and writes it to file /cache.php
+     * Parses xml to array, serializes it and writes it to file CACHE_URL
      *
      * @param obj   $xml
      */
@@ -688,8 +692,7 @@ class WebToPay {
             throw new WebToPayException(self::_('Directory '.dirname(__FILE__).' is not writable.',WebToPayException::E_INVALID));
         } else {
             $file   = serialize($cache);
-            $path   = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
-            $fp     = fopen($path, 'w') or die('error writing cache');
+            $fp     = fopen(self::CACHE_URL, 'w+') or die('error writing cache');
             fwrite($fp, $file);
             fclose($fp);
         };
