@@ -50,11 +50,6 @@ class WebToPay {
      */
     const PREFIX = 'wp_';
 
-    /**
-     * Cache file.
-     */
-    const CACHE_URL = dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php';
-
 
     /**
      * Identifies what verification method was used.
@@ -626,9 +621,9 @@ class WebToPay {
 
         $data   = array();
 
-        if (file_exists(self::CACHE_URL)) {
-            $fh     = fopen(self::CACHE_URL, 'r');
-            $data   = unserialize(fread($fh,filesize(self::CACHE_URL)));
+        if (file_exists(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php')) {
+            $fh     = fopen(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php', 'r');
+            $data   = unserialize(fread($fh,filesize(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php')));
             fclose($fh);
             return $data;
         } else {
@@ -692,7 +687,7 @@ class WebToPay {
             throw new WebToPayException(self::_('Directory '.dirname(__FILE__).' is not writable.',WebToPayException::E_INVALID));
         } else {
             $file   = serialize($cache);
-            $fp     = fopen(self::CACHE_URL, 'w+') or die('error writing cache');
+            $fp     = fopen(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php', 'w+') or die('error writing cache');
             fwrite($fp, $file);
             fclose($fp);
         };
