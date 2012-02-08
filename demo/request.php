@@ -1,7 +1,8 @@
 <?php
 
-require_once 'helpers.php';
-require_once('../WebToPay.php');
+require_once 'includes/helpers.php';
+require_once 'includes/config.php';
+require_once '../WebToPay.php';
 
 $base_url = get_address() . dirname($_SERVER['SCRIPT_NAME']);
 $response_url = $base_url . '/response.php';
@@ -24,10 +25,11 @@ $_SESSION['posted'] = $post;
 try {
     if (!empty($_GET['repeat'])) {
         $base_url .= '/repeat.php';
-        $request = WebToPay::buildRepeatRequest($post);
+        $request = WebToPay::buildRepeatRequest(array_merge($post, $config));
     }
     else {
-        $request = WebToPay::buildRequest($post);
+        $request = WebToPay::buildRequest(array_merge($post, $config));
+        save_request_data($request);
     }
 }
 catch (WebToPayException $e) {
@@ -35,17 +37,12 @@ catch (WebToPayException $e) {
     redirect_to($base_url);
 }
 
-save_request_data(array(
-        'request'           => $request,
-        'sign_password'     => $post['sign_password'],
-    ));
-
 $form = array();
 $form['title'] = 'Request form';
 $form['action'] = WebToPay::PAY_URL;
 $form['data'] = $request;
 
 echo template('base.html', array(
-        'content' => template('form-preview.html', $form)
-    ));
+    'content' => template('form-preview.html', $form)
+), false);
 

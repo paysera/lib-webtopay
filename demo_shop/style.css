@@ -1,0 +1,33 @@
+form {
+    margin: 30px;
+}
+h2 {
+    margin-top: 50px;
+}
+h3 {
+    color: #333;
+}
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+    width: 500px;
+}
+label input {
+    width: 300px;
+    float: right;
+}
+label input.radio {
+    width: auto;
+    float: none;
+}
+input[type=submit] {
+    margin: 16px 0;
+    font-weight: bold;
+    font-size: 120%;
+}
+div.error {
+    border: 2px solid #F00;
+    padding: 8px;
+    margin: 16px 0;
+}

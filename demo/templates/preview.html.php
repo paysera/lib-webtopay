@@ -2,7 +2,7 @@
     <legend><?php echo $title; ?></legend>
 
     <?php if (!empty($response_url)): ?>
-    Response URL: 
+    Response URL:
     <a href="<?php echo $response_url; ?>">
         <?php echo substr($response_url, 0, 24).'...'; ?>
     </a>
@@ -14,7 +14,7 @@
     <?php foreach ($meta as $key => $val): ?>
     <label>
         <?php echo $key; ?>
-        <div class="input-preview"><?php echo htmlspecialchars($val); ?></div>
+        <div class="input-preview"><?php echo $val; ?></div>
         <?php endforeach; ?>
         </label>
     <hr />
@@ -24,7 +24,7 @@
     <?php foreach ($data as $key => $val): ?>
     <label>
         <?php echo $key; ?>
-        <div class="input-preview"><?php echo htmlspecialchars($val); ?></div>
+        <div class="input-preview"><?php echo $val; ?></div>
     </label>
     <?php endforeach; ?>
 </fieldset>

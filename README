@@ -1,9 +1,28 @@
 This is WebToPay library package.
 
+Demo
+===============
+
+There are 2 demos available. Both of them needs write permissions to folder /var inside their folder.
+If you want to test them online, also change parameters in includes/config.php file to your project's.
+If you are testing offline, demos will still work, but webtopay.com will be unable to send callback to your site - 
+you can login to your account and copy-and-paste the callback link in your browser in that case.
+
+demo
+    This demo shows how the library works and is mainly for debugging purposes
+demo_shop
+    This demo is a simple example how you can integrate library to your project.
+    It also shows how to get payment methods available for your project and specific amount.
+
 
 Version history
 ===============
 
+Version 1.5     - 2012-02-08
+
+    * added API for getting available payment methods
+    * refactored old example and added another one
+    
 Version 1.5		- 2011-10-13
 
 	* updated SS1 to SS1 v2 (SS1 obsolete and not available in 1.5)
