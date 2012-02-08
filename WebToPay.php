@@ -38,7 +38,7 @@ class WebToPay {
     /**
      * Server URL where we can get XML with payment method data.
      */
-    const XML_URL = 'https://www.mokejimai.lt/new/lt/lib_web_to_pays/api/';
+    const XML_URL = 'https://www.mokejimai.lt/new/api/paymentMethods/';
 
     /**
      * SMS answer url.
@@ -551,54 +551,6 @@ class WebToPay {
     }
 
     /**
-     * Filters saved payment method cache by e-shop's order sum and language
-     *
-     * @param string    $payCurrency
-     * @param int       $sum
-     * @param array     $currency           array ( '0' => array ('iso' => 'USD', 'rate' => 0.417391, ),);
-     * @param string    $lang
-     * @param int       $projectID
-     * @return array    $filtered
-     */
-    public static function getPaymentMethods($payCurrency, $sum, $currency, $lang, $projectID) {
-
-        $filtered    = array();
-        $data        = self::loadXML();
-        $lang        = strtolower($lang);
-
-        //jei xml senesnis nei para
-        if((($data['ts']+3600*24) - time()) < 0 || $data == null) {
-            self::getXML($projectID); //siunciam nauja
-            $data = self::loadXML();  //vel uzloadinam
-        }
-
-        $filtered = self::filterPayMethods($data['data'], $payCurrency, $sum, $currency, $lang);
-
-        return $filtered;
-    }
-
-
-    /**
-     * Downloads xml data from webtopay.com
-     *
-     * @param int       $projectID
-     * @return string
-     */
-    public static function getXML($projectID) {
-        $response = self::getUrlContent(self::XML_URL.$projectID.'/');
-        $feed     = simplexml_load_string($response);
-
-        $feed = simplexml_load_string($response);
-        if($feed === false){
-            return false;
-        } else {
-            self::parseXML($feed);
-            return true;
-        }
-    }
-
-
-    /**
      * Returns payment url
      *
      * @param  string $language
@@ -611,232 +563,6 @@ class WebToPay {
         }
         return $url;
     }
-
-    /**
-     * Loads and unserializes xml data from file
-     *
-     * @return array $data
-     */
-    private static function loadXML() {
-
-        $data   = array();
-
-        if (file_exists(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php')) {
-            $fh     = fopen(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php', 'r');
-            $data   = unserialize(fread($fh,filesize(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php')));
-            fclose($fh);
-            return $data;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Parses xml to array, serializes it and writes it to file CACHE_URL
-     *
-     * @param obj   $xml
-     */
-    public static function parseXML($xml){
-
-        $paydata    = array();
-        $parsed     = array();
-        $language   = array();
-        $logo       = array();
-        $qouta      = array();
-        $title      = array();
-        $cache      = array();
-
-        foreach($xml->country as $country){
-            $countries  = strtolower(trim((string)$country->attributes()));
-            foreach($country->payment_group as $group){
-                $groups = strtolower(trim((string)$group->attributes()));
-                foreach($group->title as $tit => $v){
-                    $language[strtolower(trim((string)$v->attributes()))] = trim((string)$v);
-                }
-                $parsed[$countries][$groups]['translate'] = $language;
-                foreach($group->payment_type as $type) {
-                    $types = strtolower(trim((string)$type->attributes()));
-                    foreach($type as $key => $value) {
-                        if($key === 'logo_url'){
-                            $logo[trim((string)$value->attributes())] = trim((string)$value);
-                        }
-                        if($key === 'title'){
-                            $title[trim((string)$value->attributes())] = trim((string)$value);
-                        }
-                        if($key === 'max' || $key === 'min') {
-                            foreach($value->attributes() as $k => $v){
-                                $qouta[$key.'_amount'] = trim((string)$value->attributes());
-                                $qouta[$key.'_amount_currency'] = trim((string)$v);
-                            }
-                        }
-                        $paydata['logo']    = $logo;
-                        $paydata['title']   = $title;
-                        $paydata['amount']  = $qouta;
-                        $parsed[$countries][$groups][$types] = $paydata;
-                    }
-                    //unset($qouta);
-                    $qouta = null;
-                }
-            }
-        }
-
-        $cache['ts']    = time();
-        $cache['data']  = $parsed;
-
-        if (!is_writable(dirname(__FILE__))) {
-            throw new WebToPayException(self::_('Directory '.dirname(__FILE__).' is not writable.',WebToPayException::E_INVALID));
-        } else {
-            $file   = serialize($cache);
-            $fp     = fopen(dirname(__FILE__).DIRECTORY_SEPARATOR.'cache.php', 'w+') or die('error writing cache');
-            fwrite($fp, $file);
-            fclose($fp);
-        };
-    }
-
-    /**
-     * Converts money amount to e-shops base currency
-     *
-     * @param int       $sum
-     * @param string    $payCurrency
-     * @param string    $convertCurrency
-     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @return int      $amount
-     */
-    private static function toBaseCurrency($sum, $payCurrency, $convertCurrency, $currency){
-        $amount = 0;
-        foreach($currency as $entry) {
-            if($payCurrency == $entry['iso']) {
-                $amount = $sum/$entry['rate']; //turim viska BASE valiuta
-                foreach($currency as $entry) {
-                    if($convertCurrency == $entry['iso']) {
-                        $amount *= $entry['rate'];
-                        return $amount;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-
-    /**
-     * Checks minimum amount of payment method
-     *
-     * @param array     $data
-     * @param int       $sum
-     * @param string    $payCurrency
-     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @return bool
-     */
-    private static function checkMinAmount($data, $sum, $payCurrency, $currency){
-        //jei apribotas min_amount
-        if (array_key_exists('min_amount', $data) && $data['min_amount'] != null) {
-            if ($payCurrency == $data['min_amount_currency']) {//kai sutampa valiutos
-                return ($sum >= $data['min_amount']);
-            } else {
-                //konvertuojam i base
-                $amount = self::toBaseCurrency($sum, $payCurrency, $data['min_amount_currency'], $currency);
-                return ($amount >= $data['min_amount']);
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Checks maximum amount of payment method
-     *
-     * @param array     $data
-     * @param int       $sum
-     * @param string    $payCurrency
-     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @return bool
-     */
-    private static function checkMaxAmount($data, $sum, $payCurrency, $currency){
-        //jei apribotas max_amount
-        if (array_key_exists('max_amount', $data) && $data['max_amount'] != null) {
-            if ($payCurrency == $data['max_amount_currency']) {//kai sutampa valiutos
-                return ($data['max_amount'] >= $sum);
-            } else {
-                //konvertuojam i base
-                $amount = self::toBaseCurrency($sum, $payCurrency, $data['max_amount_currency'], $currency);
-                return ($data['max_amount'] >= $amount);
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Checks maximum amount of payment method
-     *
-     * @param array     $payMethods     - unserialized array with pay method data
-     * @param string    $payCurrency    -
-     * @param int       $sum
-     * @param string    $payCurrency
-     * @param array     $currency           array ( '0' => array ('iso' => USD, 'rate' => 0.417391, ),);
-     * @param string    $lang
-     * @return array
-     */
-    public static function filterPayMethods($payMethods, $payCurrency, $sum, $currency, $lang) {
-
-        $filtered   = array();
-        $groupName  = array();
-        $logo       = null;
-        $name       = null;
-
-        foreach($payMethods as $key1 => $value1) {
-            foreach($value1 as $key2 => $value2){
-                foreach($value2 as $key3 => $value3){
-                    if($key3 === 'translate') {
-                        foreach($value3 as $loc => $text) {
-                            if($loc === 'en'){
-                                $groupName = $text;
-                            }
-                            if($loc === $lang) {
-                                $groupName = $text;
-                                break;
-                            }
-                        }
-                    } else {
-                        foreach($value3 as $key4 => $value4) {
-                            if($key4 === 'logo'){
-                                foreach($value4 as $k => $v) {
-                                    if($k === 'en'){ //statom anglu kalba default jei nerasta vertimu
-                                        $logo = $v;
-                                    }
-                                    if($k === $lang) {
-                                        $logo = $v;
-                                        break;
-                                    }
-                                }
-                            }
-                            if($key4 === 'title'){
-                                foreach($value4 as $k => $v) {
-                                    if($k === 'en'){
-                                        $name = $v;
-                                    }
-                                    if($k === $lang) {
-                                        $name = $v;
-                                        break;
-                                    }
-                                }
-                            }
-                            if($key4 === 'amount'){
-                                $min = self::checkMinAmount($value4, $sum, $payCurrency, $currency);
-                                $max = self::checkMaxAmount($value4, $sum, $payCurrency, $currency);
-                                if($min && $max) { //jei praeina pagal min ir max irasom
-                                    $filtered[$key1][$groupName][$name] = array('name' => $key3,'logo' => $logo);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $filtered;
-    }
-
 
     /**
      * Return type and specification of given response array.
@@ -1142,6 +868,99 @@ class WebToPay {
         }
     }
 
+
+    /**
+     * Gets available payment methods for project. Gets methods min and max amounts in specified currency.
+     *
+     * @param integer $projectId
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodList
+     *
+     * @throws WebToPayException
+     */
+    public static function getPaymentMethodList($projectId, $currency = 'LTL') {
+        if (!function_exists('simplexml_load_string')) {
+            throw new WebToPayException('You have to install libxml to use payment methods API');
+        }
+        $xmlAsString = self::getUrlContent(self::XML_URL . $projectId . '/currency:' . $currency);
+        $useInternalErrors = libxml_use_internal_errors(false);
+        $rootNode = simplexml_load_string($xmlAsString);
+        libxml_clear_errors();
+        libxml_use_internal_errors($useInternalErrors);
+        if (!$rootNode) {
+            throw new WebToPayException('Unable to load XML from remote server');
+        }
+        $methodList = new WebToPay_PaymentMethodList($projectId, $currency);
+        $methodList->fromXmlNode($rootNode);
+        return $methodList;
+    }
+
+    /**
+     * Gets available payment types as array
+     *
+     * @param string    $payCurrency
+     * @param int       $sum
+     * @param array     $currency           Not in use anymore
+     * @param string    $lang
+     * @param int       $projectID
+     *
+     * @return array
+     *
+     * @deprecated      use getPaymentMethodList instead
+     */
+    public static function getPaymentMethods($payCurrency, $sum, $currency, $lang, $projectID) {
+        $result = array();
+
+        $countries = self::getPaymentMethodList($projectID, $payCurrency)
+            ->setDefaultLanguage($lang)
+            ->filterForAmount($sum, $payCurrency)
+            ->getCountries();
+        foreach ($countries as $country) {
+            foreach ($country->getGroups() as $group) {
+                foreach ($group->getPaymentMethods() as $method) {
+                    $result[$country->getCode()][$group->getTitle()][$method->getTitle()] = array(
+                        'name' => $method->getKey(),
+                        'logo' => $method->getLogoUrl(),
+                    );
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Deprecated method. Left to preserve backwards compatibility in current version
+     *
+     * @return boolean
+     *
+     * @deprecated    this method will be removed in future releace
+     */
+    public static function getXML() {
+        return true;
+    }
+
+    /**
+     * Deprecated method. Left to preserve backwards compatibility in current version
+     *
+     * @deprecated    this method will be removed in future releace
+     */
+    public static function parseXML() {
+        // used to write cache file, which is not used anymore
+    }
+
+    /**
+     * Deprecated method. Left to preserve backwards compatibility in current version
+     *
+     * @return array
+     *
+     * @deprecated
+     */
+    public static function filterPayMethods() {
+        return array();
+    }
+
 }
 
 
@@ -1188,6 +1007,16 @@ class WebToPayException extends Exception {
      */
     const E_STATUS = 8;
 
+    /**
+     * Library errors - if this happens, bug-report should be sent; also you can check for newer version
+     */
+    const E_LIBRARY = 9;
+
+    /**
+     * Errors in remote service - it returns some invalid data
+     */
+    const E_SERVICE = 10;
+
     protected $field_name = false;
 
     public function setField($field_name) {
@@ -1198,3 +1027,781 @@ class WebToPayException extends Exception {
         return $this->field_name;
     }
 }
+
+/**
+ * Class with all information about available payment methods for some project, optionally filtered by some amount.
+ */
+class WebToPay_PaymentMethodList {
+    /**
+     * Holds available payment countries
+     *
+     * @var WebToPay_PaymentMethodCountry[]
+     */
+    protected $countries;
+
+    /**
+     * Default language for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Project ID, to which this method list is valid
+     *
+     * @var integer
+     */
+    protected $projectId;
+
+    /**
+     * Currency for min and max amounts in this list
+     *
+     * @var string
+     */
+    protected $currency;
+
+    /**
+     * If this list is filtered for some amount, this field defines it
+     *
+     * @var integer
+     */
+    protected $amount;
+
+    /**
+     * Constructs object
+     *
+     * @param integer $projectId
+     * @param string  $currency              currency for min and max amounts in this list
+     * @param string  $defaultLanguage
+     * @param integer $amount                null if this list is not filtered by amount
+     */
+    public function __construct($projectId, $currency, $defaultLanguage = 'lt', $amount = null) {
+        $this->projectId = $projectId;
+        $this->countries = array();
+        $this->defaultLanguage = $defaultLanguage;
+        $this->currency = $currency;
+        $this->amount = $amount;
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethodList
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        foreach ($this->countries as $country) {
+            $country->setDefaultLanguage($language);
+        }
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Gets project ID for this payment method list
+     *
+     * @return integer
+     */
+    public function getProjectId() {
+        return $this->projectId;
+    }
+
+    /**
+     * Gets currency for min and max amounts in this list
+     *
+     * @return string
+     */
+    public function getCurrency() {
+        return $this->currency;
+    }
+
+    /**
+     * Gets whether this list is already filtered for some amount
+     *
+     * @return boolean
+     */
+    public function isFiltered() {
+        return $this->amount !== null;
+    }
+
+    /**
+     * Returns available countries
+     *
+     * @return WebToPay_PaymentMethodCountry[]
+     */
+    public function getCountries() {
+        return $this->countries;
+    }
+
+    /**
+     * Adds new country to payment methods. If some other country with same code was registered earlier, overwrites it.
+     * Returns added country instance
+     *
+     * @param WebToPay_PaymentMethodCountry $country
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    public function addCountry(WebToPay_PaymentMethodCountry $country) {
+        return $this->countries[$country->getCode()] = $country;
+    }
+
+    /**
+     * Gets country object with specified country code. If no country with such country code is found, returns null.
+     *
+     * @param string $countryCode
+     *
+     * @return null|WebToPay_PaymentMethodCountry
+     */
+    public function getCountry($countryCode) {
+        return isset($this->countries[$countryCode]) ? $this->countries[$countryCode] : null;
+    }
+
+    /**
+     * Returns new payment method list instance with only those payment methods, which are available for provided
+     * amount.
+     * Returns itself, if list is already filtered and filter amount matches the given one.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodList
+     *
+     * @throws WebToPayException    if this list is already filtered and not for provided amount
+     */
+    public function filterForAmount($amount, $currency) {
+        if ($currency !== $this->currency) {
+            throw new WebToPayException(
+                'Currencies do not match. Given currency: ' . $currency . ', currency in list: ' . $this->currency
+            );
+        }
+        if ($this->isFiltered()) {
+            if ($this->amount === $amount) {
+                return $this;
+            } else {
+                throw new WebToPayException('This list is already filtered, use unfiltered list instead');
+            }
+        } else {
+            $list = new WebToPay_PaymentMethodList($this->projectId, $currency, $this->defaultLanguage, $amount);
+            foreach ($this->getCountries() as $country) {
+                $country = $country->filterForAmount($amount, $currency);
+                if (!$country->isEmpty()) {
+                    $list->addCountry($country);
+                }
+            }
+            return $list;
+        }
+    }
+
+    /**
+     * Loads countries from given XML node
+     *
+     * @param SimpleXMLElement $xmlNode
+     */
+    public function fromXmlNode($xmlNode) {
+        foreach ($xmlNode->country as $countryNode) {
+            $titleTranslations = array();
+            foreach ($countryNode->title as $titleNode) {
+                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+            }
+            $this->addCountry($this->createCountry((string) $countryNode->attributes()->code, $titleTranslations))
+                ->fromXmlNode($countryNode);
+        }
+    }
+
+    /**
+     * Method to create new country instances. Overwrite if you have to use some other country subtype.
+     *
+     * @param string $countryCode
+     * @param array  $titleTranslations
+     */
+    protected function createCountry($countryCode, array $titleTranslations = array()) {
+        return new WebToPay_PaymentMethodCountry($countryCode, $titleTranslations, $this->defaultLanguage);
+    }
+}
+
+/**
+ * Payment method configuration for some country
+ */
+class WebToPay_PaymentMethodCountry {
+    /**
+     * @var string
+     */
+    protected $countryCode;
+
+    /**
+     * Holds available payment types for this country
+     *
+     * @var WebToPay_PaymentMethodGroup[]
+     */
+    protected $groups;
+
+    /**
+     * Default language for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Translations array for this country. Holds associative array of country title by language codes.
+     *
+     * @var array
+     */
+    protected $titleTranslations;
+
+    /**
+     * Constructs object
+     *
+     * @param string $countryCode
+     * @param string $defaultLanguage
+     */
+    public function __construct($countryCode, $titleTranslations, $defaultLanguage = 'lt') {
+        $this->countryCode = $countryCode;
+        $this->defaultLanguage = $defaultLanguage;
+        $this->titleTranslations = $titleTranslations;
+        $this->groups = array();
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        foreach ($this->groups as $group) {
+            $group->setDefaultLanguage($language);
+        }
+        return $this;
+    }
+
+    /**
+     * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
+     * specified, uses default language, given to constructor.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
+            return $this->titleTranslations[$languageCode];
+        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
+            return $this->titleTranslations[$this->defaultLanguage];
+        } else {
+            return $this->countryCode;
+        }
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Gets country code
+     *
+     * @return string
+     */
+    public function getCode() {
+        return $this->countryCode;
+    }
+
+    /**
+     * Adds new group to payment methods for this country.
+     * If some other group was registered earlier with same key, overwrites it.
+     * Returns given group
+     *
+     * @param WebToPay_PaymentMethodGroup $group
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function addGroup(WebToPay_PaymentMethodGroup $group) {
+        return $this->groups[$group->getKey()] = $group;
+    }
+
+    /**
+     * Gets group object with specified group key. If no group with such key is found, returns null.
+     *
+     * @param string $groupKey
+     *
+     * @return null|WebToPay_PaymentMethodGroup
+     */
+    public function getGroup($groupKey) {
+        return isset($this->groups[$groupKey]) ? $this->groups[$groupKey] : null;
+    }
+
+    /**
+     * Returns payment method groups registered for this country.
+     *
+     * @return WebToPay_PaymentMethodGroup[]
+     */
+    public function getGroups() {
+        return $this->groups;
+    }
+
+    /**
+     * Gets payment methods in all groups
+     *
+     * @return WebToPay_PaymentMethod[]
+     */
+    public function getPaymentMethods() {
+        $paymentMethods = array();
+        foreach ($this->groups as $group) {
+            $paymentMethods = array_merge($paymentMethods, $group->getPaymentMethods());
+        }
+        return $paymentMethods;
+    }
+
+    /**
+     * Returns new country instance with only those payment methods, which are available for provided amount.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    public function filterForAmount($amount, $currency) {
+        $country = new WebToPay_PaymentMethodCountry($this->countryCode, $this->titleTranslations, $this->defaultLanguage);
+        foreach ($this->getGroups() as $group) {
+            $group = $group->filterForAmount($amount, $currency);
+            if (!$group->isEmpty()) {
+                $country->addGroup($group);
+            }
+        }
+        return $country;
+    }
+
+    /**
+     * Returns whether this country has no groups
+     *
+     * @return boolean
+     */
+    public function isEmpty() {
+        return count($this->groups) === 0;
+    }
+
+    /**
+     * Loads groups from given XML node
+     *
+     * @param SimpleXMLElement $countryNode
+     */
+    public function fromXmlNode($countryNode) {
+        foreach ($countryNode->payment_group as $groupNode) {
+            $key = (string) $groupNode->attributes()->key;
+            $titleTranslations = array();
+            foreach ($groupNode->title as $titleNode) {
+                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+            }
+            $this->addGroup($this->createGroup($key, $titleTranslations))->fromXmlNode($groupNode);
+        }
+    }
+
+    /**
+     * Method to create new group instances. Overwrite if you have to use some other group subtype.
+     *
+     * @param string $groupKey
+     * @param array  $translations
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    protected function createGroup($groupKey, array $translations = array()) {
+        return new WebToPay_PaymentMethodGroup($groupKey, $translations, $this->defaultLanguage);
+    }
+}
+
+/**
+ * Wrapper class to group payment methods. Wach country can have several payment method groups, each of them
+ * have one or more payment methods.
+ */
+class WebToPay_PaymentMethodGroup {
+    /**
+     * Some unique (in the scope of country) key for this group
+     *
+     * @var string
+     */
+    protected $groupKey;
+
+    /**
+     * Translations array for this group. Holds associative array of group title by country codes.
+     *
+     * @var array
+     */
+    protected $translations;
+
+    /**
+     * Holds actual payment methods
+     *
+     * @var WebToPay_PaymentMethod[]
+     */
+    protected $paymentMethods;
+
+    /**
+     * Default language for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Constructs object
+     *
+     * @param string $groupKey
+     * @param array  $translations
+     */
+    public function __construct($groupKey, array $translations = array(), $defaultLanguage = 'lt') {
+        $this->groupKey = $groupKey;
+        $this->translations = $translations;
+        $this->defaultLanguage = $defaultLanguage;
+        $this->paymentMethods = array();
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        foreach ($this->paymentMethods as $paymentMethod) {
+            $paymentMethod->setDefaultLanguage($language);
+        }
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
+     * specified, uses default language, given to constructor.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->translations[$languageCode])) {
+            return $this->translations[$languageCode];
+        } elseif (isset($this->translations[$this->defaultLanguage])) {
+            return $this->translations[$this->defaultLanguage];
+        } else {
+            return $this->groupKey;
+        }
+    }
+
+    /**
+     * Returns group key
+     *
+     * @return string
+     */
+    public function getKey() {
+        return $this->groupKey;
+    }
+
+    /**
+     * Returns available payment methods for this group
+     *
+     * @return WebToPay_PaymentMethod[]
+     */
+    public function getPaymentMethods() {
+        return $this->paymentMethods;
+    }
+
+
+    /**
+     * Adds new payment method for this group.
+     * If some other payment method with specified key was registered earlier, overwrites it.
+     * Returns given payment method
+     *
+     * @param WebToPay_PaymentMethod $paymentMethod
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    public function addPaymentMethod(WebToPay_PaymentMethod $paymentMethod) {
+        return $this->paymentMethods[$paymentMethod->getKey()] = $paymentMethod;
+    }
+
+    /**
+     * Gets payment method object with key. If no payment method with such key is found, returns null.
+     *
+     * @param string $key
+     *
+     * @return null|WebToPay_PaymentMethod
+     */
+    public function getPaymentMethod($key) {
+        return isset($this->paymentMethods[$key]) ? $this->paymentMethods[$key] : null;
+    }
+
+    /**
+     * Returns new group instance with only those payment methods, which are available for provided amount.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function filterForAmount($amount, $currency) {
+        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
+        foreach ($this->getPaymentMethods() as $paymentMethod) {
+            if ($paymentMethod->isAvailableForAmount($amount, $currency)) {
+                $group->addPaymentMethod($paymentMethod);
+            }
+        }
+        return $group;
+    }
+
+    /**
+     * Returns whether this group has no payment methods
+     *
+     * @return boolean
+     */
+    public function isEmpty() {
+        return count($this->paymentMethods) === 0;
+    }
+
+    /**
+     * Loads payment methods from given XML node
+     *
+     * @param SimpleXMLElement $groupNode
+     */
+    public function fromXmlNode($groupNode) {
+        foreach ($groupNode->payment_type as $paymentTypeNode) {
+            $key = (string) $paymentTypeNode->attributes()->key;
+            $titleTranslations = array();
+            foreach ($paymentTypeNode->title as $titleNode) {
+                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+            }
+            $logoTranslations = array();
+            foreach ($paymentTypeNode->logo_url as $logoNode) {
+                if ((string) $logoNode !== '') {
+                    $logoTranslations[(string) $logoNode->attributes()->language] = (string) $logoNode;
+                }
+            }
+            $minAmount = null;
+            $maxAmount = null;
+            $currency = null;
+            if (isset($paymentTypeNode->min)) {
+                $minAmount = (int) $paymentTypeNode->min->attributes()->amount;
+                $currency = (string) $paymentTypeNode->min->attributes()->currency;
+            }
+            if (isset($paymentTypeNode->max)) {
+                $maxAmount = (int) $paymentTypeNode->max->attributes()->amount;
+                $currency = (string) $paymentTypeNode->max->attributes()->currency;
+            }
+            $this->addPaymentMethod($this->createPaymentMethod(
+                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations
+            ));
+        }
+    }
+
+    /**
+     * Method to create new payment method instances. Overwrite if you have to use some other subclass.
+     *
+     * @param string $key
+     * @param array  $logoList
+     * @param array  $titleTranslations
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    protected function createPaymentMethod(
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array()
+    ) {
+        return new WebToPay_PaymentMethod(
+            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage
+        );
+    }
+}
+
+/**
+ * Class to hold information about payment method
+ */
+class WebToPay_PaymentMethod {
+    /**
+     * Assigned key for this payment method
+     *
+     * @var string
+     */
+    protected $key;
+
+    /**
+     * Logo url list by language. Usually logo is same for all languages, but exceptions exist
+     *
+     * @var array
+     */
+    protected $logoList;
+
+    /**
+     * Title list by language
+     *
+     * @var array
+     */
+    protected $titleTranslations;
+
+    /**
+     * Default language to use for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Constructs object
+     *
+     * @param string  $key
+     * @param integer $minAmount
+     * @param integer $maxAmount
+     * @param string  $currency
+     * @param array   $logoList
+     * @param array   $titleTranslations
+     * @param string  $defaultLanguage
+     */
+    public function __construct(
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
+        $defaultLanguage = 'lt'
+    ) {
+        $this->key = $key;
+        $this->minAmount = $minAmount;
+        $this->maxAmount = $maxAmount;
+        $this->currency = $currency;
+        $this->logoList = $logoList;
+        $this->titleTranslations = $titleTranslations;
+        $this->defaultLanguage = $defaultLanguage;
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Get assigned payment method key
+     *
+     * @return string
+     */
+    public function getKey() {
+        return $this->key;
+    }
+
+    /**
+     * Gets logo url for this payment method. Uses specified language or default one.
+     * If logotype is not found for specified language, null is returned.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string|null
+     */
+    public function getLogoUrl($languageCode = null) {
+        if ($languageCode !== null && isset($this->logoList[$languageCode])) {
+            return $this->logoList[$languageCode];
+        } elseif (isset($this->logoList[$this->defaultLanguage])) {
+            return $this->logoList[$this->defaultLanguage];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Gets title for this payment method. Uses specified language or default one.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
+            return $this->titleTranslations[$languageCode];
+        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
+            return $this->titleTranslations[$this->defaultLanguage];
+        } else {
+            return $this->key;
+        }
+    }
+
+    /**
+     * Checks if this payment method can be used for specified amount.
+     * Throws exception if currency checked is not the one, for which payment method list was downloaded.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return boolean
+     *
+     * @throws WebToPayException
+     */
+    public function isAvailableForAmount($amount, $currency) {
+        if ($this->currency !== $currency) {
+            throw new WebToPayException(
+                'Currencies does not match. You have to get payment types for the currency you are checking. Given currency: '
+                    . $currency . ', available currency: ' . $this->currency
+            );
+        }
+        return (
+            ($this->minAmount === null || $amount >= $this->minAmount)
+            && ($this->maxAmount === null || $amount <= $this->maxAmount)
+        );
+    }
+
+    /**
+     * Returns min amount for this payment method. If no min amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMinAmountAsString() {
+        return $this->minAmount === null ? '' : ($this->minAmount . ' ' . $this->currency);
+    }
+
+    /**
+     * Returns max amount for this payment method. If no max amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMaxAmountAsString() {
+        return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
+    }
+}
+

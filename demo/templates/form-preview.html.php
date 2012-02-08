@@ -7,8 +7,8 @@
         <?php foreach ($data as $key => $val): ?>
         <label>
             <?php echo $key; ?>
-            <div class="input-preview"><?php echo htmlspecialchars($val); ?></div>
-            <input type="hidden" name="<?php echo $key ?>" value="<?php echo htmlspecialchars($val); ?>" />
+            <div class="input-preview"><?php echo $val; ?></div>
+            <input type="hidden" name="<?php echo $key ?>" value="<?php echo $val; ?>" />
         </label>
         <?php endforeach; ?>
     </fieldset>

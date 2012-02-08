@@ -1,53 +1,61 @@
 <?php
 
-require_once 'helpers.php';
-require_once('../WebToPay.php');
+require_once 'includes/helpers.php';
+require_once 'includes/config.php';
+require_once '../WebToPay.php';
 
 $answer = isset($_GET['answer']) ? $_GET['answer'] : 'cancel';
 
 if ('sms' == $answer) {
     try {
-        WebToPay::checkResponse($_GET, array(
-                'sign_password' => '526a3c835fc3a39e1369fa7446b3537f',
-                'log' => 'var/mokejimai.log',
-            ));
+        $response = WebToPay::checkResponse($_GET, array(
+            'sign_password' => $config['sign_password'],
+            'log' => 'var/mokejimai.log',
+        ));
+        if ($response['test'] != $config['test']) {
+            throw new Exception('Test value is not as expected');
+        }
 
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
 
-        echo 'OK ok';
+        echo 'OK SMS message text';
     }
     catch (Exception $e) {
         $meta['status'] = get_class($e).': '.$e->getMessage();
         if (WebToPay::$verified) {
             $meta['verified'] = WebToPay::$verified;
         }
-        echo 'FAIL '.WebToPay::$verified;
-        echo '<p>'.$meta['status'].'</p>';
+        echo 'FAIL ' . $meta['status'];
     }
 }
 elseif ('callback' == $answer) {
     $meta = array(
-            'time'      => date('Y-m-d H:i:s'),
-            'verified'  => 'none',
-        );
+        'time'      => date('Y-m-d H:i:s'),
+        'verified'  => 'none',
+    );
 
     try {
         $response = WebToPay::getPrefixed($_GET, WebToPay::PREFIX);
-        $data = load_request_data($response);
+        $data = load_data($response);
         if (false === $data) {
             throw new Exception('Missing requested data.');
         }
 
         $request = $data['request'];
 
-        WebToPay::checkResponse($_GET, array(
-                'projectid'     => $request['projectid'],
-                'orderid'       => $request['orderid'],
-                'amount'        => $request['amount'],
-                'currency'      => $request['currency'],
-                'sign_password' => $data['sign_password'],
-            ));
+        $response = WebToPay::checkResponse($_GET, array(
+            'projectid'     => $config['projectid'],
+            'sign_password' => $config['sign_password'],
+        ));
+        if (
+            $response['test'] != $config['test']
+            || $response['amount'] != $request['amount']        // you should check if amount and currency matches
+            || $response['currency'] != $request['currency']
+            || $response['status'] != 1
+        ) {
+            throw new Exception('Some values are not as expected');
+        }
 
         $meta['status'] = 'OK';
         $meta['verified'] = WebToPay::$verified;
@@ -61,16 +69,16 @@ elseif ('callback' == $answer) {
             $meta['verified'] = WebToPay::$verified;
         }
         save_response_data($response, $meta);
+        echo 'FAIL ' . $meta['status'];
     }
 }
-
 else if ('accept' == $answer) {
     try {
         if (!isset($_SESSION['posted'])) {
             throw new Exception('Session expired.');
         }
 
-        $data = load_request_data($_SESSION['posted']);
+        $data = load_data(array_merge($_SESSION['posted'], $config));
         if (false === $data) {
             throw new Exception('Missing requested data.');
         }
@@ -78,29 +86,27 @@ else if ('accept' == $answer) {
         if (isset($data['response'])) {
             $respurl = array();
             foreach ($data['response'] as $key => $val) {
-                $respurl[] = WebToPay::PREFIX.$key.'='.urlencode($val);
+                $respurl[] = WebToPay::PREFIX. $key . '=' . urlencode($val);
             }
-            $data['response_url'] = '?answer=callback&'.implode('&', $respurl);
+            $data['response_url'] = '?answer=callback&' . implode('&', $respurl);
         }
         else {
             $data['response_url'] = '';
         }
 
         echo template('base.html', array(
-                'content' => template('response.html', $data)
-            ));
+            'content' => template('response.html', $data)
+        ), false);
     }
     catch (Exception $e) {
         echo template('base.html', array(
-                'content' => '<div class="error">'
-                    . htmlspecialchars($e->getMessage()).'</div>',
-            ));
+            'content' => '<div class="error">' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>',
+        ), false);
     }
 }
-
 else {
     echo template('base.html', array(
-            'content' => '<div class="error">Payment rejected.</div>',
-        ));
+        'content' => '<div class="error">Payment rejected.</div>',
+    ), false);
 }
 
