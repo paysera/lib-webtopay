@@ -427,6 +427,9 @@ class WebToPay {
             }
             $_SS2 .= "{$value}|";
         }
+        
+        $response['_ss2'] = str_replace(' ', '+', $response['_ss2']);
+        
         $ok = openssl_verify($_SS2, base64_decode($response['_ss2']), $pKeyP);
 
         if ($ok !== 1) {
