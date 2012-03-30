@@ -18,6 +18,10 @@ demo_shop
 Version history
 ===============
 
+Version 1.6     - 2012-03-28
+
+    * sign modifications
+    
 Version 1.5     - 2012-02-08
 
     * added API for getting available payment methods

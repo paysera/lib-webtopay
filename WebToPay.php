@@ -19,7 +19,7 @@
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.5
+ * @version    1.6
  * @link       http://www.webtopay.com/
  */
 
@@ -28,7 +28,7 @@ class WebToPay {
     /**
      * WebToPay Library version.
      */
-    const VERSION = '1.5';
+    const VERSION = '1.6';
 
     /**
      * Server URL where all requests should go.
@@ -340,7 +340,7 @@ class WebToPay {
         $data = '';
         foreach ($fields as $key) {
             if (isset($request[$key]) && trim($request[$key]) != '') {
-                $data .= $request[$key];
+                $data .= sprintf("%03d", mb_strlen($request[$key], 'UTF-8')) . $request[$key];
             }
         }
         $request['sign'] = md5($data . $password);
