@@ -2,7 +2,7 @@
 
 require_once 'includes/helpers.php';
 require_once 'includes/config.php';
-require_once '../WebToPay.php';
+require_once '../src/includes.php';
 
 $post = removeQuotes($_POST);
 $id = $post['id'];
@@ -20,15 +20,14 @@ $order = array(
     'orderid' => $orderid,
 );
 
-$request = WebToPay::buildRequest(array_merge(
+$data['orderid'] = $orderid;
+$data['orders'][$orderid] = array('item' => $item, 'status' => 'new', 'additionalData' => $post);
+save_data($data);
+
+// this method builds request and sends Location header for redirecting to payment site
+// as an alternative, you can use WebToPay::buildRequest and make auto-post form
+$request = WebToPay::redirectToPayment(array_merge(
     $post,
     $config,
     $order
 ));
-
-$data['orderid'] = $orderid;
-$data['orders'][$orderid] = array('item' => $item, 'status' => 'new', 'additionalData' => $post);
-
-save_data($data);
-
-redirect_to(WebToPay::PAY_URL . '?' . http_build_query($request));

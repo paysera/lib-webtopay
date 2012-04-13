@@ -1,22 +1,64 @@
 This is WebToPay library package.
 
+Requirements
+============
+
+You must have PHP version 5.0 or higher
+
+
+Installing
+==========
+
+Easiest way to use library is to include merged all-in-one file.
+It is located in base libwebtopay directory, "WebToPay.php".
+In this case you only need this one file.
+Example:
+    <?php
+
+    require_once('WebToPay.php');
+
+    // Your code goes here
+    
+    ?>
+
+Alternatively, you can use files in the "src" folder.
+Either set-up autoloader or include file "includes.php" in "src" directory.
+Example:
+    <?php
+
+    require_once('libwebtopay/src/includes.php');
+
+    // Your code goes here
+    
+    ?>
+
+Testing
+=======
+
+    $ cd /path/to/libwebtopay
+    $ phpunit
+
+
 Demo
 ===============
 
-There are 2 demos available. Both of them needs write permissions to folder /var inside their folder.
-If you want to test them online, also change parameters in includes/config.php file to your project's.
+demo_shop is a simple example how you can integrate library to your project.
+It also shows how to get payment methods available for your project and specific amount.
+
+Demo needs write permissions to folder /var to function properly.
+If you want to test demo online, also change parameters in includes/config.php file to your project's.
 If you are testing offline, demos will still work, but webtopay.com will be unable to send callback to your site - 
 you can login to your account and copy-and-paste the callback link in your browser in that case.
-
-demo
-    This demo shows how the library works and is mainly for debugging purposes
-demo_shop
-    This demo is a simple example how you can integrate library to your project.
-    It also shows how to get payment methods available for your project and specific amount.
 
 
 Version history
 ===============
+
+Version 1.6     - 2012-04-12
+
+    * refactored WebToPay class to separate non-static classes
+    * changed request signing and callback processing - now using base64 encoding
+    * removed some public WebToPay methods
 
 Version 1.5     - 2012-02-08
 

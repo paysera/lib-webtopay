@@ -9,4 +9,18 @@
         <li><?php echo h($key), ': ', h($value); ?></li>
     <?php endforeach; ?>
     </ul>
+    <?php if (isset($order['response'])): ?>
+        <strong>Server response: </strong><ul>
+        <?php foreach($order['response'] as $key => $value): ?>
+            <li><?php echo h($key), ': ', h($value); ?></li>
+        <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+    <?php if (isset($order['additionalResponse'])): ?>
+        <strong>Additional server response: </strong><ul>
+        <?php foreach($order['additionalResponse'] as $key => $value): ?>
+            <li><?php echo h($key), ': ', h($value); ?></li>
+        <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 <?php endforeach; ?>
