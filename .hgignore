@@ -17,3 +17,9 @@ syntax: regexp
 \.hgignore$
 syntax: regexp
 ^\.project$
+syntax: regexp
+^demo_shop/var/data\.php$
+syntax: regexp
+^\.buildpath$
+syntax: regexp
+^\.settings$
