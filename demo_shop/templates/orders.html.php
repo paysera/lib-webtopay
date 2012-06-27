@@ -24,3 +24,21 @@
         </ul>
     <?php endif; ?>
 <?php endforeach; ?>
+
+<h1>SMS log</h1>
+<?php foreach ($sms as $data): ?>
+    <strong>Request: </strong><ul>
+    <?php foreach($data['_GET'] as $key => $value): ?>
+        <li><?php echo h($key), ': ', h($value); ?></li>
+    <?php endforeach; ?>
+    </ul>
+    <?php if (is_array($data['parsedData'])): ?>
+    <strong>Data: </strong><ul>
+    <?php foreach($data['parsedData'] as $key => $value): ?>
+        <li><?php echo h($key), ': ', h($value); ?></li>
+    <?php endforeach; ?>
+    </ul>
+    <?php else: ?>
+    <strong>Data: </strong> <?php echo h($data['parsedData']); ?><br />
+    <?php endif; ?>
+<?php endforeach; ?>
