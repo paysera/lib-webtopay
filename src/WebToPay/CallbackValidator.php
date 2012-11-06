@@ -45,7 +45,7 @@ class WebToPay_CallbackValidator {
      */
     public function validateAndParseData(array $requestData) {
         if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters');
+            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
         }
 
         if (!isset($requestData['data'])) {

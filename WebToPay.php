@@ -174,6 +174,7 @@ class WebToPay {
      * @return array
      *
      * @throws WebToPayException
+     * @deprecated use validateAndParseData() and check status code yourself
      */
     public static function checkResponse($query, $userData = array()) {
         $projectId = isset($userData['projectid']) ? $userData['projectid'] : null;
@@ -183,7 +184,7 @@ class WebToPay {
         try {
             $data = self::validateAndParseData($query, $projectId, $password);
             if ($data['type'] == 'macro' && $data['status'] != 1) {
-                throw new WebToPayException('Expected status code 1');
+                throw new WebToPayException('Expected status code 1', WebToPayException::E_DEPRECATED_USAGE);
             }
 
             if ($logFile) {
@@ -192,7 +193,7 @@ class WebToPay {
             return $data;
 
         } catch (WebToPayException $exception) {
-            if ($logFile) {
+        	if ($logFile && $exception->getCode() != WebToPayException::E_DEPRECATED_USAGE) {
                 self::log('ERR', $exception . "\nQuery: " . http_build_query($query), $logFile);
             }
             throw $exception;
@@ -358,6 +359,11 @@ class WebToPayException extends Exception {
      * Errors in remote service - it returns some invalid data
      */
     const E_SERVICE = 10;
+    
+    /**
+     * Deprecated usage errors
+     */
+    const E_DEPRECATED_USAGE = 11;
 
     /**
      * @var string|boolean
@@ -382,172 +388,6 @@ class WebToPayException extends Exception {
         return $this->fieldName;
     }
 }
-
-/**
- * Class to hold information about payment method
- */
-class WebToPay_PaymentMethod {
-    /**
-     * Assigned key for this payment method
-     *
-     * @var string
-     */
-    protected $key;
-
-    /**
-     * Logo url list by language. Usually logo is same for all languages, but exceptions exist
-     *
-     * @var array
-     */
-    protected $logoList;
-
-    /**
-     * Title list by language
-     *
-     * @var array
-     */
-    protected $titleTranslations;
-
-    /**
-     * Default language to use for titles
-     *
-     * @var string
-     */
-    protected $defaultLanguage;
-
-    /**
-     * Constructs object
-     *
-     * @param string  $key
-     * @param integer $minAmount
-     * @param integer $maxAmount
-     * @param string  $currency
-     * @param array   $logoList
-     * @param array   $titleTranslations
-     * @param string  $defaultLanguage
-     */
-    public function __construct(
-        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
-        $defaultLanguage = 'lt'
-    ) {
-        $this->key = $key;
-        $this->minAmount = $minAmount;
-        $this->maxAmount = $maxAmount;
-        $this->currency = $currency;
-        $this->logoList = $logoList;
-        $this->titleTranslations = $titleTranslations;
-        $this->defaultLanguage = $defaultLanguage;
-    }
-
-    /**
-     * Sets default language for titles.
-     * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethod
-     */
-    public function setDefaultLanguage($language) {
-        $this->defaultLanguage = $language;
-        return $this;
-    }
-
-    /**
-     * Gets default language for titles
-     *
-     * @return string
-     */
-    public function getDefaultLanguage() {
-        return $this->defaultLanguage;
-    }
-
-    /**
-     * Get assigned payment method key
-     *
-     * @return string
-     */
-    public function getKey() {
-        return $this->key;
-    }
-
-    /**
-     * Gets logo url for this payment method. Uses specified language or default one.
-     * If logotype is not found for specified language, null is returned.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string|null
-     */
-    public function getLogoUrl($languageCode = null) {
-        if ($languageCode !== null && isset($this->logoList[$languageCode])) {
-            return $this->logoList[$languageCode];
-        } elseif (isset($this->logoList[$this->defaultLanguage])) {
-            return $this->logoList[$this->defaultLanguage];
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets title for this payment method. Uses specified language or default one.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string
-     */
-    public function getTitle($languageCode = null) {
-        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
-            return $this->titleTranslations[$languageCode];
-        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
-            return $this->titleTranslations[$this->defaultLanguage];
-        } else {
-            return $this->key;
-        }
-    }
-
-    /**
-     * Checks if this payment method can be used for specified amount.
-     * Throws exception if currency checked is not the one, for which payment method list was downloaded.
-     *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return boolean
-     *
-     * @throws WebToPayException
-     */
-    public function isAvailableForAmount($amount, $currency) {
-        if ($this->currency !== $currency) {
-            throw new WebToPayException(
-                'Currencies does not match. You have to get payment types for the currency you are checking. Given currency: '
-                    . $currency . ', available currency: ' . $this->currency
-            );
-        }
-        return (
-            ($this->minAmount === null || $amount >= $this->minAmount)
-            && ($this->maxAmount === null || $amount <= $this->maxAmount)
-        );
-    }
-
-    /**
-     * Returns min amount for this payment method. If no min amount is specified, returns empty string.
-     *
-     * @return string
-     */
-    public function getMinAmountAsString() {
-        return $this->minAmount === null ? '' : ($this->minAmount . ' ' . $this->currency);
-    }
-
-    /**
-     * Returns max amount for this payment method. If no max amount is specified, returns empty string.
-     *
-     * @return string
-     */
-    public function getMaxAmountAsString() {
-        return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
-    }
-}
-
 
 /**
  * Class with all information about available payment methods for some project, optionally filtered by some amount.
@@ -752,187 +592,6 @@ class WebToPay_PaymentMethodList {
 }
 
 /**
- * Sends answer to SMS payment if it was not provided with response to callback
- */
-class WebToPay_SmsAnswerSender {
-
-    /**
-     * @var string
-     */
-    protected $password;
-
-    /**
-     * @var WebToPay_WebClient
-     */
-    protected $webClient;
-
-    /**
-     * Constructs object
-     *
-     * @param string             $password
-     * @param WebToPay_WebClient $webClient
-     */
-    public function __construct($password, WebToPay_WebClient $webClient) {
-        $this->password = $password;
-        $this->webClient = $webClient;
-    }
-
-    /**
-     * Sends answer by sms ID get from callback. Answer can be send only if it was not provided
-     * when responding to callback
-     *
-     * @param integer $smsId
-     * @param string  $text
-     *
-     * @throws WebToPayException
-     */
-    public function sendAnswer($smsId, $text) {
-        $content = $this->webClient->get(WebToPay::SMS_ANSWER_URL, array(
-            'id' => $smsId,
-            'msg' => $text,
-            'transaction' => md5($this->password . '|' . $smsId),
-        ));
-        if (strpos($content, 'OK') !== 0) {
-            throw new WebToPayException(
-                sprintf('Error: %s', $content),
-                WebToPayException::E_SMS_ANSWER
-            );
-        }
-    }
-}
-
-
-/**
- * Raised on validation error in passed data when building the request
- */
-class WebToPay_Exception_Validation extends WebToPayException {
-
-    public function __construct($message, $code = null, $field = null, $previousException = null) {
-        parent::__construct($message, $code, $previousException);
-        if ($field) {
-            $this->setField($field);
-        }
-    }
-}
-
-/**
- * Raised if configuration is incorrect
- */
-class WebToPay_Exception_Configuration extends WebToPayException {
-
-}
-
-
-/**
- * Raised on error in callback
- */
-class WebToPay_Exception_Callback extends WebToPayException {
-
-}
-
-/**
- * Parses and validates callbacks
- */
-class WebToPay_CallbackValidator {
-
-    /**
-     * @var WebToPay_Sign_SignCheckerInterface
-     */
-    protected $signer;
-
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util;
-
-    /**
-     * @var integer
-     */
-    protected $projectId;
-
-    /**
-     * Constructs object
-     *
-     * @param integer                            $projectId
-     * @param WebToPay_Sign_SignCheckerInterface $signer
-     * @param WebToPay_Util                      $util
-     */
-    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
-        $this->signer = $signer;
-        $this->util = $util;
-        $this->projectId = $projectId;
-    }
-
-    /**
-     * Parses callback parameters from query parameters and checks if sign is correct.
-     * Request has parameter "data", which is signed and holds all callback parameters
-     *
-     * @param array $requestData
-     *
-     * @return array Parsed callback parameters
-     *
-     * @throws WebToPayException
-     */
-    public function validateAndParseData(array $requestData) {
-        if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters');
-        }
-
-        if (!isset($requestData['data'])) {
-            throw new WebToPay_Exception_Callback('"data" parameter not found');
-        }
-        $data = $requestData['data'];
-
-        $queryString = $this->util->decodeSafeUrlBase64($data);
-        $request = $this->util->parseHttpQuery($queryString);
-
-        if (!isset($request['projectid'])) {
-            throw new WebToPay_Exception_Callback(
-                'Project ID not provided in callback',
-                WebToPayException::E_INVALID
-            );
-        }
-
-        if ((string) $request['projectid'] !== (string) $this->projectId) {
-            throw new WebToPay_Exception_Callback(
-                sprintf('Bad projectid: %s, should be: %s', $request['projectid'], $this->projectId),
-                WebToPayException::E_INVALID
-            );
-        }
-
-        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
-            $micro = (
-                isset($request['to'])
-                && isset($request['from'])
-                && isset($request['sms'])
-            );
-            $request['type'] = $micro ? 'micro' : 'macro';
-        }
-
-        return $request;
-    }
-
-    /**
-     * Checks data to have all the same parameters provided in expected array
-     *
-     * @param array $data
-     * @param array $expected
-     *
-     * @throws WebToPayException
-     */
-    public function checkExpectedFields(array $data, array $expected) {
-        foreach ($expected as $key => $value) {
-            $passedValue = isset($data[$key]) ? $data[$key] : null;
-            if ($passedValue != $value) {
-                throw new WebToPayException(
-                    sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)
-                );
-            }
-        }
-    }
-}
-
-/**
  * Builds and signs requests
  */
 class WebToPay_RequestBuilder {
@@ -1095,305 +754,6 @@ class WebToPay_RequestBuilder {
         );
     }
 }
-
-/**
- * Sign checker which checks SS1 signature. SS1 does not depend on SSL functions
- */
-class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface {
-
-    /**
-     * @var string
-     */
-    protected $projectPassword;
-
-    /**
-     * Constructs object
-     *
-     * @param string $projectPassword
-     */
-    public function __construct($projectPassword) {
-        $this->projectPassword = $projectPassword;
-    }
-
-    /**
-     * Check for SS1, which is not depend on openssl functions.
-     *
-     * @param  array  $response
-     * @param  string $password
-     *
-     * @return boolean
-     *
-     * @throws WebToPay_Exception_Callback
-     */
-    public function checkSign(array $request) {
-        if (!isset($request['data']) || !isset($request['ss1'])) {
-            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
-        }
-
-        return md5($request['data'] . $this->projectPassword) === $request['ss1'];
-    }
-}
-
-/**
- * Interface for sign checker
- */
-interface WebToPay_Sign_SignCheckerInterface {
-
-    /**
-     * Checks whether request is signed properly
-     *
-     * @param array $request
-     *
-     * @return boolean
-     */
-    public function checkSign(array $request);
-}
-
-/**
- * Checks SS2 signature. Depends on SSL functions
- */
-class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface {
-
-    /**
-     * @var string
-     */
-    protected $publicKey;
-
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util;
-
-    /**
-     * Constructs object
-     *
-     * @param string        $publicKey
-     * @param WebToPay_Util $util
-     */
-    public function __construct($publicKey, WebToPay_Util $util) {
-        $this->publicKey = $publicKey;
-        $this->util = $util;
-    }
-
-    /**
-     * Checks signature
-     *
-     * @param array $request
-     *
-     * @return boolean
-     *
-     * @throws WebToPay_Exception_Callback
-     */
-    public function checkSign(array $request) {
-        if (!isset($request['data']) || !isset($request['ss2'])) {
-            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
-        }
-
-        $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
-        $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
-        return $ok === 1;
-    }
-}
-
-/**
- * Creates objects. Also caches to avoid creating several instances of same objects
- */
-class WebToPay_Factory {
-
-    /**
-     * @var array
-     */
-    protected $configuration;
-
-    /**
-     * @var WebToPay_WebClient
-     */
-    protected $webClient = null;
-
-    /**
-     * @var WebToPay_CallbackValidator
-     */
-    protected $callbackValidator = null;
-
-    /**
-     * @var WebToPay_RequestBuilder
-     */
-    protected $requestBuilder = null;
-
-    /**
-     * @var WebToPay_Sign_SignCheckerInterface
-     */
-    protected $signer = null;
-
-    /**
-     * @var WebToPay_SmsAnswerSender
-     */
-    protected $smsAnswerSender = null;
-
-    /**
-     * @var WebToPay_PaymentMethodListProvider
-     */
-    protected $paymentMethodListProvider = null;
-
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util = null;
-
-    /**
-     * Constructs object.
-     * Configuration keys: projectId, password
-     * They are required only when some object being created needs them,
-     *     if they are not found at that moment - exception is thrown
-     *
-     * @param array $configuration
-     */
-    public function __construct(array $configuration = array()) {
-        $this->configuration = $configuration;
-    }
-
-    /**
-     * Creates or gets callback validator instance
-     *
-     * @return WebToPay_CallbackValidator
-     *
-     * @throws WebToPay_Exception_Configuration
-     */
-    public function getCallbackValidator() {
-        if ($this->callbackValidator === null) {
-            if (!isset($this->configuration['projectId'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project ID');
-            }
-            $this->callbackValidator = new WebToPay_CallbackValidator(
-                $this->configuration['projectId'],
-                $this->getSigner(),
-                $this->getUtil()
-            );
-        }
-        return $this->callbackValidator;
-    }
-
-    /**
-     * Creates or gets request builder instance
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_RequestBuilder
-     */
-    public function getRequestBuilder() {
-        if ($this->requestBuilder === null) {
-            if (!isset($this->configuration['password'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
-            }
-            if (!isset($this->configuration['projectId'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project ID');
-            }
-            $this->requestBuilder = new WebToPay_RequestBuilder(
-                $this->configuration['projectId'],
-                $this->configuration['password'],
-                $this->getUtil()
-            );
-        }
-        return $this->requestBuilder;
-    }
-
-    /**
-     * Creates or gets SMS answer sender instance
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_SmsAnswerSender
-     */
-    public function getSmsAnswerSender() {
-        if ($this->smsAnswerSender === null) {
-            if (!isset($this->configuration['password'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project password');
-            }
-            $this->smsAnswerSender = new WebToPay_SmsAnswerSender(
-                $this->configuration['password'],
-                $this->getWebClient()
-            );
-        }
-        return $this->smsAnswerSender;
-    }
-
-    /**
-     * Creates or gets payment list provider instance
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_PaymentMethodListProvider
-     */
-    public function getPaymentMethodListProvider() {
-        if ($this->paymentMethodListProvider === null) {
-            if (!isset($this->configuration['projectId'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project ID');
-            }
-            $this->paymentMethodListProvider = new WebToPay_PaymentMethodListProvider(
-                $this->configuration['projectId'],
-                $this->getWebClient()
-            );
-        }
-        return $this->paymentMethodListProvider;
-    }
-
-    /**
-     * Creates or gets signer instance. Chooses SS2 signer if openssl functions are available, SS1 in other case
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_Sign_SignCheckerInterface
-     */
-    protected function getSigner() {
-        if ($this->signer === null) {
-            if (function_exists('openssl_pkey_get_public')) {
-                $webClient = $this->getWebClient();
-                $publicKey = $webClient->get('http://downloads.webtopay.com/download/public.key');
-                if (!$publicKey) {
-                    throw new WebToPayException('Cannot download public key from WebToPay website');
-                }
-                $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
-            } else {
-                if (!isset($this->configuration['password'])) {
-                    throw new WebToPay_Exception_Configuration(
-                        'You have to provide project password if OpenSSL is unavailable'
-                    );
-                }
-                $this->signer = new WebToPay_Sign_SS1SignChecker($this->configuration['password']);
-            }
-        }
-        return $this->signer;
-    }
-
-    /**
-     * Creates or gets web client instance
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_WebClient
-     */
-    protected function getWebClient() {
-        if ($this->webClient === null) {
-            $this->webClient = new WebToPay_WebClient();
-        }
-        return $this->webClient;
-    }
-
-    /**
-     * Creates or gets util instance
-     *
-     * @throws WebToPay_Exception_Configuration
-     *
-     * @return WebToPay_Util
-     */
-    protected function getUtil() {
-        if ($this->util === null) {
-            $this->util = new WebToPay_Util();
-        }
-        return $this->util;
-    }
-}
-
 
 /**
  * Payment method configuration for some country
@@ -1594,124 +954,221 @@ class WebToPay_PaymentMethodCountry {
 }
 
 /**
- * Utility class
+ * Loads data about payment methods and constructs payment method list object from that data
+ * You need SimpleXML support to use this feature
  */
-class WebToPay_Util {
+class WebToPay_PaymentMethodListProvider {
 
     /**
-     * Decodes url-safe-base64 encoded string
-     * Url-safe-base64 is same as base64, but + is replaced to - and / to _
-     *
-     * @param string $encodedText
-     *
-     * @return string
+     * @var integer
      */
-    public function decodeSafeUrlBase64($encodedText) {
-        return base64_decode(strtr($encodedText, array('-' => '+', '_' => '/')));
-    }
+    protected $projectId;
 
     /**
-     * Encodes string to url-safe-base64
-     * Url-safe-base64 is same as base64, but + is replaced to - and / to _
-     *
-     * @param string $text
-     *
-     * @return string
+     * @var WebToPay_WebClient
      */
-    public function encodeSafeUrlBase64($text) {
-        return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
-    }
+    protected $webClient;
 
     /**
-     * Parses HTTP query to array
+     * Holds constructed method lists by currency
      *
-     * @param string $query
-     *
-     * @return array
+     * @var WebToPay_PaymentMethodList[]
      */
-    public function parseHttpQuery($query) {
-        $params = array();
-        parse_str($query, $params);
-        if (get_magic_quotes_gpc()) {
-            $params = $this->stripSlashesRecursively($params);
+    protected $methodListCache = array();
+
+    /**
+     * Constructs object
+     *
+     * @param integer            $projectId
+     * @param WebToPay_WebClient $webClient
+     *
+     * @throws WebToPayException if SimpleXML is not available
+     */
+    public function __construct($projectId, WebToPay_WebClient $webClient) {
+        $this->projectId = $projectId;
+        $this->webClient = $webClient;
+        if (!function_exists('simplexml_load_string')) {
+            throw new WebToPayException('You have to install libxml to use payment methods API');
         }
-        return $params;
     }
 
     /**
-     * Strips slashes recursively, so this method can be used on arrays with more than one level
+     * Gets payment method list for specified currency
      *
-     * @param mixed $data
+     * @param string $currency
      *
-     * @return mixed
+     * @return WebToPay_PaymentMethodList
+     *
+     * @throws WebToPayException
      */
-    protected function stripSlashesRecursively($data) {
-        if (is_array($data)) {
-            $result = array();
-            foreach ($data as $key => $value) {
-                $result[stripslashes($key)] = $this->stripSlashesRecursively($value);
+    public function getPaymentMethodList($currency) {
+        if (!isset($this->methodListCache[$currency])) {
+            $xmlAsString = $this->webClient->get(WebToPay::XML_URL . $this->projectId . '/currency:' . $currency);
+            $useInternalErrors = libxml_use_internal_errors(false);
+            $rootNode = simplexml_load_string($xmlAsString);
+            libxml_clear_errors();
+            libxml_use_internal_errors($useInternalErrors);
+            if (!$rootNode) {
+                throw new WebToPayException('Unable to load XML from remote server');
             }
-            return $result;
-        } else {
-            return stripslashes($data);
+            $methodList = new WebToPay_PaymentMethodList($this->projectId, $currency);
+            $methodList->fromXmlNode($rootNode);
+            $this->methodListCache[$currency] = $methodList;
         }
+        return $this->methodListCache[$currency];
     }
 }
 
 /**
- * Simple web client
+ * Sends answer to SMS payment if it was not provided with response to callback
  */
-class WebToPay_WebClient {
+class WebToPay_SmsAnswerSender {
 
     /**
-     * Gets page contents by specified URI. Adds query data if provided to the URI
-     * Ignores status code of the response and header fields
+     * @var string
+     */
+    protected $password;
+
+    /**
+     * @var WebToPay_WebClient
+     */
+    protected $webClient;
+
+    /**
+     * Constructs object
      *
-     * @param string $uri
-     * @param array  $queryData
+     * @param string             $password
+     * @param WebToPay_WebClient $webClient
+     */
+    public function __construct($password, WebToPay_WebClient $webClient) {
+        $this->password = $password;
+        $this->webClient = $webClient;
+    }
+
+    /**
+     * Sends answer by sms ID get from callback. Answer can be send only if it was not provided
+     * when responding to callback
      *
-     * @return string
+     * @param integer $smsId
+     * @param string  $text
      *
      * @throws WebToPayException
      */
-    public function get($uri, array $queryData = array()) {
-        if (count($queryData) > 0) {
-            $uri .= strpos($uri, '?') === false ? '?' : '&';
-            $uri .= http_build_query($queryData);
+    public function sendAnswer($smsId, $text) {
+        $content = $this->webClient->get(WebToPay::SMS_ANSWER_URL, array(
+            'id' => $smsId,
+            'msg' => $text,
+            'transaction' => md5($this->password . '|' . $smsId),
+        ));
+        if (strpos($content, 'OK') !== 0) {
+            throw new WebToPayException(
+                sprintf('Error: %s', $content),
+                WebToPayException::E_SMS_ANSWER
+            );
         }
-        $url = parse_url($uri);
-        if ('https' == $url['scheme']) {
-            $host = 'ssl://'.$url['host'];
-            $port = 443;
-        } else {
-            $host = $url['host'];
-            $port = 80;
+    }
+}
+
+
+/**
+ * Parses and validates callbacks
+ */
+class WebToPay_CallbackValidator {
+
+    /**
+     * @var WebToPay_Sign_SignCheckerInterface
+     */
+    protected $signer;
+
+    /**
+     * @var WebToPay_Util
+     */
+    protected $util;
+
+    /**
+     * @var integer
+     */
+    protected $projectId;
+
+    /**
+     * Constructs object
+     *
+     * @param integer                            $projectId
+     * @param WebToPay_Sign_SignCheckerInterface $signer
+     * @param WebToPay_Util                      $util
+     */
+    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
+        $this->signer = $signer;
+        $this->util = $util;
+        $this->projectId = $projectId;
+    }
+
+    /**
+     * Parses callback parameters from query parameters and checks if sign is correct.
+     * Request has parameter "data", which is signed and holds all callback parameters
+     *
+     * @param array $requestData
+     *
+     * @return array Parsed callback parameters
+     *
+     * @throws WebToPayException
+     */
+    public function validateAndParseData(array $requestData) {
+        if (!$this->signer->checkSign($requestData)) {
+            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
         }
 
-        $fp = fsockopen($host, $port, $errno, $errstr, 30);
-        if (!$fp) {
-            throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
+        if (!isset($requestData['data'])) {
+            throw new WebToPay_Exception_Callback('"data" parameter not found');
+        }
+        $data = $requestData['data'];
+
+        $queryString = $this->util->decodeSafeUrlBase64($data);
+        $request = $this->util->parseHttpQuery($queryString);
+
+        if (!isset($request['projectid'])) {
+            throw new WebToPay_Exception_Callback(
+                'Project ID not provided in callback',
+                WebToPayException::E_INVALID
+            );
         }
 
-        if(isset($url['query'])) {
-            $data = $url['path'].'?'.$url['query'];
-        } else {
-            $data = $url['path'];
+        if ((string) $request['projectid'] !== (string) $this->projectId) {
+            throw new WebToPay_Exception_Callback(
+                sprintf('Bad projectid: %s, should be: %s', $request['projectid'], $this->projectId),
+                WebToPayException::E_INVALID
+            );
         }
 
-        $out = "GET " . $data . " HTTP/1.0\r\n";
-        $out .= "Host: ".$url['host']."\r\n";
-        $out .= "Connection: Close\r\n\r\n";
+        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
+            $micro = (
+                isset($request['to'])
+                && isset($request['from'])
+                && isset($request['sms'])
+            );
+            $request['type'] = $micro ? 'micro' : 'macro';
+        }
 
-        $content = '';
+        return $request;
+    }
 
-        fwrite($fp, $out);
-        while (!feof($fp)) $content .= fgets($fp, 8192);
-        fclose($fp);
-
-        list($header, $content) = explode("\r\n\r\n", $content, 2);
-
-        return trim($content);
+    /**
+     * Checks data to have all the same parameters provided in expected array
+     *
+     * @param array $data
+     * @param array $expected
+     *
+     * @throws WebToPayException
+     */
+    public function checkExpectedFields(array $data, array $expected) {
+        foreach ($expected as $key => $value) {
+            $passedValue = isset($data[$key]) ? $data[$key] : null;
+            if ($passedValue != $value) {
+                throw new WebToPayException(
+                    sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)
+                );
+            }
+        }
     }
 }
 
@@ -1928,67 +1385,615 @@ class WebToPay_PaymentMethodGroup {
 }
 
 /**
- * Loads data about payment methods and constructs payment method list object from that data
- * You need SimpleXML support to use this feature
+ * Checks SS2 signature. Depends on SSL functions
  */
-class WebToPay_PaymentMethodListProvider {
+class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface {
 
     /**
-     * @var integer
+     * @var string
      */
-    protected $projectId;
+    protected $publicKey;
 
     /**
-     * @var WebToPay_WebClient
+     * @var WebToPay_Util
      */
-    protected $webClient;
-
-    /**
-     * Holds constructed method lists by currency
-     *
-     * @var WebToPay_PaymentMethodList[]
-     */
-    protected $methodListCache = array();
+    protected $util;
 
     /**
      * Constructs object
      *
-     * @param integer            $projectId
-     * @param WebToPay_WebClient $webClient
-     *
-     * @throws WebToPayException if SimpleXML is not available
+     * @param string        $publicKey
+     * @param WebToPay_Util $util
      */
-    public function __construct($projectId, WebToPay_WebClient $webClient) {
-        $this->projectId = $projectId;
-        $this->webClient = $webClient;
-        if (!function_exists('simplexml_load_string')) {
-            throw new WebToPayException('You have to install libxml to use payment methods API');
+    public function __construct($publicKey, WebToPay_Util $util) {
+        $this->publicKey = $publicKey;
+        $this->util = $util;
+    }
+
+    /**
+     * Checks signature
+     *
+     * @param array $request
+     *
+     * @return boolean
+     *
+     * @throws WebToPay_Exception_Callback
+     */
+    public function checkSign(array $request) {
+        if (!isset($request['data']) || !isset($request['ss2'])) {
+            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
+        }
+
+        $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
+        $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
+        return $ok === 1;
+    }
+}
+
+/**
+ * Sign checker which checks SS1 signature. SS1 does not depend on SSL functions
+ */
+class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface {
+
+    /**
+     * @var string
+     */
+    protected $projectPassword;
+
+    /**
+     * Constructs object
+     *
+     * @param string $projectPassword
+     */
+    public function __construct($projectPassword) {
+        $this->projectPassword = $projectPassword;
+    }
+
+    /**
+     * Check for SS1, which is not depend on openssl functions.
+     *
+     * @param  array  $response
+     * @param  string $password
+     *
+     * @return boolean
+     *
+     * @throws WebToPay_Exception_Callback
+     */
+    public function checkSign(array $request) {
+        if (!isset($request['data']) || !isset($request['ss1'])) {
+            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
+        }
+
+        return md5($request['data'] . $this->projectPassword) === $request['ss1'];
+    }
+}
+
+/**
+ * Interface for sign checker
+ */
+interface WebToPay_Sign_SignCheckerInterface {
+
+    /**
+     * Checks whether request is signed properly
+     *
+     * @param array $request
+     *
+     * @return boolean
+     */
+    public function checkSign(array $request);
+}
+
+/**
+ * Creates objects. Also caches to avoid creating several instances of same objects
+ */
+class WebToPay_Factory {
+
+    /**
+     * @var array
+     */
+    protected $configuration;
+
+    /**
+     * @var WebToPay_WebClient
+     */
+    protected $webClient = null;
+
+    /**
+     * @var WebToPay_CallbackValidator
+     */
+    protected $callbackValidator = null;
+
+    /**
+     * @var WebToPay_RequestBuilder
+     */
+    protected $requestBuilder = null;
+
+    /**
+     * @var WebToPay_Sign_SignCheckerInterface
+     */
+    protected $signer = null;
+
+    /**
+     * @var WebToPay_SmsAnswerSender
+     */
+    protected $smsAnswerSender = null;
+
+    /**
+     * @var WebToPay_PaymentMethodListProvider
+     */
+    protected $paymentMethodListProvider = null;
+
+    /**
+     * @var WebToPay_Util
+     */
+    protected $util = null;
+
+    /**
+     * Constructs object.
+     * Configuration keys: projectId, password
+     * They are required only when some object being created needs them,
+     *     if they are not found at that moment - exception is thrown
+     *
+     * @param array $configuration
+     */
+    public function __construct(array $configuration = array()) {
+        $this->configuration = $configuration;
+    }
+
+    /**
+     * Creates or gets callback validator instance
+     *
+     * @return WebToPay_CallbackValidator
+     *
+     * @throws WebToPay_Exception_Configuration
+     */
+    public function getCallbackValidator() {
+        if ($this->callbackValidator === null) {
+            if (!isset($this->configuration['projectId'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project ID');
+            }
+            $this->callbackValidator = new WebToPay_CallbackValidator(
+                $this->configuration['projectId'],
+                $this->getSigner(),
+                $this->getUtil()
+            );
+        }
+        return $this->callbackValidator;
+    }
+
+    /**
+     * Creates or gets request builder instance
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_RequestBuilder
+     */
+    public function getRequestBuilder() {
+        if ($this->requestBuilder === null) {
+            if (!isset($this->configuration['password'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
+            }
+            if (!isset($this->configuration['projectId'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project ID');
+            }
+            $this->requestBuilder = new WebToPay_RequestBuilder(
+                $this->configuration['projectId'],
+                $this->configuration['password'],
+                $this->getUtil()
+            );
+        }
+        return $this->requestBuilder;
+    }
+
+    /**
+     * Creates or gets SMS answer sender instance
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_SmsAnswerSender
+     */
+    public function getSmsAnswerSender() {
+        if ($this->smsAnswerSender === null) {
+            if (!isset($this->configuration['password'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project password');
+            }
+            $this->smsAnswerSender = new WebToPay_SmsAnswerSender(
+                $this->configuration['password'],
+                $this->getWebClient()
+            );
+        }
+        return $this->smsAnswerSender;
+    }
+
+    /**
+     * Creates or gets payment list provider instance
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_PaymentMethodListProvider
+     */
+    public function getPaymentMethodListProvider() {
+        if ($this->paymentMethodListProvider === null) {
+            if (!isset($this->configuration['projectId'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project ID');
+            }
+            $this->paymentMethodListProvider = new WebToPay_PaymentMethodListProvider(
+                $this->configuration['projectId'],
+                $this->getWebClient()
+            );
+        }
+        return $this->paymentMethodListProvider;
+    }
+
+    /**
+     * Creates or gets signer instance. Chooses SS2 signer if openssl functions are available, SS1 in other case
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_Sign_SignCheckerInterface
+     */
+    protected function getSigner() {
+        if ($this->signer === null) {
+            if (function_exists('openssl_pkey_get_public')) {
+                $webClient = $this->getWebClient();
+                $publicKey = $webClient->get('http://downloads.webtopay.com/download/public.key');
+                if (!$publicKey) {
+                    throw new WebToPayException('Cannot download public key from WebToPay website');
+                }
+                $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
+            } else {
+                if (!isset($this->configuration['password'])) {
+                    throw new WebToPay_Exception_Configuration(
+                        'You have to provide project password if OpenSSL is unavailable'
+                    );
+                }
+                $this->signer = new WebToPay_Sign_SS1SignChecker($this->configuration['password']);
+            }
+        }
+        return $this->signer;
+    }
+
+    /**
+     * Creates or gets web client instance
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_WebClient
+     */
+    protected function getWebClient() {
+        if ($this->webClient === null) {
+            $this->webClient = new WebToPay_WebClient();
+        }
+        return $this->webClient;
+    }
+
+    /**
+     * Creates or gets util instance
+     *
+     * @throws WebToPay_Exception_Configuration
+     *
+     * @return WebToPay_Util
+     */
+    protected function getUtil() {
+        if ($this->util === null) {
+            $this->util = new WebToPay_Util();
+        }
+        return $this->util;
+    }
+}
+
+
+/**
+ * Utility class
+ */
+class WebToPay_Util {
+
+    /**
+     * Decodes url-safe-base64 encoded string
+     * Url-safe-base64 is same as base64, but + is replaced to - and / to _
+     *
+     * @param string $encodedText
+     *
+     * @return string
+     */
+    public function decodeSafeUrlBase64($encodedText) {
+        return base64_decode(strtr($encodedText, array('-' => '+', '_' => '/')));
+    }
+
+    /**
+     * Encodes string to url-safe-base64
+     * Url-safe-base64 is same as base64, but + is replaced to - and / to _
+     *
+     * @param string $text
+     *
+     * @return string
+     */
+    public function encodeSafeUrlBase64($text) {
+        return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
+    }
+
+    /**
+     * Parses HTTP query to array
+     *
+     * @param string $query
+     *
+     * @return array
+     */
+    public function parseHttpQuery($query) {
+        $params = array();
+        parse_str($query, $params);
+        if (get_magic_quotes_gpc()) {
+            $params = $this->stripSlashesRecursively($params);
+        }
+        return $params;
+    }
+
+    /**
+     * Strips slashes recursively, so this method can be used on arrays with more than one level
+     *
+     * @param mixed $data
+     *
+     * @return mixed
+     */
+    protected function stripSlashesRecursively($data) {
+        if (is_array($data)) {
+            $result = array();
+            foreach ($data as $key => $value) {
+                $result[stripslashes($key)] = $this->stripSlashesRecursively($value);
+            }
+            return $result;
+        } else {
+            return stripslashes($data);
+        }
+    }
+}
+
+/**
+ * Raised on error in callback
+ */
+class WebToPay_Exception_Callback extends WebToPayException {
+
+}
+
+/**
+ * Raised on validation error in passed data when building the request
+ */
+class WebToPay_Exception_Validation extends WebToPayException {
+
+    public function __construct($message, $code = null, $field = null, $previousException = null) {
+        parent::__construct($message, $code, $previousException);
+        if ($field) {
+            $this->setField($field);
+        }
+    }
+}
+
+/**
+ * Raised if configuration is incorrect
+ */
+class WebToPay_Exception_Configuration extends WebToPayException {
+
+}
+
+
+/**
+ * Simple web client
+ */
+class WebToPay_WebClient {
+
+    /**
+     * Gets page contents by specified URI. Adds query data if provided to the URI
+     * Ignores status code of the response and header fields
+     *
+     * @param string $uri
+     * @param array  $queryData
+     *
+     * @return string
+     *
+     * @throws WebToPayException
+     */
+    public function get($uri, array $queryData = array()) {
+        if (count($queryData) > 0) {
+            $uri .= strpos($uri, '?') === false ? '?' : '&';
+            $uri .= http_build_query($queryData);
+        }
+        $url = parse_url($uri);
+        if ('https' == $url['scheme']) {
+            $host = 'ssl://'.$url['host'];
+            $port = 443;
+        } else {
+            $host = $url['host'];
+            $port = 80;
+        }
+
+        $fp = fsockopen($host, $port, $errno, $errstr, 30);
+        if (!$fp) {
+            throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
+        }
+
+        if(isset($url['query'])) {
+            $data = $url['path'].'?'.$url['query'];
+        } else {
+            $data = $url['path'];
+        }
+
+        $out = "GET " . $data . " HTTP/1.0\r\n";
+        $out .= "Host: ".$url['host']."\r\n";
+        $out .= "Connection: Close\r\n\r\n";
+
+        $content = '';
+
+        fwrite($fp, $out);
+        while (!feof($fp)) $content .= fgets($fp, 8192);
+        fclose($fp);
+
+        list($header, $content) = explode("\r\n\r\n", $content, 2);
+
+        return trim($content);
+    }
+}
+
+/**
+ * Class to hold information about payment method
+ */
+class WebToPay_PaymentMethod {
+    /**
+     * Assigned key for this payment method
+     *
+     * @var string
+     */
+    protected $key;
+
+    /**
+     * Logo url list by language. Usually logo is same for all languages, but exceptions exist
+     *
+     * @var array
+     */
+    protected $logoList;
+
+    /**
+     * Title list by language
+     *
+     * @var array
+     */
+    protected $titleTranslations;
+
+    /**
+     * Default language to use for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Constructs object
+     *
+     * @param string  $key
+     * @param integer $minAmount
+     * @param integer $maxAmount
+     * @param string  $currency
+     * @param array   $logoList
+     * @param array   $titleTranslations
+     * @param string  $defaultLanguage
+     */
+    public function __construct(
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
+        $defaultLanguage = 'lt'
+    ) {
+        $this->key = $key;
+        $this->minAmount = $minAmount;
+        $this->maxAmount = $maxAmount;
+        $this->currency = $currency;
+        $this->logoList = $logoList;
+        $this->titleTranslations = $titleTranslations;
+        $this->defaultLanguage = $defaultLanguage;
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Get assigned payment method key
+     *
+     * @return string
+     */
+    public function getKey() {
+        return $this->key;
+    }
+
+    /**
+     * Gets logo url for this payment method. Uses specified language or default one.
+     * If logotype is not found for specified language, null is returned.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string|null
+     */
+    public function getLogoUrl($languageCode = null) {
+        if ($languageCode !== null && isset($this->logoList[$languageCode])) {
+            return $this->logoList[$languageCode];
+        } elseif (isset($this->logoList[$this->defaultLanguage])) {
+            return $this->logoList[$this->defaultLanguage];
+        } else {
+            return null;
         }
     }
 
     /**
-     * Gets payment method list for specified currency
+     * Gets title for this payment method. Uses specified language or default one.
      *
-     * @param string $currency
+     * @param string [Optional] $languageCode
      *
-     * @return WebToPay_PaymentMethodList
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
+            return $this->titleTranslations[$languageCode];
+        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
+            return $this->titleTranslations[$this->defaultLanguage];
+        } else {
+            return $this->key;
+        }
+    }
+
+    /**
+     * Checks if this payment method can be used for specified amount.
+     * Throws exception if currency checked is not the one, for which payment method list was downloaded.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return boolean
      *
      * @throws WebToPayException
      */
-    public function getPaymentMethodList($currency) {
-        if (!isset($this->methodListCache[$currency])) {
-            $xmlAsString = $this->webClient->get(WebToPay::XML_URL . $this->projectId . '/currency:' . $currency);
-            $useInternalErrors = libxml_use_internal_errors(false);
-            $rootNode = simplexml_load_string($xmlAsString);
-            libxml_clear_errors();
-            libxml_use_internal_errors($useInternalErrors);
-            if (!$rootNode) {
-                throw new WebToPayException('Unable to load XML from remote server');
-            }
-            $methodList = new WebToPay_PaymentMethodList($this->projectId, $currency);
-            $methodList->fromXmlNode($rootNode);
-            $this->methodListCache[$currency] = $methodList;
+    public function isAvailableForAmount($amount, $currency) {
+        if ($this->currency !== $currency) {
+            throw new WebToPayException(
+                'Currencies does not match. You have to get payment types for the currency you are checking. Given currency: '
+                    . $currency . ', available currency: ' . $this->currency
+            );
         }
-        return $this->methodListCache[$currency];
+        return (
+            ($this->minAmount === null || $amount >= $this->minAmount)
+            && ($this->maxAmount === null || $amount <= $this->maxAmount)
+        );
+    }
+
+    /**
+     * Returns min amount for this payment method. If no min amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMinAmountAsString() {
+        return $this->minAmount === null ? '' : ($this->minAmount . ' ' . $this->currency);
+    }
+
+    /**
+     * Returns max amount for this payment method. If no max amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMaxAmountAsString() {
+        return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
     }
 }

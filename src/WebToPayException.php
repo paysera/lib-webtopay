@@ -54,6 +54,11 @@ class WebToPayException extends Exception {
      * Errors in remote service - it returns some invalid data
      */
     const E_SERVICE = 10;
+    
+    /**
+     * Deprecated usage errors
+     */
+    const E_DEPRECATED_USAGE = 11;
 
     /**
      * @var string|boolean
