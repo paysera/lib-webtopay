@@ -171,6 +171,7 @@ class WebToPay {
      * @return array
      *
      * @throws WebToPayException
+     * @deprecated use validateAndParseData() and check status code yourself
      */
     public static function checkResponse($query, $userData = array()) {
         $projectId = isset($userData['projectid']) ? $userData['projectid'] : null;
@@ -180,7 +181,7 @@ class WebToPay {
         try {
             $data = self::validateAndParseData($query, $projectId, $password);
             if ($data['type'] == 'macro' && $data['status'] != 1) {
-                throw new WebToPayException('Expected status code 1');
+                throw new WebToPayException('Expected status code 1', WebToPayException::E_DEPRECATED_USAGE);
             }
 
             if ($logFile) {
@@ -189,7 +190,7 @@ class WebToPay {
             return $data;
 
         } catch (WebToPayException $exception) {
-            if ($logFile) {
+        	if ($logFile && $exception->getCode() != WebToPayException::E_DEPRECATED_USAGE) {
                 self::log('ERR', $exception . "\nQuery: " . http_build_query($query), $logFile);
             }
             throw $exception;
