@@ -148,6 +148,8 @@ class WebToPay_Factory {
      * @throws WebToPay_Exception_Configuration
      *
      * @return WebToPay_Sign_SignCheckerInterface
+     *
+     * @throws WebToPayException
      */
     protected function getSigner() {
         if ($this->signer === null) {

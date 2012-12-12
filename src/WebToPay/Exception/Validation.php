@@ -5,7 +5,7 @@
  */
 class WebToPay_Exception_Validation extends WebToPayException {
 
-    public function __construct($message, $code = null, $field = null, $previousException = null) {
+    public function __construct($message, $code = 0, $field = null, Exception $previousException = null) {
         parent::__construct($message, $code, $previousException);
         if ($field) {
             $this->setField($field);

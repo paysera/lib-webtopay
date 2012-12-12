@@ -59,7 +59,7 @@ class WebToPay_RequestBuilder {
      * This method checks all given data and generates correct request data
      * array or raises WebToPayException on failure.
      *
-     * @param  array $data information about current repeated payment request
+     * @param string $orderId order id of repeated request
      *
      * @return array
      *
@@ -76,7 +76,8 @@ class WebToPay_RequestBuilder {
     /**
      * Checks data to be valid by passed specification
      *
-     * @param  array $data
+     * @param array $data
+     * @param array $specs
      *
      * @throws WebToPay_Exception_Validation
      */

@@ -38,6 +38,7 @@ class WebToPay_PaymentMethodGroup {
      *
      * @param string $groupKey
      * @param array  $translations
+     * @param string $defaultLanguage
      */
     public function __construct($groupKey, array $translations = array(), $defaultLanguage = 'lt') {
         $this->groupKey = $groupKey;
@@ -197,9 +198,12 @@ class WebToPay_PaymentMethodGroup {
     /**
      * Method to create new payment method instances. Overwrite if you have to use some other subclass.
      *
-     * @param string $key
-     * @param array  $logoList
-     * @param array  $titleTranslations
+     * @param string  $key
+     * @param integer $minAmount
+     * @param integer $maxAmount
+     * @param string  $currency
+     * @param array   $logoList
+     * @param array   $titleTranslations
      *
      * @return WebToPay_PaymentMethod
      */

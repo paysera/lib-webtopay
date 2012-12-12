@@ -196,6 +196,8 @@ class WebToPay_PaymentMethodList {
      *
      * @param string $countryCode
      * @param array  $titleTranslations
+     *
+     * @return WebToPay_PaymentMethodCountry
      */
     protected function createCountry($countryCode, array $titleTranslations = array()) {
         return new WebToPay_PaymentMethodCountry($countryCode, $titleTranslations, $this->defaultLanguage);

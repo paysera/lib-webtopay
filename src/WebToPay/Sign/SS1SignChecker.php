@@ -22,8 +22,7 @@ class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface
     /**
      * Check for SS1, which is not depend on openssl functions.
      *
-     * @param  array  $response
-     * @param  string $password
+     * @param array $request
      *
      * @return boolean
      *

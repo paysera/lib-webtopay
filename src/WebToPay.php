@@ -165,7 +165,7 @@ class WebToPay {
      *
      * If response is not correct, WebToPayException will be raised.
      *
-     * @param array $response Response array
+     * @param array $query    Response array
      * @param array $userData
      *
      * @return array
@@ -221,6 +221,7 @@ class WebToPay {
      * @param array $userData
      *
      * @throws WebToPayException
+     * @throws WebToPay_Exception_Validation
      */
     public static function smsAnswer($userData) {
         if (!isset($userData['id']) || !isset($userData['msg']) || !isset($userData['sign_password'])) {
@@ -276,7 +277,7 @@ class WebToPay {
     protected static function log($type, $msg, $logfile) {
         $fp = @fopen($logfile, 'a');
         if (!$fp) {
-            return false;
+            return;
         }
 
         $logline = array(

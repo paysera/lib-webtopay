@@ -26,7 +26,7 @@ save_data($data);
 
 // this method builds request and sends Location header for redirecting to payment site
 // as an alternative, you can use WebToPay::buildRequest and make auto-post form
-$request = WebToPay::redirectToPayment(array_merge(
+WebToPay::redirectToPayment(array_merge(
     $post,
     $config,
     $order

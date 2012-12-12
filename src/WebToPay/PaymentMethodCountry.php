@@ -34,6 +34,7 @@ class WebToPay_PaymentMethodCountry {
      * Constructs object
      *
      * @param string $countryCode
+     * @param array  $titleTranslations
      * @param string $defaultLanguage
      */
     public function __construct($countryCode, $titleTranslations, $defaultLanguage = 'lt') {

@@ -42,6 +42,7 @@ class WebToPay_CallbackValidator {
      * @return array Parsed callback parameters
      *
      * @throws WebToPayException
+     * @throws WebToPay_Exception_Callback
      */
     public function validateAndParseData(array $requestData) {
         if (!$this->signer->checkSign($requestData)) {
