@@ -1,0 +1,15 @@
+{
+    "name": "webtopay/libwebtopay",
+    "description": "PHP Library for WebToPay provided services",
+    "version": "1.6",
+    "license": "LGPL-3.0",
+    "authors": [
+        {
+            "name": "EVP International",
+            "homepage": "http://www.webtopay.com/"
+        }
+    ],
+    "autoload": {
+        "classmap": ["src/"]
+    }
+}
