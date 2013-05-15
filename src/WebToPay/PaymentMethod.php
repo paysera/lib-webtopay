@@ -33,6 +33,16 @@ class WebToPay_PaymentMethod {
     protected $defaultLanguage;
 
     /**
+     * @var boolean
+     */
+    protected $isIban;
+
+    /**
+     * @var string
+     */
+    protected $baseCurrency;
+
+    /**
      * Constructs object
      *
      * @param string  $key
@@ -42,10 +52,12 @@ class WebToPay_PaymentMethod {
      * @param array   $logoList
      * @param array   $titleTranslations
      * @param string  $defaultLanguage
+     * @param bool    $isIban
+     * @param string  $baseCurrency
      */
     public function __construct(
         $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
-        $defaultLanguage = 'lt'
+        $defaultLanguage = 'lt', $isIban = false, $baseCurrency = null
     ) {
         $this->key = $key;
         $this->minAmount = $minAmount;
@@ -54,6 +66,8 @@ class WebToPay_PaymentMethod {
         $this->logoList = $logoList;
         $this->titleTranslations = $titleTranslations;
         $this->defaultLanguage = $defaultLanguage;
+        $this->isIban = $isIban;
+        $this->baseCurrency = $baseCurrency;
     }
 
     /**
@@ -162,5 +176,43 @@ class WebToPay_PaymentMethod {
      */
     public function getMaxAmountAsString() {
         return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
+    }
+
+    /**
+     * Set if this method returns IBAN number after payment
+     *
+     * @param boolean $isIban
+     */
+    public function setIsIban($isIban) {
+        $this->isIban = $isIban == 1;
+    }
+
+    /**
+     * Get if this method returns IBAN number after payment
+     *
+     * @return bool
+     */
+    public function isIban() {
+        return $this->isIban;
+    }
+
+    /**
+     * Setter of BaseCurrency
+     *
+     * @param string $baseCurrency
+     */
+    public function setBaseCurrency($baseCurrency)
+    {
+        $this->baseCurrency = $baseCurrency;
+    }
+
+    /**
+     * Getter of BaseCurrency
+     *
+     * @return string
+     */
+    public function getBaseCurrency()
+    {
+        return $this->baseCurrency;
     }
 }
