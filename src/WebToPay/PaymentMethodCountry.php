@@ -162,6 +162,24 @@ class WebToPay_PaymentMethodCountry {
     }
 
     /**
+     * Returns new country instance with only those payment methods, which are returns or not iban number after payment
+     *
+     * @param boolean $isIban
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    public function filterForIban($isIban = true) {
+        $country = new WebToPay_PaymentMethodCountry($this->countryCode, $this->titleTranslations, $this->defaultLanguage);
+        foreach ($this->getGroups() as $group) {
+            $group = $group->filterForIban($isIban);
+            if (!$group->isEmpty()) {
+                $country->addGroup($group);
+            }
+        }
+        return $country;
+    }
+
+    /**
      * Returns whether this country has no groups
      *
      * @return boolean

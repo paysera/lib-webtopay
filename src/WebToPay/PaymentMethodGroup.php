@@ -152,6 +152,23 @@ class WebToPay_PaymentMethodGroup {
     }
 
     /**
+     * Returns new country instance with only those payment methods, which are returns or not iban number after payment
+     *
+     * @param boolean $isIban
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function filterForIban($isIban = true) {
+        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
+        foreach ($this->getPaymentMethods() as $paymentMethod) {
+            if ($paymentMethod->isIban() == $isIban) {
+                $group->addPaymentMethod($paymentMethod);
+            }
+        }
+        return $group;
+    }
+
+    /**
      * Returns whether this group has no payment methods
      *
      * @return boolean
@@ -181,6 +198,8 @@ class WebToPay_PaymentMethodGroup {
             $minAmount = null;
             $maxAmount = null;
             $currency = null;
+            $isIban = false;
+            $baseCurrency = null;
             if (isset($paymentTypeNode->min)) {
                 $minAmount = (int) $paymentTypeNode->min->attributes()->amount;
                 $currency = (string) $paymentTypeNode->min->attributes()->currency;
@@ -189,8 +208,15 @@ class WebToPay_PaymentMethodGroup {
                 $maxAmount = (int) $paymentTypeNode->max->attributes()->amount;
                 $currency = (string) $paymentTypeNode->max->attributes()->currency;
             }
+
+            if (isset($paymentTypeNode->is_iban)) {
+                $isIban = (int) $paymentTypeNode->is_iban;
+            }
+            if (isset($paymentTypeNode->base_currency)) {
+                $baseCurrency = (string) $paymentTypeNode->base_currency;
+            }
             $this->addPaymentMethod($this->createPaymentMethod(
-                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations
+                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations, $isIban, $baseCurrency
             ));
         }
     }
@@ -198,20 +224,24 @@ class WebToPay_PaymentMethodGroup {
     /**
      * Method to create new payment method instances. Overwrite if you have to use some other subclass.
      *
-     * @param string  $key
+     * @param string $key
      * @param integer $minAmount
      * @param integer $maxAmount
-     * @param string  $currency
-     * @param array   $logoList
-     * @param array   $titleTranslations
+     * @param string $currency
+     * @param array $logoList
+     * @param array $titleTranslations
+     * @param bool $isIban
+     * @param null $baseCurrency
      *
      * @return WebToPay_PaymentMethod
      */
     protected function createPaymentMethod(
-        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array()
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
+        $isIban = false, $baseCurrency = null
     ) {
         return new WebToPay_PaymentMethod(
-            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage
+            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage,
+            $isIban, $baseCurrency
         );
     }
 }
