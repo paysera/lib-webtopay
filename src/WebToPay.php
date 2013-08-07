@@ -38,6 +38,11 @@ class WebToPay {
      * Server URL where all requests should go.
      */
     const PAY_URL = 'https://www.mokejimai.lt/pay/';
+    
+    /**
+     * Server URL where all non-lithuanian language requests should go.
+     */
+    const PAYSERA_PAY_URL = 'https://www.paysera.com/pay/';
 
     /**
      * Server URL where we can get XML with payment method data.
@@ -92,7 +97,8 @@ class WebToPay {
      */
     public static function redirectToPayment($data, $exit = false) {
         $request = self::buildRequest($data);
-        $url = self::PAY_URL . '?' . http_build_query($request);
+        $payUrl = (isset($data['lang'])) ? self::getPaymentUrl($data['lang']) : self::PAY_URL;
+        $url = $payUrl . '?' . http_build_query($request);
         $url = preg_replace('/[\r\n]+/is', '', $url);
         if (headers_sent()) {
             echo '<script type="text/javascript">window.location = "' . addslashes($url) . '";</script>';
@@ -145,11 +151,9 @@ class WebToPay {
      * @return string $url
      */
     public static function getPaymentUrl($language = 'LIT') {
-        $url = self::PAY_URL;
-        if ($language != 'LIT') {
-            $url = str_replace('mokejimai.lt', 'webtopay.com', $url);
-        }
-        return $url;
+       return (in_array($language, array('lt', 'lit', 'LIT')))
+           ? self::PAY_URL
+           : self::PAYSERA_PAY_URL;
     }
 
     /**
