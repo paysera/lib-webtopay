@@ -16,14 +16,25 @@ class WebToPay_SmsAnswerSender {
     protected $webClient;
 
     /**
+     * @var WebToPay_UrlBuilder $urlBuilder
+     */
+    protected $urlBuilder;
+
+    /**
      * Constructs object
      *
      * @param string             $password
      * @param WebToPay_WebClient $webClient
+     * @param WebToPay_UrlBuilder $urlBuilder
      */
-    public function __construct($password, WebToPay_WebClient $webClient) {
+    public function __construct(
+        $password,
+        WebToPay_WebClient $webClient,
+        WebToPay_UrlBuilder $urlBuilder
+    ) {
         $this->password = $password;
         $this->webClient = $webClient;
+        $this->urlBuilder = $urlBuilder;
     }
 
     /**
@@ -36,7 +47,7 @@ class WebToPay_SmsAnswerSender {
      * @throws WebToPayException
      */
     public function sendAnswer($smsId, $text) {
-        $content = $this->webClient->get(WebToPay::SMS_ANSWER_URL, array(
+        $content = $this->webClient->get($this->urlBuilder->buildForSmsAnswer(), array(
             'id' => $smsId,
             'msg' => $text,
             'transaction' => md5($this->password . '|' . $smsId),

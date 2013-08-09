@@ -20,17 +20,31 @@ class WebToPay_RequestBuilder {
      */
     protected $projectId;
 
+
+    /**
+     * @var WebToPay_UrlBuilder $urlBuilder
+     */
+    protected $urlBuilder;
+
     /**
      * Constructs object
      *
      * @param integer       $projectId
      * @param string        $projectPassword
      * @param WebToPay_Util $util
+     * @param WebToPay_UrlBuilder $urlBuilder
      */
-    public function __construct($projectId, $projectPassword, WebToPay_Util $util) {
+    public function __construct(
+        $projectId,
+        $projectPassword,
+        WebToPay_Util $util,
+        WebToPay_UrlBuilder $urlBuilder
+    )
+    {
         $this->projectId = $projectId;
         $this->projectPassword = $projectPassword;
         $this->util = $util;
+        $this->urlBuilder = $urlBuilder;
     }
 
     /**
@@ -54,6 +68,18 @@ class WebToPay_RequestBuilder {
     }
 
     /**
+     * Builds the full request url (including the protocol and the domain)
+     *
+     * @param array $data
+     * @return string
+     */
+    public function buildRequestUrlFromData($data) {
+        $language = isset($data['lang']) ? $data['lang'] : null;
+        $request = $this->buildRequest($data);
+        return $this->urlBuilder->buildForRequest($request, $language);
+    }
+
+    /**
      * Builds repeat request data array.
      *
      * This method checks all given data and generates correct request data
@@ -71,6 +97,17 @@ class WebToPay_RequestBuilder {
         $data['projectid'] = $this->projectId;
         $data['repeat_request'] = '1';
         return $this->createRequest($data);
+    }
+
+    /**
+     * Builds the full request url for a repeated request (including the protocol and the domain)
+     *
+     * @param string $orderId order id of repeated request
+     * @return string
+     */
+    public function buildRepeatRequestUrlFromOrderId($orderId) {
+        $request = $this->buildRepeatRequest($orderId);
+        return $this->urlBuilder->buildForRequest($request);
     }
 
     /**

@@ -5,6 +5,41 @@
  */
 class WebToPay_Factory {
 
+    const ENV_PRODUCTION = 'production';
+    const ENV_SANDBOX = 'sandbox';
+
+    /**
+     * @var array
+     */
+    protected static $defaultConfiguration = array(
+        'routes' => array(
+            self::ENV_PRODUCTION => array(
+                'publicKey'           => 'http://downloads.[domain]/download/public.key',
+                'payment'             => 'https://www.[domain]/pay/',
+                'paymentMethodList'   => 'https://www.[domain]/new/api/paymentMethods/',
+                'smsAnswer'           => 'https://www.[domain]/psms/respond/',
+            ),
+            self::ENV_SANDBOX => array(
+                'publicKey'         => 'http://downloads-sandbox.[domain]/download/public.key',
+                'payment'           => 'https://sandbox.[domain]/pay/',
+                'paymentMethodList' => 'https://sandbox.[domain]/new/api/paymentMethods/',
+                'smsAnswer'         => 'https://sandbox.[domain]/psms/respond/',
+            ),
+        ),
+
+        'domains' => array(
+            'lit' => 'mokejimai.lt',
+            'eng' => 'paysera.com',
+        ),
+
+        'defaultDomainLanguage' => 'lit'
+    );
+
+    /**
+     * @var string
+     */
+    protected $environment;
+
     /**
      * @var array
      */
@@ -46,6 +81,12 @@ class WebToPay_Factory {
     protected $util = null;
 
     /**
+     * @var WebToPay_UrlBuilder
+     */
+    protected $urlBuilder = null;
+
+
+    /**
      * Constructs object.
      * Configuration keys: projectId, password
      * They are required only when some object being created needs them,
@@ -54,7 +95,25 @@ class WebToPay_Factory {
      * @param array $configuration
      */
     public function __construct(array $configuration = array()) {
-        $this->configuration = $configuration;
+
+        $this->configuration = array_merge(self::$defaultConfiguration, $configuration);
+        $this->environment = self::ENV_PRODUCTION;
+    }
+
+    /**
+     * If passed true the factory will use sandbox when constructing URLs
+     *
+     * @param $enableSandbox
+     * @return self
+     */
+    public function useSandbox($enableSandbox)
+    {
+        if ($enableSandbox) {
+            $this->environment = self::ENV_SANDBOX;
+        } else {
+            $this->environment = self::ENV_PRODUCTION;
+        }
+        return $this;
     }
 
     /**
@@ -96,10 +155,24 @@ class WebToPay_Factory {
             $this->requestBuilder = new WebToPay_RequestBuilder(
                 $this->configuration['projectId'],
                 $this->configuration['password'],
-                $this->getUtil()
+                $this->getUtil(),
+                $this->getUrlBuilder()
             );
         }
         return $this->requestBuilder;
+    }
+
+    /**
+     * @return WebToPay_UrlBuilder
+     */
+    public function getUrlBuilder() {
+        if ($this->urlBuilder === null) {
+            $this->urlBuilder = new WebToPay_UrlBuilder(
+                $this->configuration,
+                $this->environment
+            );
+        }
+        return $this->urlBuilder;
     }
 
     /**
@@ -116,7 +189,8 @@ class WebToPay_Factory {
             }
             $this->smsAnswerSender = new WebToPay_SmsAnswerSender(
                 $this->configuration['password'],
-                $this->getWebClient()
+                $this->getWebClient(),
+                $this->getUrlBuilder()
             );
         }
         return $this->smsAnswerSender;
@@ -136,7 +210,9 @@ class WebToPay_Factory {
             }
             $this->paymentMethodListProvider = new WebToPay_PaymentMethodListProvider(
                 $this->configuration['projectId'],
-                $this->getWebClient()
+                $this->getWebClient(),
+                $this->getUrlBuilder()
+
             );
         }
         return $this->paymentMethodListProvider;
@@ -155,7 +231,7 @@ class WebToPay_Factory {
         if ($this->signer === null) {
             if (function_exists('openssl_pkey_get_public')) {
                 $webClient = $this->getWebClient();
-                $publicKey = $webClient->get('http://downloads.webtopay.com/download/public.key');
+                $publicKey = $webClient->get($this->getUrlBuilder()->buildForPublicKey());
                 if (!$publicKey) {
                     throw new WebToPayException('Cannot download public key from WebToPay website');
                 }

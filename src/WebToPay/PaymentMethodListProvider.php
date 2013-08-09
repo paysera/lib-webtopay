@@ -24,16 +24,31 @@ class WebToPay_PaymentMethodListProvider {
     protected $methodListCache = array();
 
     /**
+     * Builds various request URLs
+     *
+     * @var WebToPay_UrlBuilder $urlBuilder
+     */
+    protected $urlBuilder;
+
+    /**
      * Constructs object
      *
      * @param integer            $projectId
      * @param WebToPay_WebClient $webClient
+     * @param WebToPay_UrlBuilder $urlBuilder
      *
      * @throws WebToPayException if SimpleXML is not available
      */
-    public function __construct($projectId, WebToPay_WebClient $webClient) {
+    public function __construct(
+        $projectId,
+        WebToPay_WebClient $webClient,
+        WebToPay_UrlBuilder $urlBuilder
+    )
+    {
         $this->projectId = $projectId;
         $this->webClient = $webClient;
+        $this->urlBuilder = $urlBuilder;
+
         if (!function_exists('simplexml_load_string')) {
             throw new WebToPayException('You have to install libxml to use payment methods API');
         }
@@ -50,7 +65,7 @@ class WebToPay_PaymentMethodListProvider {
      */
     public function getPaymentMethodList($currency) {
         if (!isset($this->methodListCache[$currency])) {
-            $xmlAsString = $this->webClient->get(WebToPay::XML_URL . $this->projectId . '/currency:' . $currency);
+            $xmlAsString = $this->webClient->get($this->urlBuilder->buildForPaymentsMethodList($this->projectId, $currency));
             $useInternalErrors = libxml_use_internal_errors(false);
             $rootNode = simplexml_load_string($xmlAsString);
             libxml_clear_errors();

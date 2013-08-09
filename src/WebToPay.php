@@ -96,10 +96,18 @@ class WebToPay {
      * @throws WebToPayException on data validation error
      */
     public static function redirectToPayment($data, $exit = false) {
-        $request = self::buildRequest($data);
-        $payUrl = (isset($data['lang'])) ? self::getPaymentUrl($data['lang']) : self::PAY_URL;
-        $url = $payUrl . '?' . http_build_query($request);
-        $url = preg_replace('/[\r\n]+/is', '', $url);
+        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
+            throw new WebToPayException('sign_password or projectid is not provided');
+        }
+        $password = $data['sign_password'];
+        $projectId = $data['projectid'];
+        unset($data['sign_password']);
+        unset($data['projectid']);
+
+        $factory = new WebToPay_Factory(array('projectId' => $projectId, 'password' => $password));
+        $url = $factory->getRequestBuilder()
+            ->buildRequestUrlFromData($data);
+
         if (headers_sent()) {
             echo '<script type="text/javascript">window.location = "' . addslashes($url) . '";</script>';
         } else {

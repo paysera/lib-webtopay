@@ -4,6 +4,10 @@
  * Test for class WebToPay_RequestBuilder
  */
 class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
+    /**
+     * @var WebToPay_UrlBuilder
+     */
+    protected $urlBuilder;
 
     /**
      * @var WebToPay_Util
@@ -20,7 +24,11 @@ class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
      */
     public function setUp() {
         $this->util = $this->getMock('WebToPay_Util', array('encodeSafeUrlBase64'));
-        $this->builder = new WebToPay_RequestBuilder(123, 'secret', $this->util);
+        $this->urlBuilder = $this->getMockBuilder('WebToPay_UrlBuilder')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->builder = new WebToPay_RequestBuilder(123, 'secret', $this->util, $this->urlBuilder);
     }
 
     /**

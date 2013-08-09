@@ -20,4 +20,5 @@ if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay/SmsAnswerSender.php');
     include(dirname(__FILE__) . '/WebToPay/Util.php');
     include(dirname(__FILE__) . '/WebToPay/WebClient.php');
+    include(dirname(__FILE__) . '/WebToPay/UrlBuilder.php');
 }
