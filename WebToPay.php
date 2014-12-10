@@ -277,7 +277,7 @@ class WebToPay {
      *
      * @throws WebToPayException
      */
-    public static function getPaymentMethodList($projectId, $currency = 'LTL') {
+    public static function getPaymentMethodList($projectId, $currency = 'EUR') {
         $factory = new WebToPay_Factory(array('projectId' => $projectId));
         return $factory->getPaymentMethodListProvider()->getPaymentMethodList($currency);
     }

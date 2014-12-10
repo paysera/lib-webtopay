@@ -13,7 +13,7 @@ $shopItems = array(            // just sample shop items; unrelated to WebToPay 
     array(
         'title' => 'Item A',
         'price' => 100,
-        'currency' => 'LTL',
+        'currency' => 'EUR',
     ),
     array(
         'title' => 'Item B',
@@ -23,6 +23,6 @@ $shopItems = array(            // just sample shop items; unrelated to WebToPay 
     array(
         'title' => 'Item C',
         'price' => 4990,
-        'currency' => 'LTL',
+        'currency' => 'EUR',
     ),
 );
