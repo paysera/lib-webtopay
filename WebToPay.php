@@ -2147,7 +2147,8 @@ class WebToPay_Factory {
         ),
 
         'domains' => array(
-            'lit' => 'mokejimai.lt',
+            'lav' => 'paysera.lv',
+            'lit' => 'paysera.lt',
             'eng' => 'paysera.com',
         ),
 
