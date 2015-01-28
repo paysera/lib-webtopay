@@ -40,7 +40,7 @@ class WebToPay {
     /**
      * Server URL where all requests should go.
      */
-    const PAY_URL = 'https://www.mokejimai.lt/pay/';
+    const PAY_URL = 'https://www.paysera.lt/pay/';
     
     /**
      * Server URL where all non-lithuanian language requests should go.
@@ -50,12 +50,12 @@ class WebToPay {
     /**
      * Server URL where we can get XML with payment method data.
      */
-    const XML_URL = 'https://www.mokejimai.lt/new/api/paymentMethods/';
+    const XML_URL = 'https://www.paysera.lt/new/api/paymentMethods/';
 
     /**
      * SMS answer url.
      */
-    const SMS_ANSWER_URL = 'https://www.mokejimai.lt/psms/respond/';
+    const SMS_ANSWER_URL = 'https://www.paysera.lt/psms/respond/';
 
     /**
      * Builds request data array.
@@ -64,7 +64,7 @@ class WebToPay {
      * array or raises WebToPayException on failure.
      *
      * Possible keys:
-     * https://www.mokejimai.lt/makro_specifikacija.html
+     * https://www.paysera.lt/makro_specifikacija.html
      *
      * @param  array $data Information about current payment request
      *
@@ -91,7 +91,7 @@ class WebToPay {
      * Builds request and redirects user to payment window with generated request data
      *
      * Possible array keys are described here:
-     * https://www.mokejimai.lt/makro_specifikacija.html
+     * https://www.paysera.lt/makro_specifikacija.html
      *
      * @param  array   $data Information about current payment request.
      * @param  boolean $exit if true, exits after sending Location header; default false
@@ -134,7 +134,7 @@ class WebToPay {
      *
      * Method accepts single parameter $data of array type. All possible array
      * keys are described here:
-     * https://www.mokejimai.lt/makro_specifikacija.html
+     * https://www.paysera.lt/makro_specifikacija.html
      *
      * @param  array $data Information about current payment request
      *
@@ -175,8 +175,8 @@ class WebToPay {
      * First parameter usualy should be $_GET array.
      *
      * Description about response can be found here:
-     * makro: https://www.mokejimai.lt/makro_specifikacija.html
-     * mikro: https://www.mokejimai.lt/mikro_mokejimu_specifikacija_SMS.html
+     * makro: https://www.paysera.lt/makro_specifikacija.html
+     * mikro: https://www.paysera.lt/mikro_mokejimu_specifikacija_SMS.html
      *
      * If response is not correct, WebToPayException will be raised.
      *
@@ -763,7 +763,7 @@ class WebToPay_UrlBuilder {
 
     /**
      * Gets the domain by lang variable
-     * lit -> mokejimai.lt
+     * lit -> paysera.lt
      * eng -> paysera
      * etc
      *
