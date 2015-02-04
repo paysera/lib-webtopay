@@ -44,7 +44,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     public function buildForRequest($request, $language = null) {
-        return $this->createUrlFromRequestAndLanguage($request, $language);
+        return $this->createUrlFromRequestAndLanguage($request);
     }
 
     /**
@@ -55,8 +55,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     public function buildForPaymentsMethodList($projectId, $currency) {
-        $routeWithNoDomain = $this->environmentSettings['paymentMethodList'];
-        $route = str_replace(self::PLACEHOLDER_KEY, $this->getDefaultDomain(), $routeWithNoDomain);
+        $route = $this->environmentSettings['paymentMethodList'];
         return $route . $projectId . '/currency:' . $currency;
     }
 
@@ -66,8 +65,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     public function buildForSmsAnswer() {
-        $routeWithNoDomain = $this->environmentSettings['smsAnswer'];
-        $route = str_replace(self::PLACEHOLDER_KEY, $this->getDefaultDomain(), $routeWithNoDomain);
+        $route = $this->environmentSettings['smsAnswer'];
         return $route;
     }
 
@@ -77,8 +75,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     public function buildForPublicKey() {
-        $routeWithNoDomain = $this->environmentSettings['publicKey'];
-        $route = str_replace(self::PLACEHOLDER_KEY, $this->getDefaultDomain(), $routeWithNoDomain);
+        $route = $this->environmentSettings['publicKey'];
         return $route;
     }
 
@@ -86,51 +83,20 @@ class WebToPay_UrlBuilder {
      * Creates an URL from the request and data provided.
      *
      * @param array $request
-     * @param array $language
      * @return string
      */
-    protected function createUrlFromRequestAndLanguage($request, $language) {
-        $url = $this->getPaymentUrl($language) . '?' . http_build_query($request);
+    protected function createUrlFromRequestAndLanguage($request) {
+        $url = $this->getPaymentUrl() . '?' . http_build_query($request);
         return preg_replace('/[\r\n]+/is', '', $url);
     }
 
     /**
      * Returns payment url. Argument is same as lang parameter in request data
      *
-     * @param  string $language
      * @return string $url
      */
-    protected function getPaymentUrl($language) {
-        $routeWithNoDomain = $this->environmentSettings['payment'];
-        $route = str_replace(self::PLACEHOLDER_KEY, $this->getDomainByLanguage($language), $routeWithNoDomain);
+    protected function getPaymentUrl() {
+        $route = $this->environmentSettings['payment'];
         return $route;
-    }
-
-    /**
-     * Gets the domain by lang variable
-     * lit -> mokejimai.lt
-     * eng -> paysera
-     * etc
-     *
-     * @param $language
-     * @return string
-     */
-    protected function getDomainByLanguage($language) {
-        if (isset($this->configuration['domains'][$language])) {
-            return $this->configuration['domains'][$language];
-        } else {
-            $defaultLanguage = $this->configuration['defaultDomainLanguage'];
-            return $this->configuration['domains'][$defaultLanguage];
-        }
-    }
-
-    /**
-     * Gets the domain for the default language
-     *
-     * @return string
-     */
-    protected function getDefaultDomain()
-    {
-        return $this->getDomainByLanguage($this->configuration['defaultDomainLanguage']);
     }
 }

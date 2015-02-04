@@ -14,25 +14,18 @@ class WebToPay_Factory {
     protected static $defaultConfiguration = array(
         'routes' => array(
             self::ENV_PRODUCTION => array(
-                'publicKey'           => 'http://downloads.[domain]/download/public.key',
-                'payment'             => 'https://www.[domain]/pay/',
-                'paymentMethodList'   => 'https://www.[domain]/new/api/paymentMethods/',
-                'smsAnswer'           => 'https://www.[domain]/psms/respond/',
+                'publicKey'           => 'http://downloads.paysera.com/download/public.key',
+                'payment'             => 'https://www.paysera.com/pay/',
+                'paymentMethodList'   => 'https://www.paysera.com/new/api/paymentMethods/',
+                'smsAnswer'           => 'https://www.paysera.com/psms/respond/',
             ),
             self::ENV_SANDBOX => array(
-                'publicKey'         => 'http://downloads-sandbox.[domain]/download/public.key',
-                'payment'           => 'https://sandbox.[domain]/pay/',
-                'paymentMethodList' => 'https://sandbox.[domain]/new/api/paymentMethods/',
-                'smsAnswer'         => 'https://sandbox.[domain]/psms/respond/',
+                'publicKey'         => 'http://downloads-sandbox.paysera.com/download/public.key',
+                'payment'           => 'https://sandbox.paysera.com/pay/',
+                'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+                'smsAnswer'         => 'https://sandbox.paysera.com/psms/respond/',
             ),
-        ),
-
-        'domains' => array(
-            'lit' => 'mokejimai.lt',
-            'eng' => 'paysera.com',
-        ),
-
-        'defaultDomainLanguage' => 'lit'
+        )
     );
 
     /**
