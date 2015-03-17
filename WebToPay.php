@@ -403,66 +403,14 @@ class WebToPayException extends Exception {
 }
 
 /**
- * Sign checker which checks SS1 signature. SS1 does not depend on SSL functions
+ * Parses and validates callbacks
  */
-class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface {
+class WebToPay_CallbackValidator {
 
     /**
-     * @var string
+     * @var WebToPay_Sign_SignCheckerInterface
      */
-    protected $projectPassword;
-
-    /**
-     * Constructs object
-     *
-     * @param string $projectPassword
-     */
-    public function __construct($projectPassword) {
-        $this->projectPassword = $projectPassword;
-    }
-
-    /**
-     * Check for SS1, which is not depend on openssl functions.
-     *
-     * @param array $request
-     *
-     * @return boolean
-     *
-     * @throws WebToPay_Exception_Callback
-     */
-    public function checkSign(array $request) {
-        if (!isset($request['data']) || !isset($request['ss1'])) {
-            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
-        }
-
-        return md5($request['data'] . $this->projectPassword) === $request['ss1'];
-    }
-}
-
-/**
- * Interface for sign checker
- */
-interface WebToPay_Sign_SignCheckerInterface {
-
-    /**
-     * Checks whether request is signed properly
-     *
-     * @param array $request
-     *
-     * @return boolean
-     */
-    public function checkSign(array $request);
-}
-
-/**
- * Checks SS2 signature. Depends on SSL functions
- */
-class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface {
-
-    /**
-     * @var string
-     */
-    protected $publicKey;
+    protected $signer;
 
     /**
      * @var WebToPay_Util
@@ -470,33 +418,336 @@ class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
     protected $util;
 
     /**
+     * @var integer
+     */
+    protected $projectId;
+
+    /**
      * Constructs object
      *
-     * @param string        $publicKey
-     * @param WebToPay_Util $util
+     * @param integer                            $projectId
+     * @param WebToPay_Sign_SignCheckerInterface $signer
+     * @param WebToPay_Util                      $util
      */
-    public function __construct($publicKey, WebToPay_Util $util) {
-        $this->publicKey = $publicKey;
+    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
+        $this->signer = $signer;
         $this->util = $util;
+        $this->projectId = $projectId;
     }
 
     /**
-     * Checks signature
+     * Parses callback parameters from query parameters and checks if sign is correct.
+     * Request has parameter "data", which is signed and holds all callback parameters
      *
-     * @param array $request
+     * @param array $requestData
      *
-     * @return boolean
+     * @return array Parsed callback parameters
      *
+     * @throws WebToPayException
      * @throws WebToPay_Exception_Callback
      */
-    public function checkSign(array $request) {
-        if (!isset($request['data']) || !isset($request['ss2'])) {
-            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
+    public function validateAndParseData(array $requestData) {
+        if (!$this->signer->checkSign($requestData)) {
+            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
         }
 
-        $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
-        $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
-        return $ok === 1;
+        if (!isset($requestData['data'])) {
+            throw new WebToPay_Exception_Callback('"data" parameter not found');
+        }
+        $data = $requestData['data'];
+
+        $queryString = $this->util->decodeSafeUrlBase64($data);
+        $request = $this->util->parseHttpQuery($queryString);
+
+        if (!isset($request['projectid'])) {
+            throw new WebToPay_Exception_Callback(
+                'Project ID not provided in callback',
+                WebToPayException::E_INVALID
+            );
+        }
+
+        if ((string) $request['projectid'] !== (string) $this->projectId) {
+            throw new WebToPay_Exception_Callback(
+                sprintf('Bad projectid: %s, should be: %s', $request['projectid'], $this->projectId),
+                WebToPayException::E_INVALID
+            );
+        }
+
+        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
+            $micro = (
+                isset($request['to'])
+                && isset($request['from'])
+                && isset($request['sms'])
+            );
+            $request['type'] = $micro ? 'micro' : 'macro';
+        }
+
+        return $request;
+    }
+
+    /**
+     * Checks data to have all the same parameters provided in expected array
+     *
+     * @param array $data
+     * @param array $expected
+     *
+     * @throws WebToPayException
+     */
+    public function checkExpectedFields(array $data, array $expected) {
+        foreach ($expected as $key => $value) {
+            $passedValue = isset($data[$key]) ? $data[$key] : null;
+            if ($passedValue != $value) {
+                throw new WebToPayException(
+                    sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)
+                );
+            }
+        }
+    }
+}
+
+/**
+ * Wrapper class to group payment methods. Each country can have several payment method groups, each of them
+ * have one or more payment methods.
+ */
+class WebToPay_PaymentMethodGroup {
+    /**
+     * Some unique (in the scope of country) key for this group
+     *
+     * @var string
+     */
+    protected $groupKey;
+
+    /**
+     * Translations array for this group. Holds associative array of group title by country codes.
+     *
+     * @var array
+     */
+    protected $translations;
+
+    /**
+     * Holds actual payment methods
+     *
+     * @var WebToPay_PaymentMethod[]
+     */
+    protected $paymentMethods;
+
+    /**
+     * Default language for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * Constructs object
+     *
+     * @param string $groupKey
+     * @param array  $translations
+     * @param string $defaultLanguage
+     */
+    public function __construct($groupKey, array $translations = array(), $defaultLanguage = 'lt') {
+        $this->groupKey = $groupKey;
+        $this->translations = $translations;
+        $this->defaultLanguage = $defaultLanguage;
+        $this->paymentMethods = array();
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        foreach ($this->paymentMethods as $paymentMethod) {
+            $paymentMethod->setDefaultLanguage($language);
+        }
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
+     * specified, uses default language, given to constructor.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->translations[$languageCode])) {
+            return $this->translations[$languageCode];
+        } elseif (isset($this->translations[$this->defaultLanguage])) {
+            return $this->translations[$this->defaultLanguage];
+        } else {
+            return $this->groupKey;
+        }
+    }
+
+    /**
+     * Returns group key
+     *
+     * @return string
+     */
+    public function getKey() {
+        return $this->groupKey;
+    }
+
+    /**
+     * Returns available payment methods for this group
+     *
+     * @return WebToPay_PaymentMethod[]
+     */
+    public function getPaymentMethods() {
+        return $this->paymentMethods;
+    }
+
+
+    /**
+     * Adds new payment method for this group.
+     * If some other payment method with specified key was registered earlier, overwrites it.
+     * Returns given payment method
+     *
+     * @param WebToPay_PaymentMethod $paymentMethod
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    public function addPaymentMethod(WebToPay_PaymentMethod $paymentMethod) {
+        return $this->paymentMethods[$paymentMethod->getKey()] = $paymentMethod;
+    }
+
+    /**
+     * Gets payment method object with key. If no payment method with such key is found, returns null.
+     *
+     * @param string $key
+     *
+     * @return null|WebToPay_PaymentMethod
+     */
+    public function getPaymentMethod($key) {
+        return isset($this->paymentMethods[$key]) ? $this->paymentMethods[$key] : null;
+    }
+
+    /**
+     * Returns new group instance with only those payment methods, which are available for provided amount.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function filterForAmount($amount, $currency) {
+        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
+        foreach ($this->getPaymentMethods() as $paymentMethod) {
+            if ($paymentMethod->isAvailableForAmount($amount, $currency)) {
+                $group->addPaymentMethod($paymentMethod);
+            }
+        }
+        return $group;
+    }
+
+    /**
+     * Returns new country instance with only those payment methods, which are returns or not iban number after payment
+     *
+     * @param boolean $isIban
+     *
+     * @return WebToPay_PaymentMethodGroup
+     */
+    public function filterForIban($isIban = true) {
+        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
+        foreach ($this->getPaymentMethods() as $paymentMethod) {
+            if ($paymentMethod->isIban() == $isIban) {
+                $group->addPaymentMethod($paymentMethod);
+            }
+        }
+        return $group;
+    }
+
+    /**
+     * Returns whether this group has no payment methods
+     *
+     * @return boolean
+     */
+    public function isEmpty() {
+        return count($this->paymentMethods) === 0;
+    }
+
+    /**
+     * Loads payment methods from given XML node
+     *
+     * @param SimpleXMLElement $groupNode
+     */
+    public function fromXmlNode($groupNode) {
+        foreach ($groupNode->payment_type as $paymentTypeNode) {
+            $key = (string) $paymentTypeNode->attributes()->key;
+            $titleTranslations = array();
+            foreach ($paymentTypeNode->title as $titleNode) {
+                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+            }
+            $logoTranslations = array();
+            foreach ($paymentTypeNode->logo_url as $logoNode) {
+                if ((string) $logoNode !== '') {
+                    $logoTranslations[(string) $logoNode->attributes()->language] = (string) $logoNode;
+                }
+            }
+            $minAmount = null;
+            $maxAmount = null;
+            $currency = null;
+            $isIban = false;
+            $baseCurrency = null;
+            if (isset($paymentTypeNode->min)) {
+                $minAmount = (int) $paymentTypeNode->min->attributes()->amount;
+                $currency = (string) $paymentTypeNode->min->attributes()->currency;
+            }
+            if (isset($paymentTypeNode->max)) {
+                $maxAmount = (int) $paymentTypeNode->max->attributes()->amount;
+                $currency = (string) $paymentTypeNode->max->attributes()->currency;
+            }
+
+            if (isset($paymentTypeNode->is_iban)) {
+                $isIban = (int) $paymentTypeNode->is_iban;
+            }
+            if (isset($paymentTypeNode->base_currency)) {
+                $baseCurrency = (string) $paymentTypeNode->base_currency;
+            }
+            $this->addPaymentMethod($this->createPaymentMethod(
+                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations, $isIban, $baseCurrency
+            ));
+        }
+    }
+
+    /**
+     * Method to create new payment method instances. Overwrite if you have to use some other subclass.
+     *
+     * @param string $key
+     * @param integer $minAmount
+     * @param integer $maxAmount
+     * @param string $currency
+     * @param array $logoList
+     * @param array $titleTranslations
+     * @param bool $isIban
+     * @param null $baseCurrency
+     *
+     * @return WebToPay_PaymentMethod
+     */
+    protected function createPaymentMethod(
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
+        $isIban = false, $baseCurrency = null
+    ) {
+        return new WebToPay_PaymentMethod(
+            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage,
+            $isIban, $baseCurrency
+        );
     }
 }
 
@@ -581,104 +832,248 @@ class WebToPay_PaymentMethodListProvider {
     }
 }
 
+/**
+ * Raised on error in callback
+ */
+class WebToPay_Exception_Callback extends WebToPayException {
+
+}
 
 /**
- * Used to build a complete request URL.
- *
- * Class WebToPay_UrlBuilder
+ * Raised if configuration is incorrect
  */
-class WebToPay_UrlBuilder {
+class WebToPay_Exception_Configuration extends WebToPayException {
 
-    const PLACEHOLDER_KEY = '[domain]';
+}
+
+
+/**
+ * Raised on validation error in passed data when building the request
+ */
+class WebToPay_Exception_Validation extends WebToPayException {
+
+    public function __construct($message, $code = 0, $field = null, Exception $previousException = null) {
+        parent::__construct($message, $code, $previousException);
+        if ($field) {
+            $this->setField($field);
+        }
+    }
+}
+
+/**
+ * Class to hold information about payment method
+ */
+class WebToPay_PaymentMethod {
+    /**
+     * Assigned key for this payment method
+     *
+     * @var string
+     */
+    protected $key;
 
     /**
+     * Logo url list by language. Usually logo is same for all languages, but exceptions exist
+     *
      * @var array
      */
-    protected $configuration = array();
+    protected $logoList;
+
+    /**
+     * Title list by language
+     *
+     * @var array
+     */
+    protected $titleTranslations;
+
+    /**
+     * Default language to use for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
+
+    /**
+     * @var boolean
+     */
+    protected $isIban;
 
     /**
      * @var string
      */
-    protected $environment;
+    protected $baseCurrency;
 
     /**
-     * @var array
+     * Constructs object
+     *
+     * @param string  $key
+     * @param integer $minAmount
+     * @param integer $maxAmount
+     * @param string  $currency
+     * @param array   $logoList
+     * @param array   $titleTranslations
+     * @param string  $defaultLanguage
+     * @param bool    $isIban
+     * @param string  $baseCurrency
      */
-    protected $environmentSettings;
+    public function __construct(
+        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
+        $defaultLanguage = 'lt', $isIban = false, $baseCurrency = null
+    ) {
+        $this->key = $key;
+        $this->minAmount = $minAmount;
+        $this->maxAmount = $maxAmount;
+        $this->currency = $currency;
+        $this->logoList = $logoList;
+        $this->titleTranslations = $titleTranslations;
+        $this->defaultLanguage = $defaultLanguage;
+        $this->isIban = $isIban;
+        $this->baseCurrency = $baseCurrency;
+    }
 
     /**
-     * @param array $configuration
-     * @param string $environment
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethod
      */
-    function __construct($configuration, $environment)
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Get assigned payment method key
+     *
+     * @return string
+     */
+    public function getKey() {
+        return $this->key;
+    }
+
+    /**
+     * Gets logo url for this payment method. Uses specified language or default one.
+     * If logotype is not found for specified language, null is returned.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string|null
+     */
+    public function getLogoUrl($languageCode = null) {
+        if ($languageCode !== null && isset($this->logoList[$languageCode])) {
+            return $this->logoList[$languageCode];
+        } elseif (isset($this->logoList[$this->defaultLanguage])) {
+            return $this->logoList[$this->defaultLanguage];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Gets title for this payment method. Uses specified language or default one.
+     *
+     * @param string [Optional] $languageCode
+     *
+     * @return string
+     */
+    public function getTitle($languageCode = null) {
+        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
+            return $this->titleTranslations[$languageCode];
+        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
+            return $this->titleTranslations[$this->defaultLanguage];
+        } else {
+            return $this->key;
+        }
+    }
+
+    /**
+     * Checks if this payment method can be used for specified amount.
+     * Throws exception if currency checked is not the one, for which payment method list was downloaded.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return boolean
+     *
+     * @throws WebToPayException
+     */
+    public function isAvailableForAmount($amount, $currency) {
+        if ($this->currency !== $currency) {
+            throw new WebToPayException(
+                'Currencies does not match. You have to get payment types for the currency you are checking. Given currency: '
+                    . $currency . ', available currency: ' . $this->currency
+            );
+        }
+        return (
+            ($this->minAmount === null || $amount >= $this->minAmount)
+            && ($this->maxAmount === null || $amount <= $this->maxAmount)
+        );
+    }
+
+    /**
+     * Returns min amount for this payment method. If no min amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMinAmountAsString() {
+        return $this->minAmount === null ? '' : ($this->minAmount . ' ' . $this->currency);
+    }
+
+    /**
+     * Returns max amount for this payment method. If no max amount is specified, returns empty string.
+     *
+     * @return string
+     */
+    public function getMaxAmountAsString() {
+        return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
+    }
+
+    /**
+     * Set if this method returns IBAN number after payment
+     *
+     * @param boolean $isIban
+     */
+    public function setIsIban($isIban) {
+        $this->isIban = $isIban == 1;
+    }
+
+    /**
+     * Get if this method returns IBAN number after payment
+     *
+     * @return bool
+     */
+    public function isIban() {
+        return $this->isIban;
+    }
+
+    /**
+     * Setter of BaseCurrency
+     *
+     * @param string $baseCurrency
+     */
+    public function setBaseCurrency($baseCurrency)
     {
-        $this->configuration = $configuration;
-        $this->environment = $environment;
-        $this->environmentSettings = $this->configuration['routes'][$this->environment];
+        $this->baseCurrency = $baseCurrency;
     }
 
     /**
-     * Builds a complete request URL based on the provided parameters
-     *
-     * @param $request
-     * @param null $language
-     * @return string
-     */
-    public function buildForRequest($request, $language = null) {
-        return $this->createUrlFromRequestAndLanguage($request);
-    }
-
-    /**
-     * Builds a complete URL for payment list API
-     *
-     * @param int $projectId
-     * @param string $currency
-     * @return string
-     */
-    public function buildForPaymentsMethodList($projectId, $currency) {
-        $route = $this->environmentSettings['paymentMethodList'];
-        return $route . $projectId . '/currency:' . $currency;
-    }
-
-    /**
-     * Builds a complete URL for Sms Answer
+     * Getter of BaseCurrency
      *
      * @return string
      */
-    public function buildForSmsAnswer() {
-        $route = $this->environmentSettings['smsAnswer'];
-        return $route;
-    }
-
-    /**
-     * Build the url to the public key
-     *
-     * @return string
-     */
-    public function buildForPublicKey() {
-        $route = $this->environmentSettings['publicKey'];
-        return $route;
-    }
-
-    /**
-     * Creates an URL from the request and data provided.
-     *
-     * @param array $request
-     * @return string
-     */
-    protected function createUrlFromRequestAndLanguage($request) {
-        $url = $this->getPaymentUrl() . '?' . http_build_query($request);
-        return preg_replace('/[\r\n]+/is', '', $url);
-    }
-
-    /**
-     * Returns payment url. Argument is same as lang parameter in request data
-     *
-     * @return string $url
-     */
-    protected function getPaymentUrl() {
-        $route = $this->environmentSettings['payment'];
-        return $route;
+    public function getBaseCurrency()
+    {
+        return $this->baseCurrency;
     }
 }
 
@@ -749,30 +1144,268 @@ class WebToPay_Util {
 }
 
 /**
- * Raised on error in callback
+ * Class with all information about available payment methods for some project, optionally filtered by some amount.
  */
-class WebToPay_Exception_Callback extends WebToPayException {
+class WebToPay_PaymentMethodList {
+    /**
+     * Holds available payment countries
+     *
+     * @var WebToPay_PaymentMethodCountry[]
+     */
+    protected $countries;
 
-}
+    /**
+     * Default language for titles
+     *
+     * @var string
+     */
+    protected $defaultLanguage;
 
-/**
- * Raised on validation error in passed data when building the request
- */
-class WebToPay_Exception_Validation extends WebToPayException {
+    /**
+     * Project ID, to which this method list is valid
+     *
+     * @var integer
+     */
+    protected $projectId;
 
-    public function __construct($message, $code = 0, $field = null, Exception $previousException = null) {
-        parent::__construct($message, $code, $previousException);
-        if ($field) {
-            $this->setField($field);
+    /**
+     * Currency for min and max amounts in this list
+     *
+     * @var string
+     */
+    protected $currency;
+
+    /**
+     * If this list is filtered for some amount, this field defines it
+     *
+     * @var integer
+     */
+    protected $amount;
+
+    /**
+     * Constructs object
+     *
+     * @param integer $projectId
+     * @param string  $currency              currency for min and max amounts in this list
+     * @param string  $defaultLanguage
+     * @param integer $amount                null if this list is not filtered by amount
+     */
+    public function __construct($projectId, $currency, $defaultLanguage = 'lt', $amount = null) {
+        $this->projectId = $projectId;
+        $this->countries = array();
+        $this->defaultLanguage = $defaultLanguage;
+        $this->currency = $currency;
+        $this->amount = $amount;
+    }
+
+    /**
+     * Sets default language for titles.
+     * Returns itself for fluent interface
+     *
+     * @param string $language
+     *
+     * @return WebToPay_PaymentMethodList
+     */
+    public function setDefaultLanguage($language) {
+        $this->defaultLanguage = $language;
+        foreach ($this->countries as $country) {
+            $country->setDefaultLanguage($language);
         }
+        return $this;
+    }
+
+    /**
+     * Gets default language for titles
+     *
+     * @return string
+     */
+    public function getDefaultLanguage() {
+        return $this->defaultLanguage;
+    }
+
+    /**
+     * Gets project ID for this payment method list
+     *
+     * @return integer
+     */
+    public function getProjectId() {
+        return $this->projectId;
+    }
+
+    /**
+     * Gets currency for min and max amounts in this list
+     *
+     * @return string
+     */
+    public function getCurrency() {
+        return $this->currency;
+    }
+
+    /**
+     * Gets whether this list is already filtered for some amount
+     *
+     * @return boolean
+     */
+    public function isFiltered() {
+        return $this->amount !== null;
+    }
+
+    /**
+     * Returns available countries
+     *
+     * @return WebToPay_PaymentMethodCountry[]
+     */
+    public function getCountries() {
+        return $this->countries;
+    }
+
+    /**
+     * Adds new country to payment methods. If some other country with same code was registered earlier, overwrites it.
+     * Returns added country instance
+     *
+     * @param WebToPay_PaymentMethodCountry $country
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    public function addCountry(WebToPay_PaymentMethodCountry $country) {
+        return $this->countries[$country->getCode()] = $country;
+    }
+
+    /**
+     * Gets country object with specified country code. If no country with such country code is found, returns null.
+     *
+     * @param string $countryCode
+     *
+     * @return null|WebToPay_PaymentMethodCountry
+     */
+    public function getCountry($countryCode) {
+        return isset($this->countries[$countryCode]) ? $this->countries[$countryCode] : null;
+    }
+
+    /**
+     * Returns new payment method list instance with only those payment methods, which are available for provided
+     * amount.
+     * Returns itself, if list is already filtered and filter amount matches the given one.
+     *
+     * @param integer $amount
+     * @param string  $currency
+     *
+     * @return WebToPay_PaymentMethodList
+     *
+     * @throws WebToPayException    if this list is already filtered and not for provided amount
+     */
+    public function filterForAmount($amount, $currency) {
+        if ($currency !== $this->currency) {
+            throw new WebToPayException(
+                'Currencies do not match. Given currency: ' . $currency . ', currency in list: ' . $this->currency
+            );
+        }
+        if ($this->isFiltered()) {
+            if ($this->amount === $amount) {
+                return $this;
+            } else {
+                throw new WebToPayException('This list is already filtered, use unfiltered list instead');
+            }
+        } else {
+            $list = new WebToPay_PaymentMethodList($this->projectId, $currency, $this->defaultLanguage, $amount);
+            foreach ($this->getCountries() as $country) {
+                $country = $country->filterForAmount($amount, $currency);
+                if (!$country->isEmpty()) {
+                    $list->addCountry($country);
+                }
+            }
+            return $list;
+        }
+    }
+
+    /**
+     * Loads countries from given XML node
+     *
+     * @param SimpleXMLElement $xmlNode
+     */
+    public function fromXmlNode($xmlNode) {
+        foreach ($xmlNode->country as $countryNode) {
+            $titleTranslations = array();
+            foreach ($countryNode->title as $titleNode) {
+                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+            }
+            $this->addCountry($this->createCountry((string) $countryNode->attributes()->code, $titleTranslations))
+                ->fromXmlNode($countryNode);
+        }
+    }
+
+    /**
+     * Method to create new country instances. Overwrite if you have to use some other country subtype.
+     *
+     * @param string $countryCode
+     * @param array  $titleTranslations
+     *
+     * @return WebToPay_PaymentMethodCountry
+     */
+    protected function createCountry($countryCode, array $titleTranslations = array()) {
+        return new WebToPay_PaymentMethodCountry($countryCode, $titleTranslations, $this->defaultLanguage);
     }
 }
 
 /**
- * Raised if configuration is incorrect
+ * Sends answer to SMS payment if it was not provided with response to callback
  */
-class WebToPay_Exception_Configuration extends WebToPayException {
+class WebToPay_SmsAnswerSender {
 
+    /**
+     * @var string
+     */
+    protected $password;
+
+    /**
+     * @var WebToPay_WebClient
+     */
+    protected $webClient;
+
+    /**
+     * @var WebToPay_UrlBuilder $urlBuilder
+     */
+    protected $urlBuilder;
+
+    /**
+     * Constructs object
+     *
+     * @param string             $password
+     * @param WebToPay_WebClient $webClient
+     * @param WebToPay_UrlBuilder $urlBuilder
+     */
+    public function __construct(
+        $password,
+        WebToPay_WebClient $webClient,
+        WebToPay_UrlBuilder $urlBuilder
+    ) {
+        $this->password = $password;
+        $this->webClient = $webClient;
+        $this->urlBuilder = $urlBuilder;
+    }
+
+    /**
+     * Sends answer by sms ID get from callback. Answer can be send only if it was not provided
+     * when responding to callback
+     *
+     * @param integer $smsId
+     * @param string  $text
+     *
+     * @throws WebToPayException
+     */
+    public function sendAnswer($smsId, $text) {
+        $content = $this->webClient->get($this->urlBuilder->buildForSmsAnswer(), array(
+            'id' => $smsId,
+            'msg' => $text,
+            'transaction' => md5($this->password . '|' . $smsId),
+        ));
+        if (strpos($content, 'OK') !== 0) {
+            throw new WebToPayException(
+                sprintf('Error: %s', $content),
+                WebToPayException::E_SMS_ANSWER
+            );
+        }
+    }
 }
 
 
@@ -790,13 +1423,13 @@ class WebToPay_Factory {
     protected static $defaultConfiguration = array(
         'routes' => array(
             self::ENV_PRODUCTION => array(
-                'publicKey'           => 'http://downloads.paysera.com/download/public.key',
+                'publicKey'           => 'http://www.paysera.com/download/public.key',
                 'payment'             => 'https://www.paysera.com/pay/',
                 'paymentMethodList'   => 'https://www.paysera.com/new/api/paymentMethods/',
                 'smsAnswer'           => 'https://www.paysera.com/psms/respond/',
             ),
             self::ENV_SANDBOX => array(
-                'publicKey'         => 'http://downloads-sandbox.paysera.com/download/public.key',
+                'publicKey'         => 'http://sandbox.paysera.com/download/public.key',
                 'payment'           => 'https://sandbox.paysera.com/pay/',
                 'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
                 'smsAnswer'         => 'https://sandbox.paysera.com/psms/respond/',
@@ -1048,330 +1681,9 @@ class WebToPay_Factory {
 
 
 /**
- * Parses and validates callbacks
+ * Sign checker which checks SS1 signature. SS1 does not depend on SSL functions
  */
-class WebToPay_CallbackValidator {
-
-    /**
-     * @var WebToPay_Sign_SignCheckerInterface
-     */
-    protected $signer;
-
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util;
-
-    /**
-     * @var integer
-     */
-    protected $projectId;
-
-    /**
-     * Constructs object
-     *
-     * @param integer                            $projectId
-     * @param WebToPay_Sign_SignCheckerInterface $signer
-     * @param WebToPay_Util                      $util
-     */
-    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
-        $this->signer = $signer;
-        $this->util = $util;
-        $this->projectId = $projectId;
-    }
-
-    /**
-     * Parses callback parameters from query parameters and checks if sign is correct.
-     * Request has parameter "data", which is signed and holds all callback parameters
-     *
-     * @param array $requestData
-     *
-     * @return array Parsed callback parameters
-     *
-     * @throws WebToPayException
-     * @throws WebToPay_Exception_Callback
-     */
-    public function validateAndParseData(array $requestData) {
-        if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
-        }
-
-        if (!isset($requestData['data'])) {
-            throw new WebToPay_Exception_Callback('"data" parameter not found');
-        }
-        $data = $requestData['data'];
-
-        $queryString = $this->util->decodeSafeUrlBase64($data);
-        $request = $this->util->parseHttpQuery($queryString);
-
-        if (!isset($request['projectid'])) {
-            throw new WebToPay_Exception_Callback(
-                'Project ID not provided in callback',
-                WebToPayException::E_INVALID
-            );
-        }
-
-        if ((string) $request['projectid'] !== (string) $this->projectId) {
-            throw new WebToPay_Exception_Callback(
-                sprintf('Bad projectid: %s, should be: %s', $request['projectid'], $this->projectId),
-                WebToPayException::E_INVALID
-            );
-        }
-
-        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
-            $micro = (
-                isset($request['to'])
-                && isset($request['from'])
-                && isset($request['sms'])
-            );
-            $request['type'] = $micro ? 'micro' : 'macro';
-        }
-
-        return $request;
-    }
-
-    /**
-     * Checks data to have all the same parameters provided in expected array
-     *
-     * @param array $data
-     * @param array $expected
-     *
-     * @throws WebToPayException
-     */
-    public function checkExpectedFields(array $data, array $expected) {
-        foreach ($expected as $key => $value) {
-            $passedValue = isset($data[$key]) ? $data[$key] : null;
-            if ($passedValue != $value) {
-                throw new WebToPayException(
-                    sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)
-                );
-            }
-        }
-    }
-}
-
-/**
- * Class to hold information about payment method
- */
-class WebToPay_PaymentMethod {
-    /**
-     * Assigned key for this payment method
-     *
-     * @var string
-     */
-    protected $key;
-
-    /**
-     * Logo url list by language. Usually logo is same for all languages, but exceptions exist
-     *
-     * @var array
-     */
-    protected $logoList;
-
-    /**
-     * Title list by language
-     *
-     * @var array
-     */
-    protected $titleTranslations;
-
-    /**
-     * Default language to use for titles
-     *
-     * @var string
-     */
-    protected $defaultLanguage;
-
-    /**
-     * @var boolean
-     */
-    protected $isIban;
-
-    /**
-     * @var string
-     */
-    protected $baseCurrency;
-
-    /**
-     * Constructs object
-     *
-     * @param string  $key
-     * @param integer $minAmount
-     * @param integer $maxAmount
-     * @param string  $currency
-     * @param array   $logoList
-     * @param array   $titleTranslations
-     * @param string  $defaultLanguage
-     * @param bool    $isIban
-     * @param string  $baseCurrency
-     */
-    public function __construct(
-        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
-        $defaultLanguage = 'lt', $isIban = false, $baseCurrency = null
-    ) {
-        $this->key = $key;
-        $this->minAmount = $minAmount;
-        $this->maxAmount = $maxAmount;
-        $this->currency = $currency;
-        $this->logoList = $logoList;
-        $this->titleTranslations = $titleTranslations;
-        $this->defaultLanguage = $defaultLanguage;
-        $this->isIban = $isIban;
-        $this->baseCurrency = $baseCurrency;
-    }
-
-    /**
-     * Sets default language for titles.
-     * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethod
-     */
-    public function setDefaultLanguage($language) {
-        $this->defaultLanguage = $language;
-        return $this;
-    }
-
-    /**
-     * Gets default language for titles
-     *
-     * @return string
-     */
-    public function getDefaultLanguage() {
-        return $this->defaultLanguage;
-    }
-
-    /**
-     * Get assigned payment method key
-     *
-     * @return string
-     */
-    public function getKey() {
-        return $this->key;
-    }
-
-    /**
-     * Gets logo url for this payment method. Uses specified language or default one.
-     * If logotype is not found for specified language, null is returned.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string|null
-     */
-    public function getLogoUrl($languageCode = null) {
-        if ($languageCode !== null && isset($this->logoList[$languageCode])) {
-            return $this->logoList[$languageCode];
-        } elseif (isset($this->logoList[$this->defaultLanguage])) {
-            return $this->logoList[$this->defaultLanguage];
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets title for this payment method. Uses specified language or default one.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string
-     */
-    public function getTitle($languageCode = null) {
-        if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
-            return $this->titleTranslations[$languageCode];
-        } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
-            return $this->titleTranslations[$this->defaultLanguage];
-        } else {
-            return $this->key;
-        }
-    }
-
-    /**
-     * Checks if this payment method can be used for specified amount.
-     * Throws exception if currency checked is not the one, for which payment method list was downloaded.
-     *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return boolean
-     *
-     * @throws WebToPayException
-     */
-    public function isAvailableForAmount($amount, $currency) {
-        if ($this->currency !== $currency) {
-            throw new WebToPayException(
-                'Currencies does not match. You have to get payment types for the currency you are checking. Given currency: '
-                    . $currency . ', available currency: ' . $this->currency
-            );
-        }
-        return (
-            ($this->minAmount === null || $amount >= $this->minAmount)
-            && ($this->maxAmount === null || $amount <= $this->maxAmount)
-        );
-    }
-
-    /**
-     * Returns min amount for this payment method. If no min amount is specified, returns empty string.
-     *
-     * @return string
-     */
-    public function getMinAmountAsString() {
-        return $this->minAmount === null ? '' : ($this->minAmount . ' ' . $this->currency);
-    }
-
-    /**
-     * Returns max amount for this payment method. If no max amount is specified, returns empty string.
-     *
-     * @return string
-     */
-    public function getMaxAmountAsString() {
-        return $this->maxAmount === null ? '' : ($this->maxAmount . ' ' . $this->currency);
-    }
-
-    /**
-     * Set if this method returns IBAN number after payment
-     *
-     * @param boolean $isIban
-     */
-    public function setIsIban($isIban) {
-        $this->isIban = $isIban == 1;
-    }
-
-    /**
-     * Get if this method returns IBAN number after payment
-     *
-     * @return bool
-     */
-    public function isIban() {
-        return $this->isIban;
-    }
-
-    /**
-     * Setter of BaseCurrency
-     *
-     * @param string $baseCurrency
-     */
-    public function setBaseCurrency($baseCurrency)
-    {
-        $this->baseCurrency = $baseCurrency;
-    }
-
-    /**
-     * Getter of BaseCurrency
-     *
-     * @return string
-     */
-    public function getBaseCurrency()
-    {
-        return $this->baseCurrency;
-    }
-}
-
-
-/**
- * Builds and signs requests
- */
-class WebToPay_RequestBuilder {
+class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface {
 
     /**
      * @var string
@@ -1379,195 +1691,91 @@ class WebToPay_RequestBuilder {
     protected $projectPassword;
 
     /**
+     * Constructs object
+     *
+     * @param string $projectPassword
+     */
+    public function __construct($projectPassword) {
+        $this->projectPassword = $projectPassword;
+    }
+
+    /**
+     * Check for SS1, which is not depend on openssl functions.
+     *
+     * @param array $request
+     *
+     * @return boolean
+     *
+     * @throws WebToPay_Exception_Callback
+     */
+    public function checkSign(array $request) {
+        if (!isset($request['data']) || !isset($request['ss1'])) {
+            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
+        }
+
+        return md5($request['data'] . $this->projectPassword) === $request['ss1'];
+    }
+}
+
+/**
+ * Checks SS2 signature. Depends on SSL functions
+ */
+class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface {
+
+    /**
+     * @var string
+     */
+    protected $publicKey;
+
+    /**
      * @var WebToPay_Util
      */
     protected $util;
 
     /**
-     * @var integer
-     */
-    protected $projectId;
-
-
-    /**
-     * @var WebToPay_UrlBuilder $urlBuilder
-     */
-    protected $urlBuilder;
-
-    /**
      * Constructs object
      *
-     * @param integer       $projectId
-     * @param string        $projectPassword
+     * @param string        $publicKey
      * @param WebToPay_Util $util
-     * @param WebToPay_UrlBuilder $urlBuilder
      */
-    public function __construct(
-        $projectId,
-        $projectPassword,
-        WebToPay_Util $util,
-        WebToPay_UrlBuilder $urlBuilder
-    )
-    {
-        $this->projectId = $projectId;
-        $this->projectPassword = $projectPassword;
+    public function __construct($publicKey, WebToPay_Util $util) {
+        $this->publicKey = $publicKey;
         $this->util = $util;
-        $this->urlBuilder = $urlBuilder;
     }
 
     /**
-     * Builds request data array.
-     *
-     * This method checks all given data and generates correct request data
-     * array or raises WebToPayException on failure.
-     *
-     * @param  array $data information about current payment request
-     *
-     * @return array
-     *
-     * @throws WebToPayException
-     */
-    public function buildRequest($data) {
-        $this->validateRequest($data, self::getRequestSpec());
-        $data['version'] = WebToPay::VERSION;
-        $data['projectid'] = $this->projectId;
-        unset($data['repeat_request']);
-        return $this->createRequest($data);
-    }
-
-    /**
-     * Builds the full request url (including the protocol and the domain)
-     *
-     * @param array $data
-     * @return string
-     */
-    public function buildRequestUrlFromData($data) {
-        $language = isset($data['lang']) ? $data['lang'] : null;
-        $request = $this->buildRequest($data);
-        return $this->urlBuilder->buildForRequest($request, $language);
-    }
-
-    /**
-     * Builds repeat request data array.
-     *
-     * This method checks all given data and generates correct request data
-     * array or raises WebToPayException on failure.
-     *
-     * @param string $orderId order id of repeated request
-     *
-     * @return array
-     *
-     * @throws WebToPayException
-     */
-    public function buildRepeatRequest($orderId) {
-        $data['orderid'] = $orderId;
-        $data['version'] = WebToPay::VERSION;
-        $data['projectid'] = $this->projectId;
-        $data['repeat_request'] = '1';
-        return $this->createRequest($data);
-    }
-
-    /**
-     * Builds the full request url for a repeated request (including the protocol and the domain)
-     *
-     * @param string $orderId order id of repeated request
-     * @return string
-     */
-    public function buildRepeatRequestUrlFromOrderId($orderId) {
-        $request = $this->buildRepeatRequest($orderId);
-        return $this->urlBuilder->buildForRequest($request);
-    }
-
-    /**
-     * Checks data to be valid by passed specification
-     *
-     * @param array $data
-     * @param array $specs
-     *
-     * @throws WebToPay_Exception_Validation
-     */
-    protected function validateRequest($data, $specs) {
-        foreach ($specs as $spec) {
-            list($name, $maxlen, $required, $regexp) = $spec;
-            if ($required && !isset($data[$name])) {
-                throw new WebToPay_Exception_Validation(
-                    sprintf("'%s' is required but missing.", $name),
-                    WebToPayException::E_MISSING,
-                    $name
-                );
-            }
-
-            if (!empty($data[$name])) {
-                if ($maxlen && strlen($data[$name]) > $maxlen) {
-                    throw new WebToPay_Exception_Validation(sprintf(
-                        "'%s' value is too long (%d), %d characters allowed.",
-                        $name,
-                        strlen($data[$name]),
-                        $maxlen
-                    ), WebToPayException::E_MAXLEN, $name);
-                }
-
-                if ($regexp !== ''  && !preg_match($regexp, $data[$name])) {
-                    throw new WebToPay_Exception_Validation(
-                        sprintf("'%s' value '%s' is invalid.", $name, $data[$name]),
-                        WebToPayException::E_REGEXP,
-                        $name
-                    );
-                }
-            }
-        }
-    }
-
-    /**
-     * Makes request data array from parameters, also generates signature
+     * Checks signature
      *
      * @param array $request
      *
-     * @return array
+     * @return boolean
+     *
+     * @throws WebToPay_Exception_Callback
      */
-    protected function createRequest(array $request) {
-        $data = $this->util->encodeSafeUrlBase64(http_build_query($request));
-        return array(
-            'data' => $data,
-            'sign' => md5($data . $this->projectPassword),
-        );
+    public function checkSign(array $request) {
+        if (!isset($request['data']) || !isset($request['ss2'])) {
+            throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
+        }
+
+        $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
+        $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
+        return $ok === 1;
     }
+}
+
+/**
+ * Interface for sign checker
+ */
+interface WebToPay_Sign_SignCheckerInterface {
 
     /**
-     * Returns specification of fields for request.
+     * Checks whether request is signed properly
      *
-     * Array structure:
-     *   name      – request item name
-     *   maxlen    – max allowed value for item
-     *   required  – is this item is required
-     *   regexp    – regexp to test item value
+     * @param array $request
      *
-     * @return array
+     * @return boolean
      */
-    protected static function getRequestSpec() {
-        return array(
-            array('orderid',       40,  true,  ''),
-            array('accepturl',     255, true,  ''),
-            array('cancelurl',     255, true,  ''),
-            array('callbackurl',   255, true,  ''),
-            array('lang',          3,   false, '/^[a-z]{3}$/i'),
-            array('amount',        11,  false, '/^\d+$/'),
-            array('currency',      3,   false, '/^[a-z]{3}$/i'),
-            array('payment',       20,  false, ''),
-            array('country',       2,   false, '/^[a-z_]{2}$/i'),
-            array('paytext',       255, false, ''),
-            array('p_firstname',   255, false, ''),
-            array('p_lastname',    255, false, ''),
-            array('p_email',       255, false, ''),
-            array('p_street',      255, false, ''),
-            array('p_city',        255, false, ''),
-            array('p_state',       20,  false, ''),
-            array('p_zip',         20,  false, ''),
-            array('p_countrycode', 2,   false, '/^[a-z]{2}$/i'),
-            array('test',          1,   false, '/^[01]$/'),
-            array('time_limit',    19,  false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'),
-        );
-    }
+    public function checkSign(array $request);
 }
 
 /**
@@ -1624,456 +1832,6 @@ class WebToPay_WebClient {
         list($header, $content) = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
-    }
-}
-
-/**
- * Wrapper class to group payment methods. Each country can have several payment method groups, each of them
- * have one or more payment methods.
- */
-class WebToPay_PaymentMethodGroup {
-    /**
-     * Some unique (in the scope of country) key for this group
-     *
-     * @var string
-     */
-    protected $groupKey;
-
-    /**
-     * Translations array for this group. Holds associative array of group title by country codes.
-     *
-     * @var array
-     */
-    protected $translations;
-
-    /**
-     * Holds actual payment methods
-     *
-     * @var WebToPay_PaymentMethod[]
-     */
-    protected $paymentMethods;
-
-    /**
-     * Default language for titles
-     *
-     * @var string
-     */
-    protected $defaultLanguage;
-
-    /**
-     * Constructs object
-     *
-     * @param string $groupKey
-     * @param array  $translations
-     * @param string $defaultLanguage
-     */
-    public function __construct($groupKey, array $translations = array(), $defaultLanguage = 'lt') {
-        $this->groupKey = $groupKey;
-        $this->translations = $translations;
-        $this->defaultLanguage = $defaultLanguage;
-        $this->paymentMethods = array();
-    }
-
-    /**
-     * Sets default language for titles.
-     * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethodGroup
-     */
-    public function setDefaultLanguage($language) {
-        $this->defaultLanguage = $language;
-        foreach ($this->paymentMethods as $paymentMethod) {
-            $paymentMethod->setDefaultLanguage($language);
-        }
-        return $this;
-    }
-
-    /**
-     * Gets default language for titles
-     *
-     * @return string
-     */
-    public function getDefaultLanguage() {
-        return $this->defaultLanguage;
-    }
-
-    /**
-     * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
-     * specified, uses default language, given to constructor.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string
-     */
-    public function getTitle($languageCode = null) {
-        if ($languageCode !== null && isset($this->translations[$languageCode])) {
-            return $this->translations[$languageCode];
-        } elseif (isset($this->translations[$this->defaultLanguage])) {
-            return $this->translations[$this->defaultLanguage];
-        } else {
-            return $this->groupKey;
-        }
-    }
-
-    /**
-     * Returns group key
-     *
-     * @return string
-     */
-    public function getKey() {
-        return $this->groupKey;
-    }
-
-    /**
-     * Returns available payment methods for this group
-     *
-     * @return WebToPay_PaymentMethod[]
-     */
-    public function getPaymentMethods() {
-        return $this->paymentMethods;
-    }
-
-
-    /**
-     * Adds new payment method for this group.
-     * If some other payment method with specified key was registered earlier, overwrites it.
-     * Returns given payment method
-     *
-     * @param WebToPay_PaymentMethod $paymentMethod
-     *
-     * @return WebToPay_PaymentMethod
-     */
-    public function addPaymentMethod(WebToPay_PaymentMethod $paymentMethod) {
-        return $this->paymentMethods[$paymentMethod->getKey()] = $paymentMethod;
-    }
-
-    /**
-     * Gets payment method object with key. If no payment method with such key is found, returns null.
-     *
-     * @param string $key
-     *
-     * @return null|WebToPay_PaymentMethod
-     */
-    public function getPaymentMethod($key) {
-        return isset($this->paymentMethods[$key]) ? $this->paymentMethods[$key] : null;
-    }
-
-    /**
-     * Returns new group instance with only those payment methods, which are available for provided amount.
-     *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodGroup
-     */
-    public function filterForAmount($amount, $currency) {
-        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
-        foreach ($this->getPaymentMethods() as $paymentMethod) {
-            if ($paymentMethod->isAvailableForAmount($amount, $currency)) {
-                $group->addPaymentMethod($paymentMethod);
-            }
-        }
-        return $group;
-    }
-
-    /**
-     * Returns new country instance with only those payment methods, which are returns or not iban number after payment
-     *
-     * @param boolean $isIban
-     *
-     * @return WebToPay_PaymentMethodGroup
-     */
-    public function filterForIban($isIban = true) {
-        $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
-        foreach ($this->getPaymentMethods() as $paymentMethod) {
-            if ($paymentMethod->isIban() == $isIban) {
-                $group->addPaymentMethod($paymentMethod);
-            }
-        }
-        return $group;
-    }
-
-    /**
-     * Returns whether this group has no payment methods
-     *
-     * @return boolean
-     */
-    public function isEmpty() {
-        return count($this->paymentMethods) === 0;
-    }
-
-    /**
-     * Loads payment methods from given XML node
-     *
-     * @param SimpleXMLElement $groupNode
-     */
-    public function fromXmlNode($groupNode) {
-        foreach ($groupNode->payment_type as $paymentTypeNode) {
-            $key = (string) $paymentTypeNode->attributes()->key;
-            $titleTranslations = array();
-            foreach ($paymentTypeNode->title as $titleNode) {
-                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
-            }
-            $logoTranslations = array();
-            foreach ($paymentTypeNode->logo_url as $logoNode) {
-                if ((string) $logoNode !== '') {
-                    $logoTranslations[(string) $logoNode->attributes()->language] = (string) $logoNode;
-                }
-            }
-            $minAmount = null;
-            $maxAmount = null;
-            $currency = null;
-            $isIban = false;
-            $baseCurrency = null;
-            if (isset($paymentTypeNode->min)) {
-                $minAmount = (int) $paymentTypeNode->min->attributes()->amount;
-                $currency = (string) $paymentTypeNode->min->attributes()->currency;
-            }
-            if (isset($paymentTypeNode->max)) {
-                $maxAmount = (int) $paymentTypeNode->max->attributes()->amount;
-                $currency = (string) $paymentTypeNode->max->attributes()->currency;
-            }
-
-            if (isset($paymentTypeNode->is_iban)) {
-                $isIban = (int) $paymentTypeNode->is_iban;
-            }
-            if (isset($paymentTypeNode->base_currency)) {
-                $baseCurrency = (string) $paymentTypeNode->base_currency;
-            }
-            $this->addPaymentMethod($this->createPaymentMethod(
-                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations, $isIban, $baseCurrency
-            ));
-        }
-    }
-
-    /**
-     * Method to create new payment method instances. Overwrite if you have to use some other subclass.
-     *
-     * @param string $key
-     * @param integer $minAmount
-     * @param integer $maxAmount
-     * @param string $currency
-     * @param array $logoList
-     * @param array $titleTranslations
-     * @param bool $isIban
-     * @param null $baseCurrency
-     *
-     * @return WebToPay_PaymentMethod
-     */
-    protected function createPaymentMethod(
-        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
-        $isIban = false, $baseCurrency = null
-    ) {
-        return new WebToPay_PaymentMethod(
-            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage,
-            $isIban, $baseCurrency
-        );
-    }
-}
-
-/**
- * Class with all information about available payment methods for some project, optionally filtered by some amount.
- */
-class WebToPay_PaymentMethodList {
-    /**
-     * Holds available payment countries
-     *
-     * @var WebToPay_PaymentMethodCountry[]
-     */
-    protected $countries;
-
-    /**
-     * Default language for titles
-     *
-     * @var string
-     */
-    protected $defaultLanguage;
-
-    /**
-     * Project ID, to which this method list is valid
-     *
-     * @var integer
-     */
-    protected $projectId;
-
-    /**
-     * Currency for min and max amounts in this list
-     *
-     * @var string
-     */
-    protected $currency;
-
-    /**
-     * If this list is filtered for some amount, this field defines it
-     *
-     * @var integer
-     */
-    protected $amount;
-
-    /**
-     * Constructs object
-     *
-     * @param integer $projectId
-     * @param string  $currency              currency for min and max amounts in this list
-     * @param string  $defaultLanguage
-     * @param integer $amount                null if this list is not filtered by amount
-     */
-    public function __construct($projectId, $currency, $defaultLanguage = 'lt', $amount = null) {
-        $this->projectId = $projectId;
-        $this->countries = array();
-        $this->defaultLanguage = $defaultLanguage;
-        $this->currency = $currency;
-        $this->amount = $amount;
-    }
-
-    /**
-     * Sets default language for titles.
-     * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethodList
-     */
-    public function setDefaultLanguage($language) {
-        $this->defaultLanguage = $language;
-        foreach ($this->countries as $country) {
-            $country->setDefaultLanguage($language);
-        }
-        return $this;
-    }
-
-    /**
-     * Gets default language for titles
-     *
-     * @return string
-     */
-    public function getDefaultLanguage() {
-        return $this->defaultLanguage;
-    }
-
-    /**
-     * Gets project ID for this payment method list
-     *
-     * @return integer
-     */
-    public function getProjectId() {
-        return $this->projectId;
-    }
-
-    /**
-     * Gets currency for min and max amounts in this list
-     *
-     * @return string
-     */
-    public function getCurrency() {
-        return $this->currency;
-    }
-
-    /**
-     * Gets whether this list is already filtered for some amount
-     *
-     * @return boolean
-     */
-    public function isFiltered() {
-        return $this->amount !== null;
-    }
-
-    /**
-     * Returns available countries
-     *
-     * @return WebToPay_PaymentMethodCountry[]
-     */
-    public function getCountries() {
-        return $this->countries;
-    }
-
-    /**
-     * Adds new country to payment methods. If some other country with same code was registered earlier, overwrites it.
-     * Returns added country instance
-     *
-     * @param WebToPay_PaymentMethodCountry $country
-     *
-     * @return WebToPay_PaymentMethodCountry
-     */
-    public function addCountry(WebToPay_PaymentMethodCountry $country) {
-        return $this->countries[$country->getCode()] = $country;
-    }
-
-    /**
-     * Gets country object with specified country code. If no country with such country code is found, returns null.
-     *
-     * @param string $countryCode
-     *
-     * @return null|WebToPay_PaymentMethodCountry
-     */
-    public function getCountry($countryCode) {
-        return isset($this->countries[$countryCode]) ? $this->countries[$countryCode] : null;
-    }
-
-    /**
-     * Returns new payment method list instance with only those payment methods, which are available for provided
-     * amount.
-     * Returns itself, if list is already filtered and filter amount matches the given one.
-     *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodList
-     *
-     * @throws WebToPayException    if this list is already filtered and not for provided amount
-     */
-    public function filterForAmount($amount, $currency) {
-        if ($currency !== $this->currency) {
-            throw new WebToPayException(
-                'Currencies do not match. Given currency: ' . $currency . ', currency in list: ' . $this->currency
-            );
-        }
-        if ($this->isFiltered()) {
-            if ($this->amount === $amount) {
-                return $this;
-            } else {
-                throw new WebToPayException('This list is already filtered, use unfiltered list instead');
-            }
-        } else {
-            $list = new WebToPay_PaymentMethodList($this->projectId, $currency, $this->defaultLanguage, $amount);
-            foreach ($this->getCountries() as $country) {
-                $country = $country->filterForAmount($amount, $currency);
-                if (!$country->isEmpty()) {
-                    $list->addCountry($country);
-                }
-            }
-            return $list;
-        }
-    }
-
-    /**
-     * Loads countries from given XML node
-     *
-     * @param SimpleXMLElement $xmlNode
-     */
-    public function fromXmlNode($xmlNode) {
-        foreach ($xmlNode->country as $countryNode) {
-            $titleTranslations = array();
-            foreach ($countryNode->title as $titleNode) {
-                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
-            }
-            $this->addCountry($this->createCountry((string) $countryNode->attributes()->code, $titleTranslations))
-                ->fromXmlNode($countryNode);
-        }
-    }
-
-    /**
-     * Method to create new country instances. Overwrite if you have to use some other country subtype.
-     *
-     * @param string $countryCode
-     * @param array  $titleTranslations
-     *
-     * @return WebToPay_PaymentMethodCountry
-     */
-    protected function createCountry($countryCode, array $titleTranslations = array()) {
-        return new WebToPay_PaymentMethodCountry($countryCode, $titleTranslations, $this->defaultLanguage);
     }
 }
 
@@ -2294,20 +2052,128 @@ class WebToPay_PaymentMethodCountry {
     }
 }
 
+
 /**
- * Sends answer to SMS payment if it was not provided with response to callback
+ * Used to build a complete request URL.
+ *
+ * Class WebToPay_UrlBuilder
  */
-class WebToPay_SmsAnswerSender {
+class WebToPay_UrlBuilder {
+
+    const PLACEHOLDER_KEY = '[domain]';
+
+    /**
+     * @var array
+     */
+    protected $configuration = array();
 
     /**
      * @var string
      */
-    protected $password;
+    protected $environment;
 
     /**
-     * @var WebToPay_WebClient
+     * @var array
      */
-    protected $webClient;
+    protected $environmentSettings;
+
+    /**
+     * @param array $configuration
+     * @param string $environment
+     */
+    function __construct($configuration, $environment)
+    {
+        $this->configuration = $configuration;
+        $this->environment = $environment;
+        $this->environmentSettings = $this->configuration['routes'][$this->environment];
+    }
+
+    /**
+     * Builds a complete request URL based on the provided parameters
+     *
+     * @param $request
+     * @param null $language
+     * @return string
+     */
+    public function buildForRequest($request, $language = null) {
+        return $this->createUrlFromRequestAndLanguage($request);
+    }
+
+    /**
+     * Builds a complete URL for payment list API
+     *
+     * @param int $projectId
+     * @param string $currency
+     * @return string
+     */
+    public function buildForPaymentsMethodList($projectId, $currency) {
+        $route = $this->environmentSettings['paymentMethodList'];
+        return $route . $projectId . '/currency:' . $currency;
+    }
+
+    /**
+     * Builds a complete URL for Sms Answer
+     *
+     * @return string
+     */
+    public function buildForSmsAnswer() {
+        $route = $this->environmentSettings['smsAnswer'];
+        return $route;
+    }
+
+    /**
+     * Build the url to the public key
+     *
+     * @return string
+     */
+    public function buildForPublicKey() {
+        $route = $this->environmentSettings['publicKey'];
+        return $route;
+    }
+
+    /**
+     * Creates an URL from the request and data provided.
+     *
+     * @param array $request
+     * @return string
+     */
+    protected function createUrlFromRequestAndLanguage($request) {
+        $url = $this->getPaymentUrl() . '?' . http_build_query($request);
+        return preg_replace('/[\r\n]+/is', '', $url);
+    }
+
+    /**
+     * Returns payment url. Argument is same as lang parameter in request data
+     *
+     * @return string $url
+     */
+    protected function getPaymentUrl() {
+        $route = $this->environmentSettings['payment'];
+        return $route;
+    }
+}
+
+
+/**
+ * Builds and signs requests
+ */
+class WebToPay_RequestBuilder {
+
+    /**
+     * @var string
+     */
+    protected $projectPassword;
+
+    /**
+     * @var WebToPay_Util
+     */
+    protected $util;
+
+    /**
+     * @var integer
+     */
+    protected $projectId;
+
 
     /**
      * @var WebToPay_UrlBuilder $urlBuilder
@@ -2317,40 +2183,175 @@ class WebToPay_SmsAnswerSender {
     /**
      * Constructs object
      *
-     * @param string             $password
-     * @param WebToPay_WebClient $webClient
+     * @param integer       $projectId
+     * @param string        $projectPassword
+     * @param WebToPay_Util $util
      * @param WebToPay_UrlBuilder $urlBuilder
      */
     public function __construct(
-        $password,
-        WebToPay_WebClient $webClient,
+        $projectId,
+        $projectPassword,
+        WebToPay_Util $util,
         WebToPay_UrlBuilder $urlBuilder
-    ) {
-        $this->password = $password;
-        $this->webClient = $webClient;
+    )
+    {
+        $this->projectId = $projectId;
+        $this->projectPassword = $projectPassword;
+        $this->util = $util;
         $this->urlBuilder = $urlBuilder;
     }
 
     /**
-     * Sends answer by sms ID get from callback. Answer can be send only if it was not provided
-     * when responding to callback
+     * Builds request data array.
      *
-     * @param integer $smsId
-     * @param string  $text
+     * This method checks all given data and generates correct request data
+     * array or raises WebToPayException on failure.
+     *
+     * @param  array $data information about current payment request
+     *
+     * @return array
      *
      * @throws WebToPayException
      */
-    public function sendAnswer($smsId, $text) {
-        $content = $this->webClient->get($this->urlBuilder->buildForSmsAnswer(), array(
-            'id' => $smsId,
-            'msg' => $text,
-            'transaction' => md5($this->password . '|' . $smsId),
-        ));
-        if (strpos($content, 'OK') !== 0) {
-            throw new WebToPayException(
-                sprintf('Error: %s', $content),
-                WebToPayException::E_SMS_ANSWER
-            );
+    public function buildRequest($data) {
+        $this->validateRequest($data, self::getRequestSpec());
+        $data['version'] = WebToPay::VERSION;
+        $data['projectid'] = $this->projectId;
+        unset($data['repeat_request']);
+        return $this->createRequest($data);
+    }
+
+    /**
+     * Builds the full request url (including the protocol and the domain)
+     *
+     * @param array $data
+     * @return string
+     */
+    public function buildRequestUrlFromData($data) {
+        $language = isset($data['lang']) ? $data['lang'] : null;
+        $request = $this->buildRequest($data);
+        return $this->urlBuilder->buildForRequest($request, $language);
+    }
+
+    /**
+     * Builds repeat request data array.
+     *
+     * This method checks all given data and generates correct request data
+     * array or raises WebToPayException on failure.
+     *
+     * @param string $orderId order id of repeated request
+     *
+     * @return array
+     *
+     * @throws WebToPayException
+     */
+    public function buildRepeatRequest($orderId) {
+        $data['orderid'] = $orderId;
+        $data['version'] = WebToPay::VERSION;
+        $data['projectid'] = $this->projectId;
+        $data['repeat_request'] = '1';
+        return $this->createRequest($data);
+    }
+
+    /**
+     * Builds the full request url for a repeated request (including the protocol and the domain)
+     *
+     * @param string $orderId order id of repeated request
+     * @return string
+     */
+    public function buildRepeatRequestUrlFromOrderId($orderId) {
+        $request = $this->buildRepeatRequest($orderId);
+        return $this->urlBuilder->buildForRequest($request);
+    }
+
+    /**
+     * Checks data to be valid by passed specification
+     *
+     * @param array $data
+     * @param array $specs
+     *
+     * @throws WebToPay_Exception_Validation
+     */
+    protected function validateRequest($data, $specs) {
+        foreach ($specs as $spec) {
+            list($name, $maxlen, $required, $regexp) = $spec;
+            if ($required && !isset($data[$name])) {
+                throw new WebToPay_Exception_Validation(
+                    sprintf("'%s' is required but missing.", $name),
+                    WebToPayException::E_MISSING,
+                    $name
+                );
+            }
+
+            if (!empty($data[$name])) {
+                if ($maxlen && strlen($data[$name]) > $maxlen) {
+                    throw new WebToPay_Exception_Validation(sprintf(
+                        "'%s' value is too long (%d), %d characters allowed.",
+                        $name,
+                        strlen($data[$name]),
+                        $maxlen
+                    ), WebToPayException::E_MAXLEN, $name);
+                }
+
+                if ($regexp !== ''  && !preg_match($regexp, $data[$name])) {
+                    throw new WebToPay_Exception_Validation(
+                        sprintf("'%s' value '%s' is invalid.", $name, $data[$name]),
+                        WebToPayException::E_REGEXP,
+                        $name
+                    );
+                }
+            }
         }
+    }
+
+    /**
+     * Makes request data array from parameters, also generates signature
+     *
+     * @param array $request
+     *
+     * @return array
+     */
+    protected function createRequest(array $request) {
+        $data = $this->util->encodeSafeUrlBase64(http_build_query($request));
+        return array(
+            'data' => $data,
+            'sign' => md5($data . $this->projectPassword),
+        );
+    }
+
+    /**
+     * Returns specification of fields for request.
+     *
+     * Array structure:
+     *   name      – request item name
+     *   maxlen    – max allowed value for item
+     *   required  – is this item is required
+     *   regexp    – regexp to test item value
+     *
+     * @return array
+     */
+    protected static function getRequestSpec() {
+        return array(
+            array('orderid',       40,  true,  ''),
+            array('accepturl',     255, true,  ''),
+            array('cancelurl',     255, true,  ''),
+            array('callbackurl',   255, true,  ''),
+            array('lang',          3,   false, '/^[a-z]{3}$/i'),
+            array('amount',        11,  false, '/^\d+$/'),
+            array('currency',      3,   false, '/^[a-z]{3}$/i'),
+            array('payment',       20,  false, ''),
+            array('country',       2,   false, '/^[a-z_]{2}$/i'),
+            array('paytext',       255, false, ''),
+            array('p_firstname',   255, false, ''),
+            array('p_lastname',    255, false, ''),
+            array('p_email',       255, false, ''),
+            array('p_street',      255, false, ''),
+            array('p_city',        255, false, ''),
+            array('p_state',       20,  false, ''),
+            array('p_zip',         20,  false, ''),
+            array('p_countrycode', 2,   false, '/^[a-z]{2}$/i'),
+            array('test',          1,   false, '/^[01]$/'),
+            array('time_limit',    19,  false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'),
+        );
     }
 }
