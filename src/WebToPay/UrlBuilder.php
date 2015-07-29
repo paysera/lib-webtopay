@@ -95,7 +95,7 @@ class WebToPay_UrlBuilder {
      *
      * @return string $url
      */
-    protected function getPaymentUrl() {
+    public function getPaymentUrl() {
         $route = $this->environmentSettings['payment'];
         return $route;
     }
