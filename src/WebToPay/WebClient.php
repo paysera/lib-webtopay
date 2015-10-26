@@ -19,7 +19,7 @@ class WebToPay_WebClient {
     public function get($uri, array $queryData = array()) {
         if (count($queryData) > 0) {
             $uri .= strpos($uri, '?') === false ? '?' : '&';
-            $uri .= http_build_query($queryData);
+            $uri .= http_build_query($queryData, null, '&');
         }
         $url = parse_url($uri);
         if ('https' == $url['scheme']) {

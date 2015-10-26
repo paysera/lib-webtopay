@@ -197,13 +197,13 @@ class WebToPay {
             }
 
             if ($logFile) {
-                self::log('OK', http_build_query($data), $logFile);
+                self::log('OK', http_build_query($data, null, '&'), $logFile);
             }
             return $data;
 
         } catch (WebToPayException $exception) {
         	if ($logFile && $exception->getCode() != WebToPayException::E_DEPRECATED_USAGE) {
-                self::log('ERR', $exception . "\nQuery: " . http_build_query($query), $logFile);
+                self::log('ERR', $exception . "\nQuery: " . http_build_query($query, null, '&'), $logFile);
             }
             throw $exception;
         }
