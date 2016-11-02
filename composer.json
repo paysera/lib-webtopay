@@ -1,12 +1,11 @@
 {
     "name": "webtopay/libwebtopay",
-    "description": "PHP Library for WebToPay provided services",
-    "version": "1.6",
+    "description": "PHP Library for Paysera payment gateway integration",
     "license": "LGPL-3.0",
     "authors": [
         {
-            "name": "EVP International",
-            "homepage": "http://www.webtopay.com/"
+            "name": "Paysera",
+            "homepage": "https://www.paysera.com/"
         }
     ],
     "autoload": {
