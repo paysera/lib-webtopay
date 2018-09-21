@@ -15,9 +15,9 @@ class WebToPay_Factory {
         'routes' => array(
             self::ENV_PRODUCTION => array(
                 'publicKey'           => 'http://www.paysera.com/download/public.key',
-                'payment'             => 'https://www.paysera.com/pay/',
+                'payment'             => 'https://bank.paysera.com/pay/',
                 'paymentMethodList'   => 'https://www.paysera.com/new/api/paymentMethods/',
-                'smsAnswer'           => 'https://www.paysera.com/psms/respond/',
+                'smsAnswer'           => 'https://bank.paysera.com/psms/respond/',
             ),
             self::ENV_SANDBOX => array(
                 'publicKey'         => 'http://sandbox.paysera.com/download/public.key',

@@ -37,12 +37,12 @@ class WebToPay {
     /**
      * Server URL where all requests should go.
      */
-    const PAY_URL = 'https://www.paysera.com/pay/';
+    const PAY_URL = 'https://bank.paysera.com/pay/';
     
     /**
      * Server URL where all non-lithuanian language requests should go.
      */
-    const PAYSERA_PAY_URL = 'https://www.paysera.com/pay/';
+    const PAYSERA_PAY_URL = 'https://bank.paysera.com/pay/';
 
     /**
      * Server URL where we can get XML with payment method data.
@@ -52,7 +52,7 @@ class WebToPay {
     /**
      * SMS answer url.
      */
-    const SMS_ANSWER_URL = 'https://www.paysera.com/psms/respond/';
+    const SMS_ANSWER_URL = 'https://bank.paysera.com/psms/respond/';
 
     /**
      * Builds request data array.

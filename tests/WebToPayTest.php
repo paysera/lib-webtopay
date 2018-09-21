@@ -9,7 +9,7 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
         $url = WebToPay::getPaymentUrl('LIT');
         $this->assertEquals($url, WebToPay::PAY_URL);
         $url = WebToPay::getPaymentUrl('ENG');
-        $this->assertEquals($url, 'https://www.paysera.com/pay/');
+        $this->assertEquals($url, 'https://bank.paysera.com/pay/');
     }
 
     /**
