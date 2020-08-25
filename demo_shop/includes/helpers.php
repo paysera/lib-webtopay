@@ -26,7 +26,7 @@ function h($var) {
 }
 
 function removeQuotes($post) {
-    if (get_magic_quotes_gpc()) {
+    if (checkMagicQuotesOption()) {
         foreach ($post as &$var) {
             if (is_array($var)) {
                 $var = removeQuotes($var);
@@ -38,7 +38,16 @@ function removeQuotes($post) {
     return $post;
 }
 
-function get_address($scriptName = '') {
+function checkMagicQuotesOption() {
+    if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
+        return false;
+    } else {
+        return get_magic_quotes_gpc();
+    }
+}
+
+function get_address($scriptName = '')
+{
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https' : 'http';
     return $protocol.'://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']) . '/' . $scriptName;
 }
@@ -62,4 +71,3 @@ function load_data() {
         return array();
     }
 }
-
