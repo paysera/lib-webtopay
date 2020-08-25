@@ -1,7 +1,9 @@
-WebToPay
+lib-webtopay
 ========
 
-This is WebToPay library package for the checkout functionality. 
+The Checkout API (Payment Gateway API) allows for the collection of online payments with many payment methods. 
+The Checkout API is easy to integrate – simply use one of our methods and the checkout processes will be performed 
+automatically. The library can be used to check all the necessary security parameters of transferred and received data.
 More information can be found in documentation: https://developers.paysera.com/en/checkout/basic
 
 Requirements
