@@ -46,7 +46,7 @@ class WebToPay_Util {
     }
 
     public function checkMagicQuotesOption() {
-        if (version_compare(PHP_VERSION, '5.4.0') >= 0 ) {
+        if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
             return false;
         } else {
             return get_magic_quotes_gpc();
