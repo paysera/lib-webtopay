@@ -2336,8 +2336,8 @@ class WebToPay_Util {
         return $params;
     }
 
-    public function checkMagicQuotesOption() {
-        if (version_compare(PHP_VERSION, '5.4.0') >= 0 ) {
+    private function checkMagicQuotesOption() {
+        if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
             return false;
         } else {
             return get_magic_quotes_gpc();
