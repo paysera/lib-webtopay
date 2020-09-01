@@ -6,12 +6,6 @@ The Checkout API is easy to integrate – simply use one of our methods and the 
 automatically. The library can be used to check all the necessary security parameters of transferred and received data.
 More information can be found in [the documentation](https://developers.paysera.com/en/checkout/basic).
 
-Requirements
-============
-
-You must have PHP version 5.0 or higher
-
-
 Installation
 ============
 
@@ -45,7 +39,6 @@ Testing
 =======
 
     $ phpunit
-
 
 Demo
 ===============
