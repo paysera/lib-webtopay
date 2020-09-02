@@ -38,7 +38,7 @@ class WebToPay {
      * Server URL where all requests should go.
      */
     const PAY_URL = 'https://bank.paysera.com/pay/';
-    
+
     /**
      * Server URL where all non-lithuanian language requests should go.
      */
@@ -61,7 +61,7 @@ class WebToPay {
      * array or raises WebToPayException on failure.
      *
      * Possible keys:
-     * https://developers.paysera.com/en/payments/current#integration-via-specification
+     * https://developers.paysera.com/en/checkout/integrations/integration-specification
      *
      * @param  array $data Information about current payment request
      *
@@ -88,7 +88,7 @@ class WebToPay {
      * Builds request and redirects user to payment window with generated request data
      *
      * Possible array keys are described here:
-     * https://developers.paysera.com/en/payments/current#integration-via-specification
+     * https://developers.paysera.com/en/checkout/integrations/integration-specification
      *
      * @param  array   $data Information about current payment request.
      * @param  boolean $exit if true, exits after sending Location header; default false
@@ -131,7 +131,7 @@ class WebToPay {
      *
      * Method accepts single parameter $data of array type. All possible array
      * keys are described here:
-     * https://developers.paysera.com/en/payments/current#integration-via-specification
+     * https://developers.paysera.com/en/checkout/integrations/integration-specification
      *
      * @param  array $data Information about current payment request
      *
@@ -172,8 +172,8 @@ class WebToPay {
      * First parameter usualy should be $_GET array.
      *
      * Description about response can be found here:
-     * makro: https://developers.paysera.com/en/payments/current#integration-via-specification
-     * mikro: https://developers.paysera.com/en/sms-keywords/current#detailed-specification
+     * makro: https://developers.paysera.com/en/checkout/integrations/integration-specification
+     * mikro: https://developers.paysera.com/en/sms-keywords/current#sms_keywords_specification
      *
      * If response is not correct, WebToPayException will be raised.
      *
