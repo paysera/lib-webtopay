@@ -30,7 +30,7 @@ class WebToPay_WebClient {
             $port = 80;
         }
 
-        $fp = fsockopen($host, $port, $errno, $errstr, 30);
+        $fp = $this->openSocket($host, $port);
         if (!$fp) {
             throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
         }
@@ -54,5 +54,32 @@ class WebToPay_WebClient {
         list($header, $content) = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
+    }
+
+    /**
+     * Open domain socket connection. Attempts specified amount of times before throwing and error.
+     *
+     * @param string $host
+     * @param integer $port
+     * @param integer $maxAttemptsCount
+     * 
+     * @return mixed
+     */
+    private function openSocket(string $host, int $port, int $maxAttemptsCount = 5)
+    {
+        $attempt = 0;
+        do {
+            try {
+                $fp = fsockopen($host, $port, $errno, $errstr, 30);
+            } catch (Exception $e) {
+                if ($attempt === $maxAttemptsCount) throw $e;
+                $attempt++;
+                sleep($attempt);
+                continue;
+            }
+            break;
+        } while ($attempt <= $maxAttemptsCount);
+
+        return $fp;
     }
 }
