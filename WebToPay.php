@@ -1189,7 +1189,7 @@ class WebToPay_RequestBuilder {
             array('p_email',       255, false, ''),
             array('p_street',      255, false, ''),
             array('p_city',        255, false, ''),
-            array('p_state',       20,  false, ''),
+            array('p_state',       255,  false, ''),
             array('p_zip',         20,  false, ''),
             array('p_countrycode', 2,   false, '/^[a-z]{2}$/i'),
             array('test',          1,   false, '/^[01]$/'),
