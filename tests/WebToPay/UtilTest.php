@@ -3,7 +3,7 @@
 /**
  * Test for class WebToPay_Util
  */
-class WebToPay_UtilTest extends PHPUnit_Framework_TestCase {
+class WebToPay_UtilTest extends \PHPUnit\Framework\TestCase {
 
     /**
      * @var WebToPay_Util
@@ -13,7 +13,7 @@ class WebToPay_UtilTest extends PHPUnit_Framework_TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
+    protected function setUp(): void {
         $this->util = new WebToPay_Util();
     }
 

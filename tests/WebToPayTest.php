@@ -3,7 +3,7 @@
 /**
  * Test for class WebToPay
  */
-class WebToPayTest extends PHPUnit_Framework_TestCase {
+class WebToPayTest extends \PHPUnit\Framework\TestCase {
 
     public function testGetPaymentUrl() {
         $url = WebToPay::getPaymentUrl('LIT');
@@ -14,10 +14,9 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Exception should be thrown if project id is not given
-     *
-     * @expectedException WebToPayException
      */
     public function testBuildRequestWithoutProjectId() {
+        $this->expectException(WebToPayException::class);
         WebToPay::buildRequest(array(
             'orderid' => '123',
             'accepturl' => 'http://local.test/accept',
@@ -30,10 +29,9 @@ class WebToPayTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Exception should be thrown if order id is not given
-     *
-     * @expectedException WebToPayException
      */
     public function testBuildRepeatRequestWithoutProjectId() {
+        $this->expectException(WebToPayException::class);
         WebToPay::buildRepeatRequest(array(
             'sign_password' => 'asdfghjkl',
             'projectid' => '123',

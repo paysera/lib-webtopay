@@ -3,7 +3,7 @@
 /**
  * Test for class WebToPay_Sign_SS1SignChecker
  */
-class WebToPay_Sign_SS1SignCheckerTest extends PHPUnit_Framework_TestCase {
+class WebToPay_SS1SignCheckerTest extends \PHPUnit\Framework\TestCase {
 
     /**
      * @var WebToPay_Sign_SS1SignChecker
@@ -13,16 +13,15 @@ class WebToPay_Sign_SS1SignCheckerTest extends PHPUnit_Framework_TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
+    protected function setUp(): void {
         $this->signChecker = new WebToPay_Sign_SS1SignChecker('secret');
     }
 
     /**
      * Should throw exception if not all required parameters are passed
-     *
-     * @expectedException WebToPay_Exception_Callback
      */
     public function testCheckSignWithoutInformation() {
+        $this->expectException(WebToPay_Exception_Callback::class);
         $this->signChecker->checkSign(array(
             'projectid' => '123',
             'ss1' => 'asd',

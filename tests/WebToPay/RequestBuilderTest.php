@@ -3,7 +3,7 @@
 /**
  * Test for class WebToPay_RequestBuilder
  */
-class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
+class WebToPay_RequestBuilderTest extends \PHPUnit\Framework\TestCase {
     /**
      * @var WebToPay_UrlBuilder
      */
@@ -22,8 +22,8 @@ class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
-        $this->util = $this->getMock('WebToPay_Util', array('encodeSafeUrlBase64'));
+    protected function setUp(): void {
+        $this->util = $this->getMockBuilder('WebToPay_Util')->onlyMethods(array('encodeSafeUrlBase64'))->getMock();
         $this->urlBuilder = $this->getMockBuilder('WebToPay_UrlBuilder')
             ->disableOriginalConstructor()
             ->getMock();
@@ -33,10 +33,9 @@ class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Test build request when no orderid is passed
-     *
-     * @expectedException WebToPay_Exception_Validation
      */
     public function testBuildRequestWithNoOrderId() {
+        $this->expectException(WebToPay_Exception_Validation::class);
         $this->builder->buildRequest(array(
             'accepturl' => 'http://local.test/',
             'cancelurl' => 'http://local.test/',
@@ -46,10 +45,9 @@ class WebToPay_RequestBuilderTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Test build request when invalid currency is passed
-     *
-     * @expectedException WebToPay_Exception_Validation
      */
     public function testBuildRequestWithInvalidCurrency() {
+        $this->expectException(WebToPay_Exception_Validation::class);
         $this->builder->buildRequest(array(
             'orderid' => 123,
             'accepturl' => 'http://local.test/',
