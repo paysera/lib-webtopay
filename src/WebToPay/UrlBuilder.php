@@ -86,7 +86,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     protected function createUrlFromRequestAndLanguage($request) {
-        $url = $this->getPaymentUrl() . '?' . http_build_query($request, null, '&');
+        $url = $this->getPaymentUrl() . '?' . http_build_query($request, "", '&');
         return preg_replace('/[\r\n]+/is', '', $url);
     }
 
