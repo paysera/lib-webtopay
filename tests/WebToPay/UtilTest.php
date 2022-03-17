@@ -1,9 +1,11 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * Test for class WebToPay_Util
  */
-class WebToPay_UtilTest extends PHPUnit_Framework_TestCase {
+class WebToPay_UtilTest extends TestCase {
 
     /**
      * @var WebToPay_Util
@@ -13,7 +15,7 @@ class WebToPay_UtilTest extends PHPUnit_Framework_TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->util = new WebToPay_Util();
     }
 

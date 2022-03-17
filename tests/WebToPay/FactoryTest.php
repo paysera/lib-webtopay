@@ -1,9 +1,11 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * Test for class WebToPay_Factory
  */
-class WebToPay_FactoryTest extends PHPUnit_Framework_TestCase {
+class WebToPay_FactoryTest extends TestCase {
 
     /**
      * @var WebToPay_Factory
@@ -18,7 +20,7 @@ class WebToPay_FactoryTest extends PHPUnit_Framework_TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->factory = new WebToPay_Factory(array(
             'projectId' => '123',
             'password' => 'abc',
@@ -64,37 +66,33 @@ class WebToPay_FactoryTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Tests exception
-     *
-     * @expectedException WebToPay_Exception_Configuration
      */
     public function testGetCallbackValidatorWithoutConfiguration() {
+        $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getCallbackValidator();
     }
 
     /**
      * Tests exception
-     *
-     * @expectedException WebToPay_Exception_Configuration
      */
     public function testGetRequestBuilderWithoutConfiguration() {
+        $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getRequestBuilder();
     }
 
     /**
      * Tests exception
-     *
-     * @expectedException WebToPay_Exception_Configuration
      */
     public function testGetSmsAnswerSenderWithoutConfiguration() {
+        $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getSmsAnswerSender();
     }
 
     /**
      * Tests exception
-     *
-     * @expectedException WebToPay_Exception_Configuration
      */
     public function testGetPaymentMethodListProviderWithoutConfiguration() {
+        $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getPaymentMethodListProvider();
     }
 }
