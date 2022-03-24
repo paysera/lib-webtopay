@@ -21,16 +21,28 @@ class WebToPay_CallbackValidator {
     protected $projectId;
 
     /**
+     * @var string
+     */
+    protected $password;
+
+    /**
      * Constructs object
      *
-     * @param integer                            $projectId
+     * @param integer $projectId
      * @param WebToPay_Sign_SignCheckerInterface $signer
-     * @param WebToPay_Util                      $util
+     * @param WebToPay_Util $util
+     * @param string $password
      */
-    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
+    public function __construct(
+        $projectId,
+        WebToPay_Sign_SignCheckerInterface $signer,
+        WebToPay_Util $util,
+        $password
+    ) {
         $this->signer = $signer;
         $this->util = $util;
         $this->projectId = $projectId;
+        $this->password = $password;
     }
 
     /**
@@ -53,8 +65,11 @@ class WebToPay_CallbackValidator {
             throw new WebToPay_Exception_Callback('"data" parameter not found');
         }
         $data = $requestData['data'];
-
-        $queryString = $this->util->decodeSafeUrlBase64($data);
+        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+            $queryString = $this->util->decodeSafeUrlBase64($data);
+        } else {
+            $queryString = $this->util->decryptGCM($data, $this->password);
+        }
         $request = $this->util->parseHttpQuery($queryString);
 
         if (!isset($request['projectid'])) {

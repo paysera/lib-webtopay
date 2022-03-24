@@ -26,7 +26,7 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
     public function setUp() {
         $this->signer = $this->getMock('WebToPay_Sign_SignCheckerInterface');
         $this->util = $this->getMock('WebToPay_Util', array('decodeSafeUrlBase64', 'parseHttpQuery'));
-        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util);
+        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util, 'pass');
     }
 
     /**

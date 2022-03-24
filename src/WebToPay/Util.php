@@ -3,7 +3,10 @@
 /**
  * Utility class
  */
-class WebToPay_Util {
+class WebToPay_Util
+{
+    const GCM_CIPHER = 'aes-256-gcm';
+    const GCM_AUTH_KEY_LENGTH = 16;
 
     /**
      * Decodes url-safe-base64 encoded string
@@ -27,6 +30,36 @@ class WebToPay_Util {
      */
     public function encodeSafeUrlBase64($text) {
         return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
+    }
+
+
+    /**
+     * @desc deCrypts with aes-256-gcm algorithm
+     * @param $stringToDecrypt string
+     * @param $key string
+     * @return string|false
+     */
+    function decryptGCM($stringToDecrypt, $key) {
+        $encrypted = base64_decode($stringToDecrypt);
+        $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
+        $iv = substr($encrypted, 0, $ivLength);
+        $ciphertext = substr($encrypted, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
+        $tag = substr($encrypted, -self::GCM_AUTH_KEY_LENGTH);
+
+        $decryptedText = openssl_decrypt(
+            $ciphertext,
+            self::GCM_CIPHER,
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($decryptedText === false) {
+            debug_error('OpenSSL decryption failed');
+        }
+
+        return $decryptedText;
     }
 
     /**

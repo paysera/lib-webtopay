@@ -1219,16 +1219,28 @@ class WebToPay_CallbackValidator {
     protected $projectId;
 
     /**
+     * @var string
+     */
+    protected $password;
+
+    /**
      * Constructs object
      *
-     * @param integer                            $projectId
+     * @param integer $projectId
      * @param WebToPay_Sign_SignCheckerInterface $signer
-     * @param WebToPay_Util                      $util
+     * @param WebToPay_Util $util
+     * @param string $password
      */
-    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
+    public function __construct(
+        $projectId,
+        WebToPay_Sign_SignCheckerInterface $signer,
+        WebToPay_Util $util,
+        $password
+    ) {
         $this->signer = $signer;
         $this->util = $util;
         $this->projectId = $projectId;
+        $this->password = $password;
     }
 
     /**
@@ -1252,7 +1264,11 @@ class WebToPay_CallbackValidator {
         }
         $data = $requestData['data'];
 
-        $queryString = $this->util->decodeSafeUrlBase64($data);
+        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+            $queryString = $this->util->decodeSafeUrlBase64($data);
+        } else {
+            $queryString = $this->util->decryptGCM($data, $this->password);
+        }
         $request = $this->util->parseHttpQuery($queryString);
 
         if (!isset($request['projectid'])) {
@@ -1843,10 +1859,14 @@ class WebToPay_Factory {
             if (!isset($this->configuration['projectId'])) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
+            if (!isset($this->configuration['password'])) {
+                throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
+            }
             $this->callbackValidator = new WebToPay_CallbackValidator(
                 $this->configuration['projectId'],
                 $this->getSigner(),
-                $this->getUtil()
+                $this->getUtil(),
+                $this->configuration['password']
             );
         }
         return $this->callbackValidator;
@@ -2296,6 +2316,8 @@ class WebToPay_WebClient {
  */
 class WebToPay_Util {
 
+    const GCM_CIPHER = 'aes-256-gcm';
+    const GCM_AUTH_KEY_LENGTH = 16;
     /**
      * Decodes url-safe-base64 encoded string
      * Url-safe-base64 is same as base64, but + is replaced to - and / to _
@@ -2318,6 +2340,35 @@ class WebToPay_Util {
      */
     public function encodeSafeUrlBase64($text) {
         return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
+    }
+
+    /**
+     * @desc deCrypts with aes-256-gcm algorithm
+     * @param $stringToDecrypt string
+     * @param $key string
+     * @return string|false
+     */
+    function decryptGCM($stringToDecrypt, $key) {
+        $encrypted = base64_decode($stringToDecrypt);
+        $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
+        $iv = substr($encrypted, 0, $ivLength);
+        $ciphertext = substr($encrypted, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
+        $tag = substr($encrypted, -self::GCM_AUTH_KEY_LENGTH);
+
+        $decryptedText = openssl_decrypt(
+            $ciphertext,
+            self::GCM_CIPHER,
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($decryptedText === false) {
+            debug_error('OpenSSL decryption failed');
+        }
+
+        return $decryptedText;
     }
 
     /**
