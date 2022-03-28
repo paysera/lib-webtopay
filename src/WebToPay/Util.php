@@ -34,9 +34,11 @@ class WebToPay_Util
 
 
     /**
-     * @desc deCrypts with aes-256-gcm algorithm
+     * Decrypts string with aes-256-gcm algorithm
+     *
      * @param $stringToDecrypt string
      * @param $key string
+     *
      * @return string|false
      */
     function decryptGCM($stringToDecrypt, $key) {
@@ -54,10 +56,6 @@ class WebToPay_Util
             $iv,
             $tag
         );
-
-        if ($decryptedText === false) {
-            debug_error('OpenSSL decryption failed');
-        }
 
         return $decryptedText;
     }

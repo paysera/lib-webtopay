@@ -122,7 +122,7 @@ class WebToPay_Factory {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             if (!isset($this->configuration['password'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
+                throw new WebToPay_Exception_Configuration('You have to provide project password');
             }
             $this->callbackValidator = new WebToPay_CallbackValidator(
                 $this->configuration['projectId'],

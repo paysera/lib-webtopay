@@ -5,6 +5,8 @@
  */
 class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
 
+    const PROJECT_PASSWORD = 'pass';
+
     /**
      * @var WebToPay_Sign_SignCheckerInterface
      */
@@ -25,8 +27,11 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
      */
     public function setUp() {
         $this->signer = $this->getMock('WebToPay_Sign_SignCheckerInterface');
-        $this->util = $this->getMock('WebToPay_Util', array('decodeSafeUrlBase64', 'parseHttpQuery'));
-        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util, 'pass');
+        $this->util = $this->getMock(
+            'WebToPay_Util',
+            array('decodeSafeUrlBase64', 'parseHttpQuery', 'decryptGCM')
+        );
+        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util, self::PROJECT_PASSWORD);
     }
 
     /**
@@ -49,7 +54,7 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
      * @expectedException WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithInvalidProject() {
-        $request = array('data' => 'abcdef', 'sign' => 'qwerty');
+        $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 456);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
@@ -60,17 +65,56 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
     }
 
     /**
-     * Tests validateAndParseData method
+     * Tests validateAndParseData method with callback data decoding
      */
-    public function testValidateAndParseData() {
-        $request = array('data' => 'abcdef', 'sign' => 'qwerty');
+    public function testValidateAndParseDataWithDecoding() {
+        $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 123, 'someparam' => 'qwerty123', 'type' => 'micro');
+
+        $this->assertArrayHasKey('ss1', $request);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
         $this->util->expects($this->at(0))->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
         $this->util->expects($this->at(1))->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->assertEquals($parsed, $this->validator->validateAndParseData($request));
+    }
+
+    /**
+     * Tests validateAndParseData method with callback data decryption
+     */
+    public function testValidateAndParseDataWithDecryption() {
+        $data = ['firstParam' => 'first', 'secondParam' => 'second', 'projectid' => 123, 'type' => 'macro'];
+        $dataString = http_build_query($data);
+        $encryptedDataString = 'ASdzxcawejlqkweQWesa==';
+        $request = array('data' => $encryptedDataString, 'sign' => 'qwerty');
+
+        $this->assertArrayNotHasKey('ss1', $request);
+        $this->assertArrayNotHasKey('ss2', $request);
+
+        $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
+        $this->util->expects($this->at(0))->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue($dataString));
+        $this->util->expects($this->at(1))->method('parseHttpQuery')->with($dataString)->will($this->returnValue($data));
+
+        $this->assertEquals($data, $this->validator->validateAndParseData($request));
+    }
+
+    /**
+     * Exception should be thrown if decryption has failed
+     *
+     * @expectedException WebToPay_Exception_Callback
+     */
+    public function testValidateAndParseDataWithDecryptionFailure() {
+        $encryptedDataString = 'ASdzxcawejlqkweQWesa==';
+        $request = array('data' => $encryptedDataString, 'sign' => 'qwerty');
+
+        $this->assertArrayNotHasKey('ss1', $request);
+        $this->assertArrayNotHasKey('ss2', $request);
+
+        $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
+        $this->util->expects($this->at(0))->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue(false));
+
+        $this->validator->validateAndParseData($request);
     }
 
     /**

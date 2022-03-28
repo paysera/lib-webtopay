@@ -73,4 +73,60 @@ class WebToPay_UtilTest extends PHPUnit_Framework_TestCase {
             )
         );
     }
+
+    public function testDecryptGCM()
+    {
+        $key = 'encryption_key';
+        $dataString = http_build_query(
+            array(
+                'firstParam' => 'first',
+                'secondParam' => 'second',
+            )
+        );
+        $encryptedData = $this->getEncryptedData($dataString, $key);
+
+        $this->assertEquals(
+            $dataString,
+            $this->util->decryptGCM($encryptedData, $key)
+        );
+    }
+
+    public function testDecryptGCMFailed()
+    {
+        $dataString = http_build_query(
+            array(
+                'firstParam' => 'first',
+                'secondParam' => 'second',
+            )
+        );
+        $encryptedData = $this->getEncryptedData($dataString, 'encryption_key');
+
+        $this->assertFalse($this->util->decryptGCM($encryptedData, 'wrong_key'));
+    }
+
+    /**
+     * @param string $data - callback data string to encrypt
+     *
+     * @return string - encrypted string
+     */
+    private function getEncryptedData($data, $key)
+    {
+        // move to util test
+        $ivLength = openssl_cipher_iv_length(WebToPay_Util::GCM_CIPHER);
+        $iv = openssl_random_pseudo_bytes($ivLength);
+        $tag = '';
+
+        $ciphertext = openssl_encrypt(
+            $data,
+            WebToPay_Util::GCM_CIPHER,
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag,
+            '',
+            WebToPay_Util::GCM_AUTH_KEY_LENGTH
+        );
+
+        return base64_encode($iv.$ciphertext.$tag);
+    }
 }

@@ -372,7 +372,7 @@ class WebToPayException extends Exception {
      * Errors in remote service - it returns some invalid data
      */
     const E_SERVICE = 10;
-    
+
     /**
      * Deprecated usage errors
      */
@@ -1268,6 +1268,9 @@ class WebToPay_CallbackValidator {
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
             $queryString = $this->util->decryptGCM($data, $this->password);
+            if (false === $queryString) {
+                throw new WebToPay_Exception_Callback('Callback data decryption failed');
+            }
         }
         $request = $this->util->parseHttpQuery($queryString);
 
@@ -1860,7 +1863,7 @@ class WebToPay_Factory {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             if (!isset($this->configuration['password'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
+                throw new WebToPay_Exception_Configuration('You have to provide project password');
             }
             $this->callbackValidator = new WebToPay_CallbackValidator(
                 $this->configuration['projectId'],
@@ -2318,6 +2321,7 @@ class WebToPay_Util {
 
     const GCM_CIPHER = 'aes-256-gcm';
     const GCM_AUTH_KEY_LENGTH = 16;
+
     /**
      * Decodes url-safe-base64 encoded string
      * Url-safe-base64 is same as base64, but + is replaced to - and / to _
@@ -2343,9 +2347,11 @@ class WebToPay_Util {
     }
 
     /**
-     * @desc deCrypts with aes-256-gcm algorithm
+     * Decrypts string with aes-256-gcm algorithm
+     *
      * @param $stringToDecrypt string
      * @param $key string
+     *
      * @return string|false
      */
     function decryptGCM($stringToDecrypt, $key) {
@@ -2363,10 +2369,6 @@ class WebToPay_Util {
             $iv,
             $tag
         );
-
-        if ($decryptedText === false) {
-            debug_error('OpenSSL decryption failed');
-        }
 
         return $decryptedText;
     }
