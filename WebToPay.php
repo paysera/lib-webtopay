@@ -200,13 +200,13 @@ class WebToPay {
             }
 
             if ($logFile) {
-                self::log('OK', http_build_query($data, null, '&'), $logFile);
+                self::log('OK', http_build_query($data, '', '&'), $logFile);
             }
             return $data;
 
         } catch (WebToPayException $exception) {
         	if ($logFile && $exception->getCode() != WebToPayException::E_DEPRECATED_USAGE) {
-                self::log('ERR', $exception . "\nQuery: " . http_build_query($query, null, '&'), $logFile);
+                self::log('ERR', $exception . "\nQuery: " . http_build_query($query, '', '&'), $logFile);
             }
             throw $exception;
         }
@@ -734,7 +734,7 @@ class WebToPay_UrlBuilder {
      * @return string
      */
     protected function createUrlFromRequestAndLanguage($request) {
-        $url = $this->getPaymentUrl() . '?' . http_build_query($request, null, '&');
+        $url = $this->getPaymentUrl() . '?' . http_build_query($request, '', '&');
         return preg_replace('/[\r\n]+/is', '', $url);
     }
 
@@ -1154,7 +1154,7 @@ class WebToPay_RequestBuilder {
      * @return array
      */
     protected function createRequest(array $request) {
-        $data = $this->util->encodeSafeUrlBase64(http_build_query($request, null, '&'));
+        $data = $this->util->encodeSafeUrlBase64(http_build_query($request, '', '&'));
         return array(
             'data' => $data,
             'sign' => md5($data . $this->projectPassword),
@@ -2253,7 +2253,7 @@ class WebToPay_WebClient {
     public function get($uri, array $queryData = array()) {
         if (count($queryData) > 0) {
             $uri .= strpos($uri, '?') === false ? '?' : '&';
-            $uri .= http_build_query($queryData, null, '&');
+            $uri .= http_build_query($queryData, '', '&');
         }
         $url = parse_url($uri);
         if ('https' == $url['scheme']) {
