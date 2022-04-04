@@ -4,7 +4,7 @@ require_once 'includes/helpers.php';
 require_once 'includes/config.php';
 require_once '../src/includes.php';
 
-$get = removeQuotes($_GET);
+$get = $_GET;
 $answer = isset($get['answer']) ? $get['answer'] : 'cancel';
 
 if ('callback' == $answer) {
