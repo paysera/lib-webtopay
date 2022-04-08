@@ -53,8 +53,8 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $parsed = array('projectid' => 456);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
-        $this->util->expects($this->at(1))->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->validator->validateAndParseData($request);
     }
@@ -67,8 +67,8 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $parsed = array('projectid' => 123, 'someparam' => 'qwerty123', 'type' => 'micro');
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
-        $this->util->expects($this->at(1))->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->assertEquals($parsed, $this->validator->validateAndParseData($request));
     }
