@@ -54,7 +54,7 @@ class WebToPay_CallbackValidatorTest extends TestCase {
      */
     public function testValidateAndParseDataWithInvalidProject() {
         $this->expectException(WebToPay_Exception_Callback::class);
-      
+
         $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 456);
 
@@ -102,10 +102,10 @@ class WebToPay_CallbackValidatorTest extends TestCase {
 
     /**
      * Exception should be thrown if decryption has failed
-     *
-     * @expectedException WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithDecryptionFailure() {
+        $this->expectException(WebToPay_Exception_Callback::class);
+
         $encryptedDataString = 'ASdzxcawejlqkweQWesa==';
         $request = array('data' => $encryptedDataString, 'sign' => 'qwerty');
 
