@@ -1,9 +1,11 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * Test for class WebToPay_CallbackValidator
  */
-class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
+class WebToPay_CallbackValidatorTest extends TestCase {
 
     const PROJECT_PASSWORD = 'pass';
 
@@ -26,8 +28,8 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
      * Sets up this test
      */
     public function setUp() {
-        $this->signer = $this->getMock('WebToPay_Sign_SignCheckerInterface');
-        $this->util = $this->getMock(
+        $this->signer = $this->createMock('WebToPay_Sign_SignCheckerInterface');
+        $this->util = $this->createMock(
             'WebToPay_Util',
             array('decodeSafeUrlBase64', 'parseHttpQuery', 'decryptGCM')
         );
@@ -36,10 +38,9 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Exception should be thrown on invalid sign
-     *
-     * @expectedException WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithInvalidSign() {
+        $this->expectException(WebToPay_Exception_Callback::class);
         $request = array('data' => 'abcdef', 'sign' => 'qwerty');
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(false));
@@ -50,16 +51,16 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Exception should be thrown if project ID does not match expected one
-     *
-     * @expectedException WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithInvalidProject() {
+        $this->expectException(WebToPay_Exception_Callback::class);
+      
         $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 456);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
-        $this->util->expects($this->at(1))->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->validator->validateAndParseData($request);
     }
@@ -74,8 +75,8 @@ class WebToPay_CallbackValidatorTest extends PHPUnit_Framework_TestCase {
         $this->assertArrayHasKey('ss1', $request);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
-        $this->util->expects($this->at(1))->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->assertEquals($parsed, $this->validator->validateAndParseData($request));
     }

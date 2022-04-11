@@ -1,6 +1,10 @@
 Version history
 ===============
 
+Version 1.7     - 2022-04-11
+
+    * added support for PHP 8.0+
+
 Version 1.6     - 2012-04-12
 
     * refactored WebToPay class to separate non-static classes
