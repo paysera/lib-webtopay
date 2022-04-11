@@ -39,18 +39,7 @@ class WebToPay_Util {
     public function parseHttpQuery($query) {
         $params = array();
         parse_str($query, $params);
-        if ($this->checkMagicQuotesOption()) {
-            $params = $this->stripSlashesRecursively($params);
-        }
         return $params;
-    }
-
-    private function checkMagicQuotesOption() {
-        if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
-            return false;
-        } else {
-            return get_magic_quotes_gpc();
-        }
     }
 
     /**
