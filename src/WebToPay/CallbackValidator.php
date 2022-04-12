@@ -69,7 +69,7 @@ class WebToPay_CallbackValidator {
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
             $queryString = $this->util->decryptGCM(urldecode($data), $this->password);
-            if (false === $queryString) {
+            if (null === $queryString) {
                 throw new WebToPay_Exception_Callback('Callback data decryption failed');
             }
         }

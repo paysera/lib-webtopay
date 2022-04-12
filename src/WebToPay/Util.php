@@ -39,7 +39,7 @@ class WebToPay_Util
      * @param $stringToDecrypt string
      * @param $key string
      *
-     * @return string|false
+     * @return string|null
      */
     function decryptGCM($stringToDecrypt, $key) {
         $encrypted = base64_decode($stringToDecrypt);
@@ -57,7 +57,7 @@ class WebToPay_Util
             $tag
         );
 
-        return $decryptedText;
+        return $decryptedText === false ? null : $decryptedText;
     }
 
     /**

@@ -27,7 +27,7 @@ class WebToPay_CallbackValidatorTest extends TestCase {
     /**
      * Sets up this test
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->signer = $this->createMock('WebToPay_Sign_SignCheckerInterface');
         $this->util = $this->createMock(
             'WebToPay_Util',
@@ -72,8 +72,6 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 123, 'someparam' => 'qwerty123', 'type' => 'micro');
 
-        $this->assertArrayHasKey('ss1', $request);
-
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
         $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with('abcdef')->will($this->returnValue('zxc'));
         $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
@@ -88,14 +86,11 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $data = ['firstParam' => 'first', 'secondParam' => 'second', 'projectid' => 123, 'type' => 'macro'];
         $dataString = http_build_query($data);
         $encryptedDataString = 'ASdzxcawejlqkweQWesa==';
-        $request = array('data' => $encryptedDataString, 'sign' => 'qwerty');
-
-        $this->assertArrayNotHasKey('ss1', $request);
-        $this->assertArrayNotHasKey('ss2', $request);
+        $request = array('data' => $encryptedDataString);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue($dataString));
-        $this->util->expects($this->at(1))->method('parseHttpQuery')->with($dataString)->will($this->returnValue($data));
+        $this->util->expects($this->once())->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue($dataString));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with($dataString)->will($this->returnValue($data));
 
         $this->assertEquals($data, $this->validator->validateAndParseData($request));
     }
@@ -107,13 +102,10 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $this->expectException(WebToPay_Exception_Callback::class);
 
         $encryptedDataString = 'ASdzxcawejlqkweQWesa==';
-        $request = array('data' => $encryptedDataString, 'sign' => 'qwerty');
-
-        $this->assertArrayNotHasKey('ss1', $request);
-        $this->assertArrayNotHasKey('ss2', $request);
+        $request = array('data' => $encryptedDataString);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
-        $this->util->expects($this->at(0))->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue(false));
+        $this->util->expects($this->once())->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue(false));
 
         $this->validator->validateAndParseData($request);
     }

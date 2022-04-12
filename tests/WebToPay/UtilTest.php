@@ -103,7 +103,7 @@ class WebToPay_UtilTest extends TestCase {
         );
         $encryptedData = $this->getEncryptedData($dataString, 'encryption_key');
 
-        $this->assertFalse($this->util->decryptGCM($encryptedData, 'wrong_key'));
+        $this->assertNull($this->util->decryptGCM($encryptedData, 'wrong_key'));
     }
 
     /**

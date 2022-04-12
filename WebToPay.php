@@ -1268,7 +1268,7 @@ class WebToPay_CallbackValidator {
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
             $queryString = $this->util->decryptGCM(urldecode($data), $this->password);
-            if (false === $queryString) {
+            if (null === $queryString) {
                 throw new WebToPay_Exception_Callback('Callback data decryption failed');
             }
         }
@@ -2349,10 +2349,10 @@ class WebToPay_Util {
     /**
      * Decrypts string with aes-256-gcm algorithm
      *
-     * @param $stringToDecrypt string
-     * @param $key string
+     * @param string $stringToDecrypt
+     * @param string $key
      *
-     * @return string|false
+     * @return string|null
      */
     function decryptGCM($stringToDecrypt, $key) {
         $encrypted = base64_decode($stringToDecrypt);
@@ -2370,7 +2370,7 @@ class WebToPay_Util {
             $tag
         );
 
-        return $decryptedText;
+        return $decryptedText === false ? null : $decryptedText;
     }
 
     /**
