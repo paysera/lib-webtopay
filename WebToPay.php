@@ -1255,19 +1255,24 @@ class WebToPay_CallbackValidator {
      * @throws WebToPay_Exception_Callback
      */
     public function validateAndParseData(array $requestData) {
-        if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
-        }
-
         if (!isset($requestData['data'])) {
             throw new WebToPay_Exception_Callback('"data" parameter not found');
         }
+
         $data = $requestData['data'];
 
         if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+            if (!$this->signer->checkSign($requestData)) {
+                throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
+            }
+
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
-            $queryString = $this->util->decryptGCM(urldecode($data), $this->password);
+            $queryString = $this->util->decryptGCM(
+                $this->util->decodeSafeUrlBase64($data),
+                $this->password
+            );
+
             if (null === $queryString) {
                 throw new WebToPay_Exception_Callback('Callback data decryption failed');
             }
@@ -2355,11 +2360,10 @@ class WebToPay_Util {
      * @return string|null
      */
     function decryptGCM($stringToDecrypt, $key) {
-        $encrypted = base64_decode($stringToDecrypt);
         $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
-        $iv = substr($encrypted, 0, $ivLength);
-        $ciphertext = substr($encrypted, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
-        $tag = substr($encrypted, -self::GCM_AUTH_KEY_LENGTH);
+        $iv = substr($stringToDecrypt, 0, $ivLength);
+        $ciphertext = substr($stringToDecrypt, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
+        $tag = substr($stringToDecrypt, -self::GCM_AUTH_KEY_LENGTH);
 
         $decryptedText = openssl_decrypt(
             $ciphertext,

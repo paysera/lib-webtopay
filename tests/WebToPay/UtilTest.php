@@ -129,6 +129,6 @@ class WebToPay_UtilTest extends TestCase {
             WebToPay_Util::GCM_AUTH_KEY_LENGTH
         );
 
-        return base64_encode($iv.$ciphertext.$tag);
+        return $iv.$ciphertext.$tag;
     }
 }

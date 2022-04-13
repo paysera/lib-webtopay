@@ -32,21 +32,19 @@ class WebToPay_Util
         return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
     }
 
-
     /**
      * Decrypts string with aes-256-gcm algorithm
      *
-     * @param $stringToDecrypt string
-     * @param $key string
+     * @param string $stringToDecrypt
+     * @param string $key
      *
      * @return string|null
      */
     function decryptGCM($stringToDecrypt, $key) {
-        $encrypted = base64_decode($stringToDecrypt);
         $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
-        $iv = substr($encrypted, 0, $ivLength);
-        $ciphertext = substr($encrypted, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
-        $tag = substr($encrypted, -self::GCM_AUTH_KEY_LENGTH);
+        $iv = substr($stringToDecrypt, 0, $ivLength);
+        $ciphertext = substr($stringToDecrypt, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
+        $tag = substr($stringToDecrypt, -self::GCM_AUTH_KEY_LENGTH);
 
         $decryptedText = openssl_decrypt(
             $ciphertext,

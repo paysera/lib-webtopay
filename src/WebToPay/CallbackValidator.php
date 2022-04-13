@@ -57,18 +57,24 @@ class WebToPay_CallbackValidator {
      * @throws WebToPay_Exception_Callback
      */
     public function validateAndParseData(array $requestData) {
-        if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
-        }
-
         if (!isset($requestData['data'])) {
             throw new WebToPay_Exception_Callback('"data" parameter not found');
         }
+
         $data = $requestData['data'];
+
         if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+            if (!$this->signer->checkSign($requestData)) {
+                throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
+            }
+
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
-            $queryString = $this->util->decryptGCM(urldecode($data), $this->password);
+            $queryString = $this->util->decryptGCM(
+                $this->util->decodeSafeUrlBase64($data),
+                $this->password
+            );
+
             if (null === $queryString) {
                 throw new WebToPay_Exception_Callback('Callback data decryption failed');
             }
