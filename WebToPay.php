@@ -1219,7 +1219,7 @@ class WebToPay_CallbackValidator {
     protected $projectId;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $password;
 
@@ -1229,13 +1229,13 @@ class WebToPay_CallbackValidator {
      * @param integer $projectId
      * @param WebToPay_Sign_SignCheckerInterface $signer
      * @param WebToPay_Util $util
-     * @param string $password
+     * @param string|null $password
      */
     public function __construct(
         $projectId,
         WebToPay_Sign_SignCheckerInterface $signer,
         WebToPay_Util $util,
-        $password
+        $password = null
     ) {
         $this->signer = $signer;
         $this->util = $util;
@@ -1268,6 +1268,10 @@ class WebToPay_CallbackValidator {
 
             $queryString = $this->util->decodeSafeUrlBase64($data);
         } else {
+            if (null === $this->password) {
+                throw new WebToPay_Exception_Configuration('You have to provide project password');
+            }
+
             $queryString = $this->util->decryptGCM(
                 $this->util->decodeSafeUrlBase64($data),
                 $this->password
@@ -1867,14 +1871,12 @@ class WebToPay_Factory {
             if (!isset($this->configuration['projectId'])) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
-            if (!isset($this->configuration['password'])) {
-                throw new WebToPay_Exception_Configuration('You have to provide project password');
-            }
+
             $this->callbackValidator = new WebToPay_CallbackValidator(
                 $this->configuration['projectId'],
                 $this->getSigner(),
                 $this->getUtil(),
-                $this->configuration['password']
+                isset($this->configuration['password']) ? $this->configuration['password'] : null
             );
         }
         return $this->callbackValidator;
