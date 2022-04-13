@@ -1,5 +1,8 @@
 Version history
 ===============
+Version 1.8     - 2022-04-13
+
+    * added callback data decryption functionality
 
 Version 1.7     - 2022-04-11
 
