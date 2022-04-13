@@ -372,7 +372,7 @@ class WebToPayException extends Exception {
      * Errors in remote service - it returns some invalid data
      */
     const E_SERVICE = 10;
-    
+
     /**
      * Deprecated usage errors
      */
@@ -1219,16 +1219,28 @@ class WebToPay_CallbackValidator {
     protected $projectId;
 
     /**
+     * @var string|null
+     */
+    protected $password;
+
+    /**
      * Constructs object
      *
-     * @param integer                            $projectId
+     * @param integer $projectId
      * @param WebToPay_Sign_SignCheckerInterface $signer
-     * @param WebToPay_Util                      $util
+     * @param WebToPay_Util $util
+     * @param string|null $password
      */
-    public function __construct($projectId, WebToPay_Sign_SignCheckerInterface $signer, WebToPay_Util $util) {
+    public function __construct(
+        $projectId,
+        WebToPay_Sign_SignCheckerInterface $signer,
+        WebToPay_Util $util,
+        $password = null
+    ) {
         $this->signer = $signer;
         $this->util = $util;
         $this->projectId = $projectId;
+        $this->password = $password;
     }
 
     /**
@@ -1243,16 +1255,32 @@ class WebToPay_CallbackValidator {
      * @throws WebToPay_Exception_Callback
      */
     public function validateAndParseData(array $requestData) {
-        if (!$this->signer->checkSign($requestData)) {
-            throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
-        }
-
         if (!isset($requestData['data'])) {
             throw new WebToPay_Exception_Callback('"data" parameter not found');
         }
+
         $data = $requestData['data'];
 
-        $queryString = $this->util->decodeSafeUrlBase64($data);
+        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+            if (!$this->signer->checkSign($requestData)) {
+                throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
+            }
+
+            $queryString = $this->util->decodeSafeUrlBase64($data);
+        } else {
+            if (null === $this->password) {
+                throw new WebToPay_Exception_Configuration('You have to provide project password');
+            }
+
+            $queryString = $this->util->decryptGCM(
+                $this->util->decodeSafeUrlBase64($data),
+                $this->password
+            );
+
+            if (null === $queryString) {
+                throw new WebToPay_Exception_Callback('Callback data decryption failed');
+            }
+        }
         $request = $this->util->parseHttpQuery($queryString);
 
         if (!isset($request['projectid'])) {
@@ -1843,10 +1871,12 @@ class WebToPay_Factory {
             if (!isset($this->configuration['projectId'])) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
+
             $this->callbackValidator = new WebToPay_CallbackValidator(
                 $this->configuration['projectId'],
                 $this->getSigner(),
-                $this->getUtil()
+                $this->getUtil(),
+                isset($this->configuration['password']) ? $this->configuration['password'] : null
             );
         }
         return $this->callbackValidator;
@@ -2296,6 +2326,9 @@ class WebToPay_WebClient {
  */
 class WebToPay_Util {
 
+    const GCM_CIPHER = 'aes-256-gcm';
+    const GCM_AUTH_KEY_LENGTH = 16;
+
     /**
      * Decodes url-safe-base64 encoded string
      * Url-safe-base64 is same as base64, but + is replaced to - and / to _
@@ -2318,6 +2351,32 @@ class WebToPay_Util {
      */
     public function encodeSafeUrlBase64($text) {
         return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
+    }
+
+    /**
+     * Decrypts string with aes-256-gcm algorithm
+     *
+     * @param string $stringToDecrypt
+     * @param string $key
+     *
+     * @return string|null
+     */
+    function decryptGCM($stringToDecrypt, $key) {
+        $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
+        $iv = substr($stringToDecrypt, 0, $ivLength);
+        $ciphertext = substr($stringToDecrypt, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
+        $tag = substr($stringToDecrypt, -self::GCM_AUTH_KEY_LENGTH);
+
+        $decryptedText = openssl_decrypt(
+            $ciphertext,
+            self::GCM_CIPHER,
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        return $decryptedText === false ? null : $decryptedText;
     }
 
     /**

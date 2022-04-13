@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
  */
 class WebToPay_CallbackValidatorTest extends TestCase {
 
+    const PROJECT_PASSWORD = 'pass';
+
     /**
      * @var WebToPay_Sign_SignCheckerInterface
      */
@@ -27,8 +29,11 @@ class WebToPay_CallbackValidatorTest extends TestCase {
      */
     public function setUp(): void {
         $this->signer = $this->createMock('WebToPay_Sign_SignCheckerInterface');
-        $this->util = $this->createMock('WebToPay_Util', array('decodeSafeUrlBase64', 'parseHttpQuery'));
-        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util);
+        $this->util = $this->createMock(
+            'WebToPay_Util',
+            array('decodeSafeUrlBase64', 'parseHttpQuery', 'decryptGCM')
+        );
+        $this->validator = new WebToPay_CallbackValidator(123, $this->signer, $this->util, self::PROJECT_PASSWORD);
     }
 
     /**
@@ -36,7 +41,7 @@ class WebToPay_CallbackValidatorTest extends TestCase {
      */
     public function testValidateAndParseDataWithInvalidSign() {
         $this->expectException(WebToPay_Exception_Callback::class);
-        $request = array('data' => 'abcdef', 'sign' => 'qwerty');
+        $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1'=> 'zxcvb');
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(false));
         $this->util->expects($this->never())->method($this->anything());
@@ -49,7 +54,8 @@ class WebToPay_CallbackValidatorTest extends TestCase {
      */
     public function testValidateAndParseDataWithInvalidProject() {
         $this->expectException(WebToPay_Exception_Callback::class);
-        $request = array('data' => 'abcdef', 'sign' => 'qwerty');
+
+        $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 456);
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
@@ -60,10 +66,10 @@ class WebToPay_CallbackValidatorTest extends TestCase {
     }
 
     /**
-     * Tests validateAndParseData method
+     * Tests validateAndParseData method with callback data decoding
      */
-    public function testValidateAndParseData() {
-        $request = array('data' => 'abcdef', 'sign' => 'qwerty');
+    public function testValidateAndParseDataWithDecoding() {
+        $request = array('data' => 'abcdef', 'sign' => 'qwerty', 'ss1' => 'randomChecksum');
         $parsed = array('projectid' => 123, 'someparam' => 'qwerty123', 'type' => 'micro');
 
         $this->signer->expects($this->once())->method('checkSign')->with($request)->will($this->returnValue(true));
@@ -71,6 +77,39 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $this->util->expects($this->once())->method('parseHttpQuery')->with('zxc')->will($this->returnValue($parsed));
 
         $this->assertEquals($parsed, $this->validator->validateAndParseData($request));
+    }
+
+    /**
+     * Tests validateAndParseData method with callback data decryption
+     */
+    public function testValidateAndParseDataWithDecryption() {
+        $data = ['firstParam' => 'first', 'secondParam' => 'second', 'projectid' => 123, 'type' => 'macro'];
+        $dataString = http_build_query($data);
+        $urlSafeEncodedString = 'ASdzxc+awej_lqkweQWesa==';
+        $encryptedDataString = 'ASdzxc+awej_lqkweQWesa==';
+        $request = array('data' => $encryptedDataString);
+
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with($urlSafeEncodedString)->will($this->returnValue($encryptedDataString));
+        $this->util->expects($this->once())->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue($dataString));
+        $this->util->expects($this->once())->method('parseHttpQuery')->with($dataString)->will($this->returnValue($data));
+
+        $this->assertEquals($data, $this->validator->validateAndParseData($request));
+    }
+
+    /**
+     * Exception should be thrown if decryption has failed
+     */
+    public function testValidateAndParseDataWithDecryptionFailure() {
+        $this->expectException(WebToPay_Exception_Callback::class);
+
+        $urlSafeEncodedString = 'ASdzxc+awej_lqkweQWesa==';
+        $encryptedDataString = 'ASdzxc+awej_lqkweQWesa==';
+        $request = array('data' => $encryptedDataString);
+
+        $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with($urlSafeEncodedString)->will($this->returnValue($encryptedDataString));
+        $this->util->expects($this->once())->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue(false));
+
+        $this->validator->validateAndParseData($request);
     }
 
     /**
