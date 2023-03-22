@@ -48,5 +48,5 @@ It also shows how to get payment methods available for your project and specific
 
 Demo needs write permissions to folder /var to function properly.
 If you want to test demo online, also change parameters in includes/config.php file to your project's.
-If you are testing offline, demos will still work, but webtopay.com will be unable to send callback to your site - 
+If you are testing offline, demos will still work, but paysera.com will be unable to send callback to your site - 
 you can login to your account and copy-and-paste the callback link in your browser in that case.
