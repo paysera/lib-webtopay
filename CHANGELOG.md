@@ -1,5 +1,9 @@
 Version history
 ===============
+Version 1.9     - 2023-05-09
+
+    * fixed TLS at certificate URLs
+
 Version 1.8     - 2022-04-13
 
     * added callback data decryption functionality
@@ -18,7 +22,7 @@ Version 1.5     - 2012-02-08
 
     * added API for getting available payment methods
     * refactored old example and added another one
-    
+
 Version 1.5		- 2011-10-13
 
 	* updated SS1 to SS1 v2 (SS1 obsolete and not available in 1.5)
