@@ -1,6 +1,6 @@
 Version history
 ===============
-Version 1.9     - 2023-05-09
+Version 1.8.1     - 2023-05-09
 
     * fixed TLS at certificate URLs
 
