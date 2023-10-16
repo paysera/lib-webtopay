@@ -50,13 +50,14 @@ class WebToPay_UrlBuilder {
     /**
      * Builds a complete URL for payment list API
      *
-     * @param int $projectId
+     * @param int    $projectId
+     * @param string $amount
      * @param string $currency
      * @return string
      */
-    public function buildForPaymentsMethodList($projectId, $currency) {
+    public function buildForPaymentsMethodList($projectId, $amount, $currency) {
         $route = $this->environmentSettings['paymentMethodList'];
-        return $route . $projectId . '/currency:' . $currency;
+        return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
     }
 
     /**

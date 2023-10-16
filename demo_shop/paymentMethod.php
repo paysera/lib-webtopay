@@ -14,10 +14,9 @@ $item = $shopItems[$id];
 $amount = $item['price'];
 $currency = $item['currency'];
 
-                // get payment methods available for this project with min/max amounts in specified currency
-$methods = WebToPay::getPaymentMethodList($config['projectid'], $currency)
-    ->filterForAmount($amount, $currency)    // filter: leave only those, which are available for this sum
-    ->setDefaultLanguage('en');              // set default language for titles (default: lt)
+// get payment methods available for this project with min/max amounts in specified currency
+$methods = WebToPay::getPaymentMethodList($config['projectid'], $amount, $currency)
+    ->setDefaultLanguage('en');  // set default language for titles (default: lt)
 
 
 echo template('paymentMethod.html', array(

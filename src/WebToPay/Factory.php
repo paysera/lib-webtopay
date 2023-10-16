@@ -208,7 +208,6 @@ class WebToPay_Factory {
                 $this->configuration['projectId'],
                 $this->getWebClient(),
                 $this->getUrlBuilder()
-
             );
         }
         return $this->paymentMethodListProvider;
