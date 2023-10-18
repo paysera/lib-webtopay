@@ -268,15 +268,16 @@ class WebToPay {
      * Gets available payment methods for project. Gets methods min and max amounts in specified currency.
      *
      * @param integer $projectId
+     * @param float   $amount
      * @param string  $currency
      *
      * @return WebToPay_PaymentMethodList
      *
      * @throws WebToPayException
      */
-    public static function getPaymentMethodList($projectId, $currency = 'EUR') {
+    public static function getPaymentMethodList($projectId, $amount, $currency = 'EUR') {
         $factory = new WebToPay_Factory(array('projectId' => $projectId));
-        return $factory->getPaymentMethodListProvider()->getPaymentMethodList($currency);
+        return $factory->getPaymentMethodListProvider()->getPaymentMethodList($amount, $currency);
     }
 
     /**
