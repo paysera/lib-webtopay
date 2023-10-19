@@ -1,6 +1,6 @@
 Version history
 ===============
-Version 2.0.1   - 2023-05-19
+Version 2.0.1   - 2023-10-19
 
     * fixed versioning texts at changelog
 
