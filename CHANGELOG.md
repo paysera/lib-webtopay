@@ -1,6 +1,10 @@
 Version history
 ===============
-Version 1.9     - 2023-10-13
+Version 2.0.1   - 2023-05-19
+
+    * fixed versioning texts at changelog
+
+Version 2.0     - 2023-10-13
 
     * added amount support for payment method list request
 
