@@ -4,83 +4,75 @@
  * Wrapper class to group payment methods. Each country can have several payment method groups, each of them
  * have one or more payment methods.
  */
-class WebToPay_PaymentMethodGroup {
+class WebToPay_PaymentMethodGroup
+{
     /**
      * Some unique (in the scope of country) key for this group
-     *
-     * @var string
      */
-    protected $groupKey;
+    protected string $groupKey;
 
     /**
      * Translations array for this group. Holds associative array of group title by country codes.
      *
-     * @var array
+     * @var array<string, string>
      */
-    protected $translations;
+    protected array $translations;
 
     /**
      * Holds actual payment methods
      *
      * @var WebToPay_PaymentMethod[]
      */
-    protected $paymentMethods;
+    protected array $paymentMethods;
 
     /**
      * Default language for titles
-     *
-     * @var string
      */
-    protected $defaultLanguage;
+    protected string $defaultLanguage;
 
     /**
      * Constructs object
      *
      * @param string $groupKey
-     * @param array  $translations
+     * @param array<string, string> $translations
      * @param string $defaultLanguage
      */
-    public function __construct($groupKey, array $translations = array(), $defaultLanguage = 'lt') {
+    public function __construct(string $groupKey, array $translations = [], string $defaultLanguage = 'lt')
+    {
         $this->groupKey = $groupKey;
         $this->translations = $translations;
         $this->defaultLanguage = $defaultLanguage;
-        $this->paymentMethods = array();
+        $this->paymentMethods = [];
     }
 
     /**
      * Sets default language for titles.
      * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethodGroup
      */
-    public function setDefaultLanguage($language) {
+    public function setDefaultLanguage(string $language): WebToPay_PaymentMethodGroup
+    {
         $this->defaultLanguage = $language;
         foreach ($this->paymentMethods as $paymentMethod) {
             $paymentMethod->setDefaultLanguage($language);
         }
+
         return $this;
     }
 
     /**
      * Gets default language for titles
-     *
-     * @return string
      */
-    public function getDefaultLanguage() {
+    public function getDefaultLanguage(): string
+    {
         return $this->defaultLanguage;
     }
 
     /**
      * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
      * specified, uses default language, given to constructor.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string
      */
-    public function getTitle($languageCode = null) {
+    public function getTitle(?string $languageCode = null): string
+    {
         if ($languageCode !== null && isset($this->translations[$languageCode])) {
             return $this->translations[$languageCode];
         } elseif (isset($this->translations[$this->defaultLanguage])) {
@@ -92,10 +84,9 @@ class WebToPay_PaymentMethodGroup {
 
     /**
      * Returns group key
-     *
-     * @return string
      */
-    public function getKey() {
+    public function getKey(): string
+    {
         return $this->groupKey;
     }
 
@@ -104,7 +95,8 @@ class WebToPay_PaymentMethodGroup {
      *
      * @return WebToPay_PaymentMethod[]
      */
-    public function getPaymentMethods() {
+    public function getPaymentMethods(): array
+    {
         return $this->paymentMethods;
     }
 
@@ -118,81 +110,76 @@ class WebToPay_PaymentMethodGroup {
      *
      * @return WebToPay_PaymentMethod
      */
-    public function addPaymentMethod(WebToPay_PaymentMethod $paymentMethod) {
+    public function addPaymentMethod(WebToPay_PaymentMethod $paymentMethod): WebToPay_PaymentMethod
+    {
         return $this->paymentMethods[$paymentMethod->getKey()] = $paymentMethod;
     }
 
     /**
      * Gets payment method object with key. If no payment method with such key is found, returns null.
-     *
-     * @param string $key
-     *
-     * @return null|WebToPay_PaymentMethod
      */
-    public function getPaymentMethod($key) {
+    public function getPaymentMethod(string $key): ?WebToPay_PaymentMethod
+    {
         return isset($this->paymentMethods[$key]) ? $this->paymentMethods[$key] : null;
     }
 
     /**
      * Returns new group instance with only those payment methods, which are available for provided amount.
      *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodGroup
+     * @throws WebToPayException
      */
-    public function filterForAmount($amount, $currency) {
+    public function filterForAmount(int $amount, string $currency): WebToPay_PaymentMethodGroup
+    {
         $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
         foreach ($this->getPaymentMethods() as $paymentMethod) {
             if ($paymentMethod->isAvailableForAmount($amount, $currency)) {
                 $group->addPaymentMethod($paymentMethod);
             }
         }
+
         return $group;
     }
 
     /**
      * Returns new country instance with only those payment methods, which are returns or not iban number after payment
-     *
-     * @param boolean $isIban
-     *
-     * @return WebToPay_PaymentMethodGroup
      */
-    public function filterForIban($isIban = true) {
+    public function filterForIban(bool $isIban = true): WebToPay_PaymentMethodGroup
+    {
         $group = new WebToPay_PaymentMethodGroup($this->groupKey, $this->translations, $this->defaultLanguage);
         foreach ($this->getPaymentMethods() as $paymentMethod) {
             if ($paymentMethod->isIban() == $isIban) {
                 $group->addPaymentMethod($paymentMethod);
             }
         }
+
         return $group;
     }
 
     /**
      * Returns whether this group has no payment methods
      *
-     * @return boolean
+     * @return bool
      */
-    public function isEmpty() {
+    public function isEmpty(): bool
+    {
         return count($this->paymentMethods) === 0;
     }
 
     /**
      * Loads payment methods from given XML node
-     *
-     * @param SimpleXMLElement $groupNode
      */
-    public function fromXmlNode($groupNode) {
+    public function fromXmlNode(SimpleXMLElement $groupNode): void
+    {
         foreach ($groupNode->payment_type as $paymentTypeNode) {
-            $key = (string) $paymentTypeNode->attributes()->key;
-            $titleTranslations = array();
+            $key = (string)$paymentTypeNode->attributes()->key;
+            $titleTranslations = [];
             foreach ($paymentTypeNode->title as $titleNode) {
-                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+                $titleTranslations[(string)$titleNode->attributes()->language] = (string)$titleNode;
             }
-            $logoTranslations = array();
+            $logoTranslations = [];
             foreach ($paymentTypeNode->logo_url as $logoNode) {
-                if ((string) $logoNode !== '') {
-                    $logoTranslations[(string) $logoNode->attributes()->language] = (string) $logoNode;
+                if ((string)$logoNode !== '') {
+                    $logoTranslations[(string)$logoNode->attributes()->language] = (string)$logoNode;
                 }
             }
             $minAmount = null;
@@ -201,19 +188,19 @@ class WebToPay_PaymentMethodGroup {
             $isIban = false;
             $baseCurrency = null;
             if (isset($paymentTypeNode->min)) {
-                $minAmount = (int) $paymentTypeNode->min->attributes()->amount;
-                $currency = (string) $paymentTypeNode->min->attributes()->currency;
+                $minAmount = (int)$paymentTypeNode->min->attributes()->amount;
+                $currency = (string)$paymentTypeNode->min->attributes()->currency;
             }
             if (isset($paymentTypeNode->max)) {
-                $maxAmount = (int) $paymentTypeNode->max->attributes()->amount;
-                $currency = (string) $paymentTypeNode->max->attributes()->currency;
+                $maxAmount = (int)$paymentTypeNode->max->attributes()->amount;
+                $currency = (string)$paymentTypeNode->max->attributes()->currency;
             }
 
             if (isset($paymentTypeNode->is_iban)) {
-                $isIban = (int) $paymentTypeNode->is_iban;
+                $isIban = (bool)$paymentTypeNode->is_iban;
             }
             if (isset($paymentTypeNode->base_currency)) {
-                $baseCurrency = (string) $paymentTypeNode->base_currency;
+                $baseCurrency = (string)$paymentTypeNode->base_currency;
             }
             $this->addPaymentMethod($this->createPaymentMethod(
                 $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations, $isIban, $baseCurrency
@@ -225,23 +212,36 @@ class WebToPay_PaymentMethodGroup {
      * Method to create new payment method instances. Overwrite if you have to use some other subclass.
      *
      * @param string $key
-     * @param integer $minAmount
-     * @param integer $maxAmount
-     * @param string $currency
-     * @param array $logoList
-     * @param array $titleTranslations
+     * @param int|null $minAmount
+     * @param int|null $maxAmount
+     * @param string|null $currency
+     * @param array<string, string> $logoList
+     * @param array<string, string> $titleTranslations
      * @param bool $isIban
-     * @param null $baseCurrency
+     * @param mixed $baseCurrency
      *
      * @return WebToPay_PaymentMethod
      */
     protected function createPaymentMethod(
-        $key, $minAmount, $maxAmount, $currency, array $logoList = array(), array $titleTranslations = array(),
-        $isIban = false, $baseCurrency = null
-    ) {
+        string $key,
+        ?int $minAmount,
+        ?int $maxAmount,
+        ?string $currency,
+        array $logoList = [],
+        array $titleTranslations = [],
+        bool $isIban = false,
+               $baseCurrency = null
+    ): WebToPay_PaymentMethod {
         return new WebToPay_PaymentMethod(
-            $key, $minAmount, $maxAmount, $currency, $logoList, $titleTranslations, $this->defaultLanguage,
-            $isIban, $baseCurrency
+            $key,
+            $minAmount,
+            $maxAmount,
+            $currency,
+            $logoList,
+            $titleTranslations,
+            $this->defaultLanguage,
+            $isIban,
+            $baseCurrency
         );
     }
 }

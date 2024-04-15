@@ -11,37 +11,27 @@ class WebToPay_Util
     /**
      * Decodes url-safe-base64 encoded string
      * Url-safe-base64 is same as base64, but + is replaced to - and / to _
-     *
-     * @param string $encodedText
-     *
-     * @return string
      */
-    public function decodeSafeUrlBase64($encodedText) {
-        return base64_decode(strtr($encodedText, array('-' => '+', '_' => '/')));
+    public function decodeSafeUrlBase64(string $encodedText): string
+    {
+        return base64_decode(strtr($encodedText, '-_', '+/'));
     }
 
     /**
      * Encodes string to url-safe-base64
      * Url-safe-base64 is same as base64, but + is replaced to - and / to _
-     *
-     * @param string $text
-     *
-     * @return string
      */
-    public function encodeSafeUrlBase64($text) {
-        return strtr(base64_encode($text), array('+' => '-', '/' => '_'));
+    public function encodeSafeUrlBase64(string $text): string
+    {
+        return strtr(base64_encode($text), '+/', '-_');
     }
 
     /**
      * Decrypts string with aes-256-gcm algorithm
-     *
-     * @param string $stringToDecrypt
-     * @param string $key
-     *
-     * @return string|null
      */
-    function decryptGCM($stringToDecrypt, $key) {
-        $ivLength = openssl_cipher_iv_length(self::GCM_CIPHER);
+    public function decryptGCM(string $stringToDecrypt, string $key): ?string
+    {
+        $ivLength = (int) openssl_cipher_iv_length(self::GCM_CIPHER);
         $iv = substr($stringToDecrypt, 0, $ivLength);
         $ciphertext = substr($stringToDecrypt, $ivLength, -self::GCM_AUTH_KEY_LENGTH);
         $tag = substr($stringToDecrypt, -self::GCM_AUTH_KEY_LENGTH);
@@ -63,11 +53,13 @@ class WebToPay_Util
      *
      * @param string $query
      *
-     * @return array
+     * @return array<int|string, mixed>
      */
-    public function parseHttpQuery($query) {
-        $params = array();
+    public function parseHttpQuery(string $query): array
+    {
+        $params = [];
         parse_str($query, $params);
+
         return $params;
     }
 
@@ -76,11 +68,12 @@ class WebToPay_Util
      *
      * @param mixed $data
      *
-     * @return mixed
+     * @return array<string, mixed>|string
      */
-    protected function stripSlashesRecursively($data) {
+    protected function stripSlashesRecursively($data)
+    {
         if (is_array($data)) {
-            $result = array();
+            $result = [];
             foreach ($data as $key => $value) {
                 $result[stripslashes($key)] = $this->stripSlashesRecursively($value);
             }

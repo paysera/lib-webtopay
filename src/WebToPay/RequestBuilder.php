@@ -3,44 +3,25 @@
 /**
  * Builds and signs requests
  */
-class WebToPay_RequestBuilder {
+class WebToPay_RequestBuilder
+{
+    protected string $projectPassword;
 
-    /**
-     * @var string
-     */
-    protected $projectPassword;
+    protected WebToPay_Util $util;
 
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util;
+    protected int $projectId;
 
-    /**
-     * @var integer
-     */
-    protected $projectId;
-
-
-    /**
-     * @var WebToPay_UrlBuilder $urlBuilder
-     */
-    protected $urlBuilder;
+    protected WebToPay_UrlBuilder $urlBuilder;
 
     /**
      * Constructs object
-     *
-     * @param integer       $projectId
-     * @param string        $projectPassword
-     * @param WebToPay_Util $util
-     * @param WebToPay_UrlBuilder $urlBuilder
      */
     public function __construct(
-        $projectId,
-        $projectPassword,
+        int $projectId,
+        string $projectPassword,
         WebToPay_Util $util,
         WebToPay_UrlBuilder $urlBuilder
-    )
-    {
+    ) {
         $this->projectId = $projectId;
         $this->projectPassword = $projectPassword;
         $this->util = $util;
@@ -53,29 +34,34 @@ class WebToPay_RequestBuilder {
      * This method checks all given data and generates correct request data
      * array or raises WebToPayException on failure.
      *
-     * @param  array $data information about current payment request
+     * @param array<string, mixed> $data information about current payment request
      *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws WebToPayException
      */
-    public function buildRequest($data) {
+    public function buildRequest(array $data): array
+    {
         $this->validateRequest($data, self::getRequestSpec());
         $data['version'] = WebToPay::VERSION;
         $data['projectid'] = $this->projectId;
         unset($data['repeat_request']);
+
         return $this->createRequest($data);
     }
 
     /**
      * Builds the full request url (including the protocol and the domain)
      *
-     * @param array $data
+     * @param array<string, mixed> $data
      * @return string
+     * @throws WebToPayException
      */
-    public function buildRequestUrlFromData($data) {
-        $language = isset($data['lang']) ? $data['lang'] : null;
+    public function buildRequestUrlFromData(array $data): string
+    {
+        $language = $data['lang'] ?? null;
         $request = $this->buildRequest($data);
+
         return $this->urlBuilder->buildForRequest($request, $language);
     }
 
@@ -87,40 +73,45 @@ class WebToPay_RequestBuilder {
      *
      * @param string $orderId order id of repeated request
      *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws WebToPayException
      */
-    public function buildRepeatRequest($orderId) {
+    public function buildRepeatRequest(string $orderId): array
+    {
         $data['orderid'] = $orderId;
         $data['version'] = WebToPay::VERSION;
         $data['projectid'] = $this->projectId;
         $data['repeat_request'] = '1';
+
         return $this->createRequest($data);
     }
 
     /**
      * Builds the full request url for a repeated request (including the protocol and the domain)
      *
-     * @param string $orderId order id of repeated request
-     * @return string
+     * @throws WebToPayException
      */
-    public function buildRepeatRequestUrlFromOrderId($orderId) {
+    public function buildRepeatRequestUrlFromOrderId(string $orderId): string
+    {
         $request = $this->buildRepeatRequest($orderId);
+
         return $this->urlBuilder->buildForRequest($request);
     }
 
     /**
      * Checks data to be valid by passed specification
      *
-     * @param array $data
-     * @param array $specs
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $specs
      *
      * @throws WebToPay_Exception_Validation
      */
-    protected function validateRequest($data, $specs) {
+    protected function validateRequest(array $data, array $specs): void
+    {
         foreach ($specs as $spec) {
-            list($name, $maxlen, $required, $regexp) = $spec;
+            [$name, $maxlen, $required, $regexp] = $spec;
+
             if ($required && !isset($data[$name])) {
                 throw new WebToPay_Exception_Validation(
                     sprintf("'%s' is required but missing.", $name),
@@ -153,16 +144,18 @@ class WebToPay_RequestBuilder {
     /**
      * Makes request data array from parameters, also generates signature
      *
-     * @param array $request
+     * @param array<string, mixed> $request
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    protected function createRequest(array $request) {
+    protected function createRequest(array $request): array
+    {
         $data = $this->util->encodeSafeUrlBase64(http_build_query($request, '', '&'));
-        return array(
+
+        return [
             'data' => $data,
             'sign' => md5($data . $this->projectPassword),
-        );
+        ];
     }
 
     /**
@@ -174,30 +167,31 @@ class WebToPay_RequestBuilder {
      *   required  – is this item is required
      *   regexp    – regexp to test item value
      *
-     * @return array
+     * @return array<array<string|bool|int>>
      */
-    protected static function getRequestSpec() {
-        return array(
-            array('orderid',       40,  true,  ''),
-            array('accepturl',     255, true,  ''),
-            array('cancelurl',     255, true,  ''),
-            array('callbackurl',   255, true,  ''),
-            array('lang',          3,   false, '/^[a-z]{3}$/i'),
-            array('amount',        11,  false, '/^\d+$/'),
-            array('currency',      3,   false, '/^[a-z]{3}$/i'),
-            array('payment',       20,  false, ''),
-            array('country',       2,   false, '/^[a-z_]{2}$/i'),
-            array('paytext',       255, false, ''),
-            array('p_firstname',   255, false, ''),
-            array('p_lastname',    255, false, ''),
-            array('p_email',       255, false, ''),
-            array('p_street',      255, false, ''),
-            array('p_city',        255, false, ''),
-            array('p_state',       255,  false, ''),
-            array('p_zip',         20,  false, ''),
-            array('p_countrycode', 2,   false, '/^[a-z]{2}$/i'),
-            array('test',          1,   false, '/^[01]$/'),
-            array('time_limit',    19,  false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'),
-        );
+    protected static function getRequestSpec(): array
+    {
+        return [
+            ['orderid', 40, true, ''],
+            ['accepturl', 255, true, ''],
+            ['cancelurl', 255, true, ''],
+            ['callbackurl', 255, true, ''],
+            ['lang', 3, false, '/^[a-z]{3}$/i'],
+            ['amount', 11, false, '/^\d+$/'],
+            ['currency', 3, false, '/^[a-z]{3}$/i'],
+            ['payment', 20, false, ''],
+            ['country', 2, false, '/^[a-z_]{2}$/i'],
+            ['paytext', 255, false, ''],
+            ['p_firstname', 255, false, ''],
+            ['p_lastname', 255, false, ''],
+            ['p_email', 255, false, ''],
+            ['p_street', 255, false, ''],
+            ['p_city', 255, false, ''],
+            ['p_state', 255, false, ''],
+            ['p_zip', 20, false, ''],
+            ['p_countrycode', 2, false, '/^[a-z]{2}$/i'],
+            ['test', 1, false, '/^[01]$/'],
+            ['time_limit', 19, false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'],
+        ];
     }
 }

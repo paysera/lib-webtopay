@@ -1,35 +1,31 @@
 <?php
 
-
 /**
  * Used to build a complete request URL.
  *
  * Class WebToPay_UrlBuilder
  */
-class WebToPay_UrlBuilder {
-
+class WebToPay_UrlBuilder
+{
     const PLACEHOLDER_KEY = '[domain]';
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $configuration = array();
+    protected array $configuration;
+
+    protected string $environment;
 
     /**
-     * @var string
+     * @var array<string, string>
      */
-    protected $environment;
+    protected array $environmentSettings;
 
     /**
-     * @var array
-     */
-    protected $environmentSettings;
-
-    /**
-     * @param array $configuration
+     * @param array<string, mixed> $configuration
      * @param string $environment
      */
-    function __construct($configuration, $environment)
+    public function __construct(array $configuration, string $environment)
     {
         $this->configuration = $configuration;
         $this->environment = $environment;
@@ -39,65 +35,63 @@ class WebToPay_UrlBuilder {
     /**
      * Builds a complete request URL based on the provided parameters
      *
-     * @param $request
-     * @param null $language
+     * @param array<string, mixed> $request
+     * @param string|null $language
+     *
      * @return string
      */
-    public function buildForRequest($request, $language = null) {
+    public function buildForRequest(array $request, ?string $language = null): string
+    {
         return $this->createUrlFromRequestAndLanguage($request);
     }
 
     /**
      * Builds a complete URL for payment list API
-     *
-     * @param int    $projectId
-     * @param string $amount
-     * @param string $currency
-     * @return string
      */
-    public function buildForPaymentsMethodList($projectId, $amount, $currency) {
+    public function buildForPaymentsMethodList(int $projectId, string $amount, string $currency): string
+    {
         $route = $this->environmentSettings['paymentMethodList'];
+
         return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
     }
 
     /**
      * Builds a complete URL for Sms Answer
-     *
-     * @return string
      */
-    public function buildForSmsAnswer() {
-        $route = $this->environmentSettings['smsAnswer'];
-        return $route;
+    public function buildForSmsAnswer(): string
+    {
+        return $this->environmentSettings['smsAnswer'];
     }
 
     /**
-     * Build the url to the public key
-     *
-     * @return string
+     * Build the URL to the public key
      */
-    public function buildForPublicKey() {
-        $route = $this->environmentSettings['publicKey'];
-        return $route;
+    public function buildForPublicKey(): string
+    {
+        return $this->environmentSettings['publicKey'];
     }
 
     /**
-     * Creates an URL from the request and data provided.
+     * Creates a URL from the request and data provided.
      *
-     * @param array $request
+     * @param array<string, mixed> $request
+     *
      * @return string
      */
-    protected function createUrlFromRequestAndLanguage($request) {
+    protected function createUrlFromRequestAndLanguage(array $request): string
+    {
         $url = $this->getPaymentUrl() . '?' . http_build_query($request, '', '&');
-        return preg_replace('/[\r\n]+/is', '', $url);
+
+        return preg_replace('/[\r\n]+/is', '', $url) ?? '';
     }
 
     /**
-     * Returns payment url. Argument is same as lang parameter in request data
+     * Returns payment URL. Argument is same as lang parameter in request data
      *
-     * @return string $url
+     * @return string
      */
-    public function getPaymentUrl() {
-        $route = $this->environmentSettings['payment'];
-        return $route;
+    public function getPaymentUrl(): string
+    {
+        return $this->environmentSettings['payment'];
     }
 }
