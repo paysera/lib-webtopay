@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 /**
  * PHP Library for WebToPay provided services.
  * Copyright (C) 2012 http://www.webtopay.com/
