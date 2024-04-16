@@ -1,0 +1,30 @@
+name: Check styling
+
+on: [pull_request]
+
+permissions:
+    contents: read
+
+jobs:
+    style:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 7.4
+                  coverage: none
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Install PHP dependencies
+              run: composer update --no-cache --prefer-stable --no-interaction --no-progress
+
+            - name: Check styling
+              run: vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --dry-run --stop-on-violation --using-cache=no --path-mode=intersection ./src ./tests

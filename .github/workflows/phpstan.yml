@@ -1,0 +1,38 @@
+name: PHPStan
+
+on:
+  pull_request:
+    paths:
+      - '**.php'
+      - 'phpstan.neon.dist'
+
+permissions:
+  contents: read
+
+jobs:
+  phpstan:
+    name: phpstan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 7.4
+          coverage: none
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install PHP dependencies
+        uses: ramsey/composer-install@v2
+
+      - name: Run PHPStan
+        run: |
+          vendor/bin/phpstan --error-format=github analyse src/
+          exit_code=$?
+          if [ $exit_code -ne 0 ]; then
+            echo "PHPStan analysis failed with exit code $exit_code"
+            exit $exit_code
+          fi

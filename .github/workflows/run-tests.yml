@@ -1,0 +1,36 @@
+name: Run tests
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [8.3, 8.2, 8.1, 8.0, 7.4]
+        dependency-version: [prefer-lowest, prefer-stable]
+        os: [ubuntu-latest]
+
+    name: P${{ matrix.php }} - ${{ matrix.dependency-version }} - ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        coverage: none
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install PHP dependencies
+      run: composer update --${{ matrix.dependency-version }} --no-cache --no-interaction --no-progress
+
+    - name: Execute tests
+      run: composer run phpunit
