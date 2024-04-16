@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test for class WebToPay_Factory
  */
-class WebToPay_FactoryTest extends TestCase {
-
+class WebToPay_FactoryTest extends TestCase
+{
     /**
      * @var WebToPay_Factory
      */
@@ -20,18 +22,20 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Sets up this test
      */
-    public function setUp(): void {
-        $this->factory = new WebToPay_Factory(array(
+    public function setUp(): void
+    {
+        $this->factory = new WebToPay_Factory([
             'projectId' => '123',
             'password' => 'abc',
-        ));
+        ]);
         $this->factoryWithoutConfiguration = new WebToPay_Factory();
     }
 
     /**
      * Tests getCallbackValidator
      */
-    public function testGetCallbackValidator() {
+    public function testGetCallbackValidator()
+    {
         $validator = $this->factory->getCallbackValidator();
         $this->assertSame($validator, $this->factory->getCallbackValidator());
         $this->assertInstanceOf('WebToPay_CallbackValidator', $validator);
@@ -40,7 +44,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests getRequestBuilder
      */
-    public function testGetRequestBuilder() {
+    public function testGetRequestBuilder()
+    {
         $builder = $this->factory->getRequestBuilder();
         $this->assertSame($builder, $this->factory->getRequestBuilder());
         $this->assertInstanceOf('WebToPay_RequestBuilder', $builder);
@@ -49,7 +54,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests getSmsAnswerSender
      */
-    public function testGetSmsAnswerSender() {
+    public function testGetSmsAnswerSender()
+    {
         $sender = $this->factory->getSmsAnswerSender();
         $this->assertSame($sender, $this->factory->getSmsAnswerSender());
         $this->assertInstanceOf('WebToPay_SmsAnswerSender', $sender);
@@ -58,7 +64,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests getPaymentMethodListProvider
      */
-    public function testGetPaymentMethodListProvider() {
+    public function testGetPaymentMethodListProvider()
+    {
         $provider = $this->factory->getPaymentMethodListProvider();
         $this->assertSame($provider, $this->factory->getPaymentMethodListProvider());
         $this->assertInstanceOf('WebToPay_PaymentMethodListProvider', $provider);
@@ -67,7 +74,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests exception
      */
-    public function testGetCallbackValidatorWithoutConfiguration() {
+    public function testGetCallbackValidatorWithoutConfiguration()
+    {
         $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getCallbackValidator();
     }
@@ -75,7 +83,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests exception
      */
-    public function testGetRequestBuilderWithoutConfiguration() {
+    public function testGetRequestBuilderWithoutConfiguration()
+    {
         $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getRequestBuilder();
     }
@@ -83,7 +92,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests exception
      */
-    public function testGetSmsAnswerSenderWithoutConfiguration() {
+    public function testGetSmsAnswerSenderWithoutConfiguration()
+    {
         $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getSmsAnswerSender();
     }
@@ -91,7 +101,8 @@ class WebToPay_FactoryTest extends TestCase {
     /**
      * Tests exception
      */
-    public function testGetPaymentMethodListProviderWithoutConfiguration() {
+    public function testGetPaymentMethodListProviderWithoutConfiguration()
+    {
         $this->expectException(WebToPay_Exception_Configuration::class);
         $this->factoryWithoutConfiguration->getPaymentMethodListProvider();
     }

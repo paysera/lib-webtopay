@@ -16,7 +16,7 @@ class WebToPay_Util
      */
     public function decodeSafeUrlBase64(string $encodedText): string
     {
-        return base64_decode(strtr($encodedText, '-_', '+/'), true);
+        return (string) base64_decode(strtr($encodedText, '-_', '+/'), true);
     }
 
     /**

@@ -73,13 +73,13 @@ class WebToPay_RequestBuilder
      * This method checks all given data and generates correct request data
      * array or raises WebToPayException on failure.
      *
-     * @param string $orderId order id of repeated request
+     * @param int $orderId order id of repeated request
      *
      * @return array<string, mixed>
      *
      * @throws WebToPayException
      */
-    public function buildRepeatRequest(string $orderId): array
+    public function buildRepeatRequest(int $orderId): array
     {
         $data['orderid'] = $orderId;
         $data['version'] = WebToPay::VERSION;
@@ -94,7 +94,7 @@ class WebToPay_RequestBuilder
      *
      * @throws WebToPayException
      */
-    public function buildRepeatRequestUrlFromOrderId(string $orderId): string
+    public function buildRepeatRequestUrlFromOrderId(int $orderId): string
     {
         $request = $this->buildRepeatRequest($orderId);
 
