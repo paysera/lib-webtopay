@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Creates objects. Also caches to avoid creating several instances of same objects
  */
 class WebToPay_Factory
 {
-    const ENV_PRODUCTION = 'production';
-    const ENV_SANDBOX = 'sandbox';
+    public const ENV_PRODUCTION = 'production';
+    public const ENV_SANDBOX = 'sandbox';
 
     /**
      * @var array<string, mixed>
@@ -229,7 +231,7 @@ class WebToPay_Factory
      *
      * @throws WebToPay_Exception_Configuration
      */
-    protected function getUtil():WebToPay_Util
+    protected function getUtil(): WebToPay_Util
     {
         if ($this->util === null) {
             $this->util = new WebToPay_Util();

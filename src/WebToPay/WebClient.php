@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Simple web client
  */
@@ -26,7 +28,7 @@ class WebToPay_WebClient
 
         // Parse URL
         $url = parse_url($uri);
-        $scheme = isset($url['scheme']) ? $url['scheme'] : 'http';
+        $scheme = $url['scheme'] ?? 'http';
         $host = $url['host'] ?? '';
         $port = $scheme === 'https' ? 443 : 80;
         $path = $url['path'] ?? '/';
@@ -49,7 +51,7 @@ class WebToPay_WebClient
         fclose($fp);
 
         // Separate header and content
-        list($header, $content) = explode("\r\n\r\n", $content, 2);
+        [$header, $content] = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Used to build a complete request URL.
  *
@@ -7,7 +9,7 @@
  */
 class WebToPay_UrlBuilder
 {
-    const PLACEHOLDER_KEY = '[domain]';
+    public const PLACEHOLDER_KEY = '[domain]';
 
     /**
      * @var array<string, mixed>

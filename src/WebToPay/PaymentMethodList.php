@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Class with all information about available payment methods for some project, optionally filtered by some amount.
  */
@@ -119,7 +121,7 @@ class WebToPay_PaymentMethodList
      */
     public function getCountry(string $countryCode): ?WebToPay_PaymentMethodCountry
     {
-        return isset($this->countries[$countryCode]) ? $this->countries[$countryCode] : null;
+        return $this->countries[$countryCode] ?? null;
     }
 
     /**

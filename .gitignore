@@ -1,2 +1,7 @@
 /vendor
 composer.lock
+.composer
+.phpunit.result.cache
+coverage
+.bash_history
+.php-cs-fixer.cache

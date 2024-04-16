@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay.php');
     include(dirname(__FILE__) . '/WebToPayException.php');

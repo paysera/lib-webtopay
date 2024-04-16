@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Wrapper class to group payment methods. Each country can have several payment method groups, each of them
  * have one or more payment methods.
@@ -120,7 +122,7 @@ class WebToPay_PaymentMethodGroup
      */
     public function getPaymentMethod(string $key): ?WebToPay_PaymentMethod
     {
-        return isset($this->paymentMethods[$key]) ? $this->paymentMethods[$key] : null;
+        return $this->paymentMethods[$key] ?? null;
     }
 
     /**
@@ -203,7 +205,14 @@ class WebToPay_PaymentMethodGroup
                 $baseCurrency = (string)$paymentTypeNode->base_currency;
             }
             $this->addPaymentMethod($this->createPaymentMethod(
-                $key, $minAmount, $maxAmount, $currency, $logoTranslations, $titleTranslations, $isIban, $baseCurrency
+                $key,
+                $minAmount,
+                $maxAmount,
+                $currency,
+                $logoTranslations,
+                $titleTranslations,
+                $isIban,
+                $baseCurrency
             ));
         }
     }
@@ -230,7 +239,7 @@ class WebToPay_PaymentMethodGroup
         array $logoList = [],
         array $titleTranslations = [],
         bool $isIban = false,
-               $baseCurrency = null
+        $baseCurrency = null
     ): WebToPay_PaymentMethod {
         return new WebToPay_PaymentMethod(
             $key,

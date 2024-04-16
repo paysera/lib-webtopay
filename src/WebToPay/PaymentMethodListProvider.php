@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Loads data about payment methods and constructs payment method list object from that data
  * You need SimpleXML support to use this feature
@@ -31,8 +33,7 @@ class WebToPay_PaymentMethodListProvider
         int $projectId,
         WebToPay_WebClient $webClient,
         WebToPay_UrlBuilder $urlBuilder
-    )
-    {
+    ) {
         $this->projectId = $projectId;
         $this->webClient = $webClient;
         $this->urlBuilder = $urlBuilder;

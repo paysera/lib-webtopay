@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Utility class
  */
 class WebToPay_Util
 {
-    const GCM_CIPHER = 'aes-256-gcm';
-    const GCM_AUTH_KEY_LENGTH = 16;
+    public const GCM_CIPHER = 'aes-256-gcm';
+    public const GCM_AUTH_KEY_LENGTH = 16;
 
     /**
      * Decodes url-safe-base64 encoded string
@@ -14,7 +16,7 @@ class WebToPay_Util
      */
     public function decodeSafeUrlBase64(string $encodedText): string
     {
-        return base64_decode(strtr($encodedText, '-_', '+/'));
+        return base64_decode(strtr($encodedText, '-_', '+/'), true);
     }
 
     /**

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Sign checker which checks SS1 signature. SS1 does not depend on SSL functions
  */

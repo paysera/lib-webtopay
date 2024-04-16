@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Sends answer to SMS payment if it was not provided with response to callback
  */

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Parses and validates callbacks
  */
@@ -88,7 +90,7 @@ class WebToPay_CallbackValidator
             );
         }
 
-        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
+        if (!isset($request['type']) || !in_array($request['type'], ['micro', 'macro'], true)) {
             $micro = (
                 isset($request['to'])
                 && isset($request['from'])

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Payment method configuration for some country
  */
@@ -33,7 +35,8 @@ class WebToPay_PaymentMethodCountry
      * @param array<string, string> $titleTranslations
      * @param string $defaultLanguage
      */
-    public function __construct(string $countryCode, array $titleTranslations, string $defaultLanguage = 'lt') {
+    public function __construct(string $countryCode, array $titleTranslations, string $defaultLanguage = 'lt')
+    {
         $this->countryCode = $countryCode;
         $this->defaultLanguage = $defaultLanguage;
         $this->titleTranslations = $titleTranslations;
@@ -120,7 +123,7 @@ class WebToPay_PaymentMethodCountry
      */
     public function getPaymentMethods(): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
         foreach ($this->groups as $group) {
             $paymentMethods = array_merge($paymentMethods, $group->getPaymentMethods());
         }
@@ -180,7 +183,7 @@ class WebToPay_PaymentMethodCountry
     {
         foreach ($countryNode->payment_group as $groupNode) {
             $key = (string) $groupNode->attributes()->key;
-            $titleTranslations = array();
+            $titleTranslations = [];
             foreach ($groupNode->title as $titleNode) {
                 $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
             }
@@ -190,7 +193,7 @@ class WebToPay_PaymentMethodCountry
 
     /**
      * Method to create new group instances. Overwrite if you have to use some other group subtype.
-     * 
+     *
      * @param string $groupKey
      * @param array<string, string> $translations
      *

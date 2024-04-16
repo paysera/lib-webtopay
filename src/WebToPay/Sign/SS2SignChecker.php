@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Checks SS2 signature. Depends on SSL functions
  */
