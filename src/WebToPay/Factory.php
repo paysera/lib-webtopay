@@ -84,6 +84,7 @@ class WebToPay_Factory
     /**
      * Creates or gets callback validator instance
      *
+     * @throws WebToPayException
      * @throws WebToPay_Exception_Configuration
      */
     public function getCallbackValidator(): WebToPay_CallbackValidator
@@ -131,7 +132,7 @@ class WebToPay_Factory
 
     public function getUrlBuilder(): WebToPay_UrlBuilder
     {
-        if ($this->urlBuilder === null) {
+        if ($this->urlBuilder === null || $this->urlBuilder->getEnvironment() !== $this->environment) {
             $this->urlBuilder = new WebToPay_UrlBuilder(
                 $this->configuration,
                 $this->environment
@@ -165,6 +166,7 @@ class WebToPay_Factory
     /**
      * Creates or gets payment list provider instance
      *
+     * @throws WebToPayException
      * @throws WebToPay_Exception_Configuration
      */
     public function getPaymentMethodListProvider(): WebToPay_PaymentMethodListProvider
@@ -192,7 +194,7 @@ class WebToPay_Factory
     protected function getSigner(): WebToPay_Sign_SignCheckerInterface
     {
         if ($this->signer === null) {
-            if (function_exists('openssl_pkey_get_public')) {
+            if (WebToPay_Functions::function_exists('openssl_pkey_get_public')) {
                 $webClient = $this->getWebClient();
                 $publicKey = $webClient->get($this->getUrlBuilder()->buildForPublicKey());
                 if (!$publicKey) {
@@ -214,8 +216,6 @@ class WebToPay_Factory
 
     /**
      * Creates or gets web client instance
-     *
-     * @throws WebToPay_Exception_Configuration
      */
     protected function getWebClient(): WebToPay_WebClient
     {

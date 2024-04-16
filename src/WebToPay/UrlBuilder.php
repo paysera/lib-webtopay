@@ -34,6 +34,11 @@ class WebToPay_UrlBuilder
         $this->environmentSettings = $this->configuration['routes'][$this->environment];
     }
 
+    public function getEnvironment(): string
+    {
+        return $this->environment;
+    }
+
     /**
      * Builds a complete request URL based on the provided parameters
      *

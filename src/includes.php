@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-
+// @codeCoverageIgnoreStart
 if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay.php');
     include(dirname(__FILE__) . '/WebToPayException.php');
@@ -24,3 +24,4 @@ if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay/WebClient.php');
     include(dirname(__FILE__) . '/WebToPay/UrlBuilder.php');
 }
+// @codeCoverageIgnoreEnd
