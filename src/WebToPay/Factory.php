@@ -119,7 +119,7 @@ class WebToPay_Factory
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             $this->requestBuilder = new WebToPay_RequestBuilder(
-                $this->configuration['projectId'],
+                (int) $this->configuration['projectId'],
                 $this->configuration['password'],
                 $this->getUtil(),
                 $this->getUrlBuilder()
@@ -174,7 +174,7 @@ class WebToPay_Factory
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             $this->paymentMethodListProvider = new WebToPay_PaymentMethodListProvider(
-                $this->configuration['projectId'],
+                (int) $this->configuration['projectId'],
                 $this->getWebClient(),
                 $this->getUrlBuilder()
             );

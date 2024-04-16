@@ -123,7 +123,7 @@ class WebToPay_RequestBuilder
             }
 
             if (!empty($data[$name])) {
-                if ($maxlen && strlen($data[$name]) > $maxlen) {
+                if ($maxlen && strlen((string) $data[$name]) > $maxlen) {
                     throw new WebToPay_Exception_Validation(sprintf(
                         "'%s' value is too long (%d), %d characters allowed.",
                         $name,
@@ -132,7 +132,7 @@ class WebToPay_RequestBuilder
                     ), WebToPayException::E_MAXLEN, $name);
                 }
 
-                if ($regexp !== ''  && !preg_match($regexp, $data[$name])) {
+                if ($regexp !== ''  && !preg_match($regexp, (string) $data[$name])) {
                     throw new WebToPay_Exception_Validation(
                         sprintf("'%s' value '%s' is invalid.", $name, $data[$name]),
                         WebToPayException::E_REGEXP,

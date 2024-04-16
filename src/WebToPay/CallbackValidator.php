@@ -114,7 +114,8 @@ class WebToPay_CallbackValidator
     {
         foreach ($expected as $key => $value) {
             $passedValue = $data[$key] ?? null;
-            if ($passedValue !== $value) {
+            // there should be non-strict comparison here
+            if ($passedValue != $value) {
                 throw new WebToPayException(
                     sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)
                 );

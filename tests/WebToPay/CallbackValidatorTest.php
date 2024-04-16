@@ -107,7 +107,10 @@ class WebToPay_CallbackValidatorTest extends TestCase {
         $request = array('data' => $encryptedDataString);
 
         $this->util->expects($this->once())->method('decodeSafeUrlBase64')->with($urlSafeEncodedString)->will($this->returnValue($encryptedDataString));
-        $this->util->expects($this->once())->method('decryptGCM')->with($encryptedDataString, self::PROJECT_PASSWORD)->will($this->returnValue(false));
+        $this->util->expects($this->once())
+            ->method('decryptGCM')
+            ->with($encryptedDataString, self::PROJECT_PASSWORD)
+            ->willReturn(null);
 
         $this->validator->validateAndParseData($request);
     }
