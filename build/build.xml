@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="WebToPay" default="build" basedir="..">
     <target name="test">
-        <exec command="phpunit" passthru="true" returnProperty="phpunitResult" />
+        <exec command="composer run phpunit" passthru="true" returnProperty="phpunitResult" />
         <if>
             <equals arg1="${phpunitResult}" arg2="0" />
             <then>
@@ -24,12 +24,26 @@
                     <regexp pattern="^\&lt;\?php" replace="" />
                 </replaceregexp>
             </filterchain>
-            <filelist dir="src" files="WebToPay.php,WebToPayException.php" />
+            <filelist dir="src" files="WebToPay.php" />
         </append>
         <append destFile="WebToPay.php">
             <filterchain>
                 <replaceregexp>
                     <regexp pattern="^\&lt;\?php" replace="" />
+                </replaceregexp>
+                <replaceregexp>
+                    <regexp pattern=".*declare\(strict_types=1\);\s*" replace="" />
+                </replaceregexp>
+            </filterchain>
+            <filelist dir="src" files="WebToPayException.php" />
+        </append>
+        <append destFile="WebToPay.php">
+            <filterchain>
+                <replaceregexp>
+                    <regexp pattern="^\&lt;\?php" replace="" />
+                </replaceregexp>
+                <replaceregexp>
+                    <regexp pattern=".*declare\(strict_types=1\);\s*" replace="" />
                 </replaceregexp>
             </filterchain>
             <fileset dir="src/WebToPay">
