@@ -13,6 +13,7 @@ if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay/Sign/SS2SignChecker.php');
     include(dirname(__FILE__) . '/WebToPay/CallbackValidator.php');
     include(dirname(__FILE__) . '/WebToPay/Factory.php');
+    include(dirname(__FILE__) . '/WebToPay/Functions.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethod.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethodCountry.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethodGroup.php');

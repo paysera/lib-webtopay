@@ -263,6 +263,9 @@ class WebToPay_CallbackValidatorTest extends TestCase
 
     /**
      * Tests validateAndParseData method with callback data decoding
+     *
+     * @throws WebToPayException
+     * @throws WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithDecoding(): void
     {
@@ -295,6 +298,9 @@ class WebToPay_CallbackValidatorTest extends TestCase
 
     /**
      * Tests validateAndParseData method with callback data decryption
+     *
+     * @throws WebToPayException
+     * @throws WebToPay_Exception_Callback
      */
     public function testValidateAndParseDataWithDecryption(): void
     {

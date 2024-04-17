@@ -62,25 +62,20 @@ class WebToPayException extends Exception
      */
     public const E_DEPRECATED_USAGE = 11;
 
-    /**
-     * @var string|bool
-     */
-    protected $fieldName = false;
+    protected ?string $fieldName = null;
 
     /**
      * Sets field which failed
      */
-    public function setField(string $fieldName): void
+    public function setField(?string $fieldName): void
     {
         $this->fieldName = $fieldName;
     }
 
     /**
      * Gets field which failed
-     *
-     * @return string|bool
      */
-    public function getField()
+    public function getField(): ?string
     {
         return $this->fieldName;
     }

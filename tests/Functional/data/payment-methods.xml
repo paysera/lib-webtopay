@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<payment_types_document project_id="241202" currency="EUR" amount="10000">
+  <country code="lt">
+    <title language="en"><![CDATA[Norway]]></title>
+    <title language="lt"><![CDATA[Norvegija]]></title>
+    <payment_group key="e-banking">
+      <title language="en"><![CDATA[E-banking]]></title>
+      <title language="lt"><![CDATA[Elektroninė bankininkystė]]></title>
+      <payment_type key="no_trustly">
+        <title language="en"><![CDATA[Trustly (pay via local banks)]]></title>
+        <title language="lt"><![CDATA[Trustly (mokėjimas per vietinius bankus)]]></title>
+        <logo_url language="en"><![CDATA[https://bank.paysera.com/assets/image/payment_types/no_trustly.png]]></logo_url>
+        <logo_url language="lt"><![CDATA[https://bank.paysera.com/assets/image/payment_types/no_trustly.png]]></logo_url>
+        <min amount="1" currency="EUR"/>
+        <max amount="1000" currency="EUR"/>
+        <is_iban>0</is_iban>
+        <base_currency><![CDATA[NOK]]></base_currency>
+      </payment_type>
+      <payment_type key="wallet">
+        <title language="en"><![CDATA[Paysera account]]></title>
+        <title language="lt"><![CDATA[Paysera sąskaita]]></title>
+        <logo_url language="en"><![CDATA[https://bank.paysera.com/assets/image/payment_types/wallet.png]]></logo_url>
+        <logo_url language="lt"><![CDATA[https://bank.paysera.com/assets/image/payment_types/wallet.png]]></logo_url>
+        <min amount="1" currency="EUR"/>
+        <is_iban>0</is_iban>
+        <base_currency><![CDATA[EUR]]></base_currency>
+      </payment_type>
+    </payment_group>
+    <payment_group key="other">
+      <title language="en">
+        <![CDATA[ Other payment systems ]]>
+      </title>
+      <title language="lt">
+        <![CDATA[ Kitos mokėjimo sistemos ]]>
+      </title>
+      <payment_type key="inbank_lt_bnpl_3">
+        <title language="en">
+          <![CDATA[ Buy now, pay later – MOKI3 ]]>
+        </title>
+        <title language="lt">
+          <![CDATA[ Pirkite dabar, mokėkite vėliau – MOKI3 ]]>
+        </title>
+        <logo_url language="en">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/inbank_lt_bnpl_3.png ]]>
+        </logo_url>
+        <logo_url language="lt">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/inbank_lt_bnpl_3.png ]]>
+        </logo_url>
+        <min amount="5000" currency="EUR"/>
+        <max amount="1000000" currency="EUR"/>
+        <is_iban>0</is_iban>
+        <base_currency>
+          <![CDATA[ EUR ]]>
+        </base_currency>
+      </payment_type>
+      <payment_type key="inbank_lt_leasing">
+        <title language="en">
+          <![CDATA[ Inbank Leasing ]]>
+        </title>
+        <title language="lt">
+          <![CDATA[ Inbank Leasing ]]>
+        </title>
+        <logo_url language="en">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/inbank_lt_leasing.png ]]>
+        </logo_url>
+        <logo_url language="lt">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/inbank_lt_leasing.png ]]>
+        </logo_url>
+        <min amount="5000" currency="EUR"/>
+        <max amount="1000000" currency="EUR"/>
+        <is_iban>0</is_iban>
+        <base_currency>
+          <![CDATA[ EUR ]]>
+        </base_currency>
+      </payment_type>
+      <payment_type key="vb2">
+        <title language="en">
+          <![CDATA[ AB SEB bankas ]]>
+        </title>
+        <title language="lt">
+          <![CDATA[ AB „SEB bankas“ ]]>
+        </title>
+        <logo_url language="en">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/vb2.png ]]>
+        </logo_url>
+        <logo_url language="lt">
+          <![CDATA[ https://bank.paysera.com/assets/image/payment_types/vb2.png ]]>
+        </logo_url>
+        <min amount="1" currency="EUR"/>
+        <is_iban>1</is_iban>
+        <base_currency>
+          <![CDATA[ EUR ]]>
+        </base_currency>
+      </payment_type>
+    </payment_group>
+  </country>
+</payment_types_document>

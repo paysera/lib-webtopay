@@ -38,7 +38,7 @@ class WebToPay_PaymentMethodListProvider
         $this->webClient = $webClient;
         $this->urlBuilder = $urlBuilder;
 
-        if (!function_exists('simplexml_load_string')) {
+        if (!WebToPay_Functions::function_exists('simplexml_load_string')) {
             throw new WebToPayException('You have to install libxml to use payment methods API');
         }
     }

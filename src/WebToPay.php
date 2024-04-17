@@ -73,9 +73,8 @@ class WebToPay
      */
     public static function buildRequest(array $data): array
     {
-        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
-            throw new WebToPayException('sign_password or projectid is not provided');
-        }
+        self::checkRequiredParameters($data);
+
         $password = $data['sign_password'];
         $projectId = $data['projectid'];
         unset($data['sign_password']);
@@ -100,9 +99,8 @@ class WebToPay
      */
     public static function redirectToPayment(array $data, bool $exit = false): void
     {
-        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
-            throw new WebToPayException('sign_password or projectid is not provided');
-        }
+        self::checkRequiredParameters($data);
+
         $password = $data['sign_password'];
         $projectId = $data['projectid'];
         unset($data['sign_password']);
@@ -112,7 +110,7 @@ class WebToPay
         $url = $factory->getRequestBuilder()
             ->buildRequestUrlFromData($data);
 
-        if (headers_sent()) {
+        if (WebToPay_Functions::headers_sent()) {
             echo '<script type="text/javascript">window.location = "' . addslashes($url) . '";</script>';
         } else {
             header("Location: $url", true);
@@ -123,7 +121,9 @@ class WebToPay
             htmlentities($url, ENT_QUOTES, 'UTF-8')
         );
         if ($exit) {
+            // @codeCoverageIgnoreStart
             exit();
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -191,6 +191,7 @@ class WebToPay
      *
      * @throws WebToPayException
      * @deprecated use validateAndParseData() and check status code yourself
+     * @codeCoverageIgnore because of deprecation
      */
     public static function checkResponse(array $query, array $userData = [])
     {
@@ -245,6 +246,8 @@ class WebToPay
      *
      * @throws WebToPayException
      * @throws WebToPay_Exception_Validation
+     *
+     * @codeCoverageIgnore We do not support sms-service anymore
      */
     public static function smsAnswer(array $userData): void
     {
@@ -301,6 +304,8 @@ class WebToPay
      * @param string $type
      * @param string $msg
      * @param string $logfile
+     *
+     * @codeCoverageIgnore because of the method is used only in deprecated methods
      */
     protected static function log(string $type, string $msg, string $logfile): void
     {
@@ -325,6 +330,16 @@ class WebToPay
         if (filesize($logfile) > 1024 * 1024 * pi()) {
             copy($logfile, $logfile.'.old');
             unlink($logfile);
+        }
+    }
+
+    /**
+     * @throws WebToPayException
+     */
+    protected static function checkRequiredParameters(array $data)
+    {
+        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
+            throw new WebToPayException('sign_password or projectid is not provided');
         }
     }
 }

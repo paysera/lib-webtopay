@@ -199,7 +199,15 @@ class WebToPay_PaymentMethodGroup
             }
 
             if (isset($paymentTypeNode->is_iban)) {
-                $isIban = (bool)$paymentTypeNode->is_iban;
+                /*
+                 * There are ONLY two ways to fetch value from a node of the SimpleXMLElement class:
+                 * - use the `current` function: current($paymentTypeNode->is_iban);
+                 * - implicitly use the `__toString()` magic method casting the node to a string.
+                 * We chose the 2nd one
+                 *
+                 * FYI: the expression `(bool) $paymentTypeNode->is_iban` ALWAYS returns `true`
+                 */
+                $isIban = (string) $paymentTypeNode->is_iban === "1";
             }
             if (isset($paymentTypeNode->base_currency)) {
                 $baseCurrency = (string)$paymentTypeNode->base_currency;

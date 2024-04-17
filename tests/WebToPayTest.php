@@ -9,28 +9,31 @@ use PHPUnit\Framework\TestCase;
  */
 class WebToPayTest extends TestCase
 {
-    public function testGetPaymentUrl()
+    public function getBuildRequestDataForChecking(): iterable
     {
-        $url = WebToPay::getPaymentUrl('LIT');
-        $this->assertEquals($url, WebToPay::PAY_URL);
-        $url = WebToPay::getPaymentUrl('ENG');
-        $this->assertEquals($url, 'https://bank.paysera.com/pay/');
+        yield 'no projectid' => [
+            [
+                'sign_password' => 'asdfghjkl',
+            ],
+        ];
+
+        yield 'no sign_password' => [
+            [
+                'projectid' => '123',
+            ],
+        ];
     }
 
     /**
-     * Exception should be thrown if project id is not given
+     * Exception should be thrown if either projectid or sign_password is not given
+     *
+     * @dataProvider getBuildRequestDataForChecking
      */
-    public function testBuildRequestWithoutProjectId()
+    public function testBuildRequestCheckRequiredParameters(array $data)
     {
         $this->expectException(WebToPayException::class);
-        WebToPay::buildRequest([
-            'orderid' => '123',
-            'accepturl' => 'http://local.test/accept',
-            'cancelurl' => 'http://local.test/cancel',
-            'callbackurl' => 'http://local.test/callback',
-
-            'sign_password' => 'asdfghjkl',
-        ]);
+        $this->expectExceptionMessage('sign_password or projectid is not provided');
+        WebToPay::buildRequest($data);
     }
 
     /**
@@ -43,5 +46,13 @@ class WebToPayTest extends TestCase
             'sign_password' => 'asdfghjkl',
             'projectid' => '123',
         ]);
+    }
+
+    public function testGetPaymentUrl()
+    {
+        $url = WebToPay::getPaymentUrl('LIT');
+        $this->assertEquals($url, WebToPay::PAY_URL);
+        $url = WebToPay::getPaymentUrl('ENG');
+        $this->assertEquals($url, 'https://bank.paysera.com/pay/');
     }
 }

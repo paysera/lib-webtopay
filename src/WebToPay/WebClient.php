@@ -35,7 +35,7 @@ class WebToPay_WebClient
         $query = isset($url['query']) ? '?' . $url['query'] : '';
 
         // Open socket connection
-        $fp = fsockopen($host, $port, $errno, $errstr, 30);
+        $fp = $this->openSocket($host, $port, $errno, $errstr, 30);
         if (!$fp) {
             throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
         }
@@ -46,13 +46,39 @@ class WebToPay_WebClient
         $out .= "Connection: Close\r\n\r\n";
 
         // Send request and read response
-        fwrite($fp, $out);
-        $content = (string) stream_get_contents($fp);
-        fclose($fp);
+        $content = $this->getContentFromSocket($fp, $out);
 
         // Separate header and content
         [$header, $content] = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
+    }
+
+    /**
+     * @param string $host
+     * @param int $port
+     * @param int $errno
+     * @param string $errstr
+     * @param float|null $timeout
+     * @return false|resource
+     */
+    protected function openSocket(string $host, int $port, &$errno, &$errstr, ?float $timeout = null)
+    {
+        return fsockopen($host, $port, $errno, $errstr, $timeout);
+    }
+
+    /**
+     * @param resource $fp
+     * @param string $out
+     *
+     * @return string
+     */
+    protected function getContentFromSocket($fp, string $out): string
+    {
+        fwrite($fp, $out);
+        $content = (string) stream_get_contents($fp);
+        fclose($fp);
+
+        return $content;
     }
 }

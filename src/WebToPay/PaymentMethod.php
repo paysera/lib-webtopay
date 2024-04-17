@@ -71,9 +71,9 @@ class WebToPay_PaymentMethod
         $this->currency = $currency;
         $this->logoList = $logoList;
         $this->titleTranslations = $titleTranslations;
-        $this->defaultLanguage = $defaultLanguage;
-        $this->isIban = $isIban;
-        $this->baseCurrency = $baseCurrency;
+        $this->setDefaultLanguage($defaultLanguage);
+        $this->setIsIban($isIban);
+        $this->setBaseCurrency($baseCurrency);
     }
 
     /**
@@ -174,7 +174,7 @@ class WebToPay_PaymentMethod
      */
     public function setIsIban(bool $isIban): void
     {
-        $this->isIban = $isIban == 1;
+        $this->isIban = $isIban;
     }
 
     /**
@@ -188,7 +188,7 @@ class WebToPay_PaymentMethod
     /**
      * Setter of BaseCurrency
      */
-    public function setBaseCurrency(string $baseCurrency): void
+    public function setBaseCurrency(?string $baseCurrency): void
     {
         $this->baseCurrency = $baseCurrency;
     }
