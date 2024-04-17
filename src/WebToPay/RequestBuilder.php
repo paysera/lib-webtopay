@@ -7,6 +7,29 @@ declare(strict_types=1);
  */
 class WebToPay_RequestBuilder
 {
+    private const REQUEST_SPECS = [
+        ['orderid', 40, true, ''],
+        ['accepturl', 255, true, ''],
+        ['cancelurl', 255, true, ''],
+        ['callbackurl', 255, true, ''],
+        ['lang', 3, false, '/^[a-z]{3}$/i'],
+        ['amount', 11, false, '/^\d+$/'],
+        ['currency', 3, false, '/^[a-z]{3}$/i'],
+        ['payment', 20, false, ''],
+        ['country', 2, false, '/^[a-z_]{2}$/i'],
+        ['paytext', 255, false, ''],
+        ['p_firstname', 255, false, ''],
+        ['p_lastname', 255, false, ''],
+        ['p_email', 255, false, ''],
+        ['p_street', 255, false, ''],
+        ['p_city', 255, false, ''],
+        ['p_state', 255, false, ''],
+        ['p_zip', 20, false, ''],
+        ['p_countrycode', 2, false, '/^[a-z]{2}$/i'],
+        ['test', 1, false, '/^[01]$/'],
+        ['time_limit', 19, false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'],
+    ];
+
     protected string $projectPassword;
 
     protected WebToPay_Util $util;
@@ -44,7 +67,7 @@ class WebToPay_RequestBuilder
      */
     public function buildRequest(array $data): array
     {
-        $this->validateRequest($data, self::getRequestSpec());
+        $this->validateRequest($data);
         $data['version'] = WebToPay::VERSION;
         $data['projectid'] = $this->projectId;
         unset($data['repeat_request']);
@@ -105,16 +128,15 @@ class WebToPay_RequestBuilder
      * Checks data to be valid by passed specification
      *
      * @param array<string, mixed> $data
-     * @param array<string, mixed> $specs
      *
      * @throws WebToPay_Exception_Validation
      */
-    protected function validateRequest(array $data, array $specs): void
+    protected function validateRequest(array $data): void
     {
-        foreach ($specs as $spec) {
+        foreach (self::REQUEST_SPECS as $spec) {
             [$name, $maxlen, $required, $regexp] = $spec;
 
-            if ($required && !isset($data[$name])) {
+            if ($required && empty($data[$name])) {
                 throw new WebToPay_Exception_Validation(
                     sprintf("'%s' is required but missing.", $name),
                     WebToPayException::E_MISSING,
@@ -157,43 +179,6 @@ class WebToPay_RequestBuilder
         return [
             'data' => $data,
             'sign' => md5($data . $this->projectPassword),
-        ];
-    }
-
-    /**
-     * Returns specification of fields for request.
-     *
-     * Array structure:
-     *   name      – request item name
-     *   maxlen    – max allowed value for item
-     *   required  – is this item is required
-     *   regexp    – regexp to test item value
-     *
-     * @return array<array<string|bool|int>>
-     */
-    protected static function getRequestSpec(): array
-    {
-        return [
-            ['orderid', 40, true, ''],
-            ['accepturl', 255, true, ''],
-            ['cancelurl', 255, true, ''],
-            ['callbackurl', 255, true, ''],
-            ['lang', 3, false, '/^[a-z]{3}$/i'],
-            ['amount', 11, false, '/^\d+$/'],
-            ['currency', 3, false, '/^[a-z]{3}$/i'],
-            ['payment', 20, false, ''],
-            ['country', 2, false, '/^[a-z_]{2}$/i'],
-            ['paytext', 255, false, ''],
-            ['p_firstname', 255, false, ''],
-            ['p_lastname', 255, false, ''],
-            ['p_email', 255, false, ''],
-            ['p_street', 255, false, ''],
-            ['p_city', 255, false, ''],
-            ['p_state', 255, false, ''],
-            ['p_zip', 20, false, ''],
-            ['p_countrycode', 2, false, '/^[a-z]{2}$/i'],
-            ['test', 1, false, '/^[01]$/'],
-            ['time_limit', 19, false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'],
         ];
     }
 }
