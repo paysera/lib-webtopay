@@ -33,33 +33,112 @@ class WebToPay_CallbackValidatorTest extends TestCase
     }
 
     /**
-     * Exception should be thrown on invalid sign
+     * @throws WebToPayException
      */
-    public function testValidateAndParseDataWithInvalidSign(): void
+    public function testValidateAndParseData_NoDataKey()
     {
         $this->expectException(WebToPay_Exception_Callback::class);
-        $request = [
-            'data' => 'abcdef',
-            'sign' => 'qwerty',
-            'ss1' => 'zxcvb',
+        $this->expectExceptionMessage('"data" parameter not found');
+        $this->validator->validateAndParseData([]);
+    }
+
+    public function getRequestDataForCheckingSign(): iterable
+    {
+        yield 'ss1' => [
+            'request' => [
+                'data' => 'abcdef',
+                'ss2' => 'zxcvb',
+            ],
         ];
 
+        yield 'ss2' => [
+            'request' => [
+                'data' => 'abcdef',
+                'ss2' => 'zxcvb',
+            ],
+        ];
+    }
+
+    /**
+     * Exception should be thrown on invalid sign
+     *
+     * @dataProvider getRequestDataForCheckingSign
+     * @throws WebToPayException
+     */
+    public function testValidateAndParseDataWithInvalidSign(array $request): void
+    {
         $this->signer->expects($this->once())
             ->method('checkSign')
             ->with($request)
             ->willReturn(false);
-        $this->util->expects($this->never())->method($this->anything());
 
+        $this->expectException(WebToPay_Exception_Callback::class);
+        $this->expectExceptionMessage('Invalid sign parameters, check $_GET length limit');
+        $this->validator->validateAndParseData($request);
+    }
+
+    /**
+     * @throws WebToPayException
+     * @throws WebToPay_Exception_Callback
+     */
+    public function testValidateAndParseData_NoCredentials()
+    {
+        $validatorWithoutPassword = new WebToPay_CallbackValidator(
+            123,
+            $this->signer,
+            $this->util
+        );
+
+        $this->expectException(WebToPay_Exception_Configuration::class);
+        $this->expectExceptionMessage('You have to provide project password');
+        $validatorWithoutPassword->validateAndParseData(['data' => '']);
+    }
+
+    /**
+     * Exception should be thrown if decryption has failed
+     *
+     * @throws WebToPayException
+     */
+    public function testValidateAndParseDataWithDecryptionFailure(): void
+    {
+        $request = ['data' => ''];
+
+        $this->util->expects($this->once())
+            ->method('decryptGCM')
+            ->willReturn(null);
+
+        $this->expectException(WebToPay_Exception_Callback::class);
+        $this->expectExceptionMessage('Callback data decryption failed');
+        $this->validator->validateAndParseData($request);
+    }
+
+    /**
+     * @throws WebToPayException
+     */
+    public function testValidateAndParseDataWithNoProjectInCallback(): void
+    {
+        $request = ['data' => 'abcdef'];
+
+        $this->util->expects($this->once())
+            ->method('decryptGCM')
+            ->willReturn('zxc');
+        $this->util->expects($this->once())
+            ->method('parseHttpQuery')
+            ->with('zxc')
+            ->willReturn([]);
+
+        $this->expectException(WebToPay_Exception_Callback::class);
+        $this->expectExceptionMessage('Project ID not provided in callback');
         $this->validator->validateAndParseData($request);
     }
 
     /**
      * Exception should be thrown if project ID does not match expected
+     *
+     * @throws WebToPayException
      */
     public function testValidateAndParseDataWithInvalidProject(): void
     {
-        $this->expectException(WebToPay_Exception_Callback::class);
-
         $request = [
             'data' => 'abcdef',
             'sign' => 'qwerty',
@@ -82,7 +161,104 @@ class WebToPay_CallbackValidatorTest extends TestCase
             ->with('zxc')
             ->willReturn($parsed);
 
+        $this->expectException(WebToPay_Exception_Callback::class);
+        $this->expectExceptionMessage('Bad projectid: 456, should be: 123');
         $this->validator->validateAndParseData($request);
+    }
+
+    public function getMicroAndMacroRequestData(): iterable
+    {
+        yield 'type is set but it is neither micro nor macro' => [
+            'callback' => [
+                'type' => 'abcdef',
+            ],
+            'expectedType' => 'macro',
+        ];
+
+        yield 'type is set and it is micro' => [
+            'callback' => [
+                'type' => 'micro',
+            ],
+            'expectedType' => 'micro',
+        ];
+
+        yield 'type is set and it is macro' => [
+            'callback' => [
+                'type' => 'macro',
+            ],
+            'expectedType' => 'macro',
+        ];
+
+        yield 'type is not set; additional parameters are not set' => [
+            'callback' => [],
+            'expectedType' => 'macro',
+        ];
+
+        yield 'type is not set; all additional parameters are set' => [
+            'callback' => [
+                'to' => '123',
+                'from' => '456',
+                'sms' => '789',
+            ],
+            'expectedType' => 'micro',
+        ];
+
+        yield 'type is set; all additional parameters are set' => [
+            'callback' => [
+                'to' => '123',
+                'from' => '456',
+                'sms' => '789',
+            ],
+            'expectedType' => 'micro',
+        ];
+
+        yield 'type is not set; only additional `to` parameter is set' => [
+            'callback' => [
+                'to' => '123',
+            ],
+            'expectedType' => 'macro',
+        ];
+
+        yield 'type is not set; only additional `from` parameter is set' => [
+            'callback' => [
+                'from' => '123',
+            ],
+            'expectedType' => 'macro',
+        ];
+
+        yield 'type is not set; only additional `sms` parameter is set' => [
+            'callback' => [
+                'sms' => '123',
+            ],
+            'expectedType' => 'macro',
+        ];
+    }
+
+    /**
+     * @dataProvider getMicroAndMacroRequestData
+     *
+     * @throws WebToPayException
+     */
+    public function testValidateAndParseDataWithMicroType(array $callback, string $expectedType): void
+    {
+        $request = [
+            'data' => 'some data',
+        ];
+
+        $callback = array_merge($callback, [
+            'projectid' => 123,
+        ]);
+
+        $this->util->expects($this->once())
+            ->method('decryptGCM')
+            ->willReturn('zxc');
+        $this->util->expects($this->once())
+            ->method('parseHttpQuery')
+            ->willReturn($callback);
+
+        $result = $this->validator->validateAndParseData($request);
+
+        $this->assertEquals($expectedType, $result['type']);
     }
 
     /**
@@ -142,29 +318,6 @@ class WebToPay_CallbackValidatorTest extends TestCase
             ->willReturn($data);
 
         $this->assertEquals($data, $this->validator->validateAndParseData($request));
-    }
-
-    /**
-     * Exception should be thrown if decryption has failed
-     */
-    public function testValidateAndParseDataWithDecryptionFailure(): void
-    {
-        $this->expectException(WebToPay_Exception_Callback::class);
-
-        $urlSafeEncodedString = 'ASdzxc+awej_lqkweQWesa==';
-        $encryptedDataString = 'ASdzxc+awej_lqkweQWesa==';
-        $request = ['data' => $encryptedDataString];
-
-        $this->util->expects($this->once())
-            ->method('decodeSafeUrlBase64')
-            ->with($urlSafeEncodedString)
-            ->willReturn($encryptedDataString);
-        $this->util->expects($this->once())
-            ->method('decryptGCM')
-            ->with($encryptedDataString, self::PROJECT_PASSWORD)
-            ->willReturn(null);
-
-        $this->validator->validateAndParseData($request);
     }
 
     /**
