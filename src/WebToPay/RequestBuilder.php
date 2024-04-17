@@ -84,10 +84,9 @@ class WebToPay_RequestBuilder
      */
     public function buildRequestUrlFromData(array $data): string
     {
-        $language = $data['lang'] ?? null;
         $request = $this->buildRequest($data);
 
-        return $this->urlBuilder->buildForRequest($request, $language);
+        return $this->urlBuilder->buildForRequest($request);
     }
 
     /**

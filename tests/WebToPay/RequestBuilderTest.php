@@ -541,12 +541,24 @@ class WebToPay_RequestBuilderTest extends TestCase
     }
 
     /**
-     * @dataProvider getDataFroCheckingBuildingRequestUrlFromData
-     *
      * @throws WebToPayException
      */
-    public function testBuildRequestUrlFromData(array $data, string $expectedQueryString, ?string $language)
+    public function testBuildRequestUrlFromData()
     {
+        $data = [
+            'orderid' => 123,
+            'accepturl' => 'http://local.test/',
+            'cancelurl' => 'http://local.test/',
+            'callbackurl' => 'http://local.test/',
+            'amount' => 100,
+            'currency' => 'EUR',
+        ];
+        $expectedQueryString = 'orderid=123&accepturl=http%3A%2F%2Flocal.test%2F'
+            . '&cancelurl=http%3A%2F%2Flocal.test%2F&callbackurl=http%3A%2F%2Flocal.test%2F'
+            . '&amount=100&currency=EUR'
+            . '&version=' . WebToPay::VERSION
+            . '&projectid=123';
+
         $this->util
             ->expects($this->once())
             ->method('encodeSafeUrlBase64')
@@ -558,7 +570,7 @@ class WebToPay_RequestBuilderTest extends TestCase
             ->with([
                 'data' => 'encoded',
                 'sign' => md5('encodedsecret'),
-            ], $language);
+            ]);
 
         $this->builder->buildRequestUrlFromData($data);
     }
@@ -579,7 +591,7 @@ class WebToPay_RequestBuilderTest extends TestCase
             ->with([
                 'data' => 'encoded',
                 'sign' => md5('encodedsecret'),
-            ], null);
+            ]);
 
         $this->builder->buildRepeatRequestUrlFromOrderId(123);
     }

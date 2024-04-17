@@ -43,11 +43,10 @@ class WebToPay_UrlBuilder
      * Builds a complete request URL based on the provided parameters
      *
      * @param array<string, mixed> $request
-     * @param string|null $language
      *
      * @return string
      */
-    public function buildForRequest(array $request, ?string $language = null): string
+    public function buildForRequest(array $request): string
     {
         return $this->createUrlFromRequestAndLanguage($request);
     }
