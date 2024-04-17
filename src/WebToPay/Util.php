@@ -64,24 +64,4 @@ class WebToPay_Util
 
         return $params;
     }
-
-    /**
-     * Strips slashes recursively, so this method can be used on arrays with more than one level
-     *
-     * @param mixed $data
-     *
-     * @return array<string, mixed>|string
-     */
-    protected function stripSlashesRecursively($data)
-    {
-        if (is_array($data)) {
-            $result = [];
-            foreach ($data as $key => $value) {
-                $result[stripslashes($key)] = $this->stripSlashesRecursively($value);
-            }
-            return $result;
-        } else {
-            return stripslashes($data);
-        }
-    }
 }
