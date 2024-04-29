@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 if (!class_exists(AbstractTestCase::class)) {
     include(dirname(__FILE__) . '/AbstractTestCase.php');
 }

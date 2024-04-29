@@ -1,4 +1,5 @@
-FROM php:7.4-fpm-buster
+ARG PHP_VER
+FROM php:${PHP_VER}-fpm
 
 RUN groupmod -g 1000 www-data && usermod -u 1000 -g 1000 www-data
 
@@ -33,5 +34,3 @@ RUN echo "\n[xdebug]" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini  \
 
 USER 1000
 WORKDIR /var/www
-
-RUN rm -rf composer.lock

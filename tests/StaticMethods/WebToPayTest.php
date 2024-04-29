@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Mockery\MockInterface;
+
 if (!class_exists(AbstractTestCase::class)) {
     include(dirname(__FILE__) . '/AbstractTestCase.php');
 }

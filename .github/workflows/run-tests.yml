@@ -18,19 +18,18 @@ jobs:
     name: P${{ matrix.php }} - ${{ matrix.dependency-version }} - ${{ matrix.os }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ matrix.php }}
-        coverage: none
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Docker image
+        run: docker build -t lib_webtopay_ci --build-arg PHP_VER=${{ matrix.php }} .
 
-    - name: Install PHP dependencies
-      run: composer update --${{ matrix.dependency-version }} --no-cache --no-interaction --no-progress
+      - name: Run tests in Docker container
+        run: |
+          docker run --rm \
+            -u root \
+            -v $GITHUB_WORKSPACE:/var/www \
+            lib_webtopay_ci \
+            /bin/bash -c "mkdir -p /var/www/vendor && composer install --no-cache --no-interaction --no-progress --ignore-platform-reqs && composer run phpunit"
 
-    - name: Execute tests
-      run: composer run phpunit
+
