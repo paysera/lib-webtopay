@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+// @codeCoverageIgnoreStart
 if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay.php');
     include(dirname(__FILE__) . '/WebToPayException.php');
@@ -11,6 +13,7 @@ if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay/Sign/SS2SignChecker.php');
     include(dirname(__FILE__) . '/WebToPay/CallbackValidator.php');
     include(dirname(__FILE__) . '/WebToPay/Factory.php');
+    include(dirname(__FILE__) . '/WebToPay/Functions.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethod.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethodCountry.php');
     include(dirname(__FILE__) . '/WebToPay/PaymentMethodGroup.php');
@@ -22,3 +25,4 @@ if (!class_exists('WebToPay')) {
     include(dirname(__FILE__) . '/WebToPay/WebClient.php');
     include(dirname(__FILE__) . '/WebToPay/UrlBuilder.php');
 }
+// @codeCoverageIgnoreEnd

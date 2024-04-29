@@ -1,55 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Class with all information about available payment methods for some project, optionally filtered by some amount.
  */
-class WebToPay_PaymentMethodList {
+class WebToPay_PaymentMethodList
+{
     /**
      * Holds available payment countries
      *
      * @var WebToPay_PaymentMethodCountry[]
      */
-    protected $countries;
+    protected array $countries;
 
     /**
      * Default language for titles
-     *
-     * @var string
      */
-    protected $defaultLanguage;
+    protected string $defaultLanguage;
 
     /**
      * Project ID, to which this method list is valid
-     *
-     * @var integer
      */
-    protected $projectId;
+    protected int $projectId;
 
     /**
      * Currency for min and max amounts in this list
-     *
-     * @var string
      */
-    protected $currency;
+    protected string $currency;
 
     /**
      * If this list is filtered for some amount, this field defines it
-     *
-     * @var integer
      */
-    protected $amount;
+    protected ?int $amount;
 
     /**
      * Constructs object
      *
-     * @param integer $projectId
-     * @param string  $currency              currency for min and max amounts in this list
-     * @param string  $defaultLanguage
-     * @param integer $amount                null if this list is not filtered by amount
+     * @param int $projectId
+     * @param string $currency currency for min and max amounts in this list
+     * @param string $defaultLanguage
+     * @param int|null $amount null if this list is not filtered by amount
      */
-    public function __construct($projectId, $currency, $defaultLanguage = 'lt', $amount = null) {
+    public function __construct(int $projectId, string $currency, string $defaultLanguage = 'lt', ?int $amount = null)
+    {
         $this->projectId = $projectId;
-        $this->countries = array();
+        $this->countries = [];
         $this->defaultLanguage = $defaultLanguage;
         $this->currency = $currency;
         $this->amount = $amount;
@@ -58,52 +54,46 @@ class WebToPay_PaymentMethodList {
     /**
      * Sets default language for titles.
      * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethodList
      */
-    public function setDefaultLanguage($language) {
+    public function setDefaultLanguage(string $language): WebToPay_PaymentMethodList
+    {
         $this->defaultLanguage = $language;
         foreach ($this->countries as $country) {
             $country->setDefaultLanguage($language);
         }
+
         return $this;
     }
 
     /**
      * Gets default language for titles
-     *
-     * @return string
      */
-    public function getDefaultLanguage() {
+    public function getDefaultLanguage(): string
+    {
         return $this->defaultLanguage;
     }
 
     /**
      * Gets project ID for this payment method list
-     *
-     * @return integer
      */
-    public function getProjectId() {
+    public function getProjectId(): int
+    {
         return $this->projectId;
     }
 
     /**
      * Gets currency for min and max amounts in this list
-     *
-     * @return string
      */
-    public function getCurrency() {
+    public function getCurrency(): string
+    {
         return $this->currency;
     }
 
     /**
      * Gets whether this list is already filtered for some amount
-     *
-     * @return boolean
      */
-    public function isFiltered() {
+    public function isFiltered(): bool
+    {
         return $this->amount !== null;
     }
 
@@ -112,31 +102,26 @@ class WebToPay_PaymentMethodList {
      *
      * @return WebToPay_PaymentMethodCountry[]
      */
-    public function getCountries() {
+    public function getCountries(): array
+    {
         return $this->countries;
     }
 
     /**
      * Adds new country to payment methods. If some other country with same code was registered earlier, overwrites it.
      * Returns added country instance
-     *
-     * @param WebToPay_PaymentMethodCountry $country
-     *
-     * @return WebToPay_PaymentMethodCountry
      */
-    public function addCountry(WebToPay_PaymentMethodCountry $country) {
+    public function addCountry(WebToPay_PaymentMethodCountry $country): WebToPay_PaymentMethodCountry
+    {
         return $this->countries[$country->getCode()] = $country;
     }
 
     /**
      * Gets country object with specified country code. If no country with such country code is found, returns null.
-     *
-     * @param string $countryCode
-     *
-     * @return null|WebToPay_PaymentMethodCountry
      */
-    public function getCountry($countryCode) {
-        return isset($this->countries[$countryCode]) ? $this->countries[$countryCode] : null;
+    public function getCountry(string $countryCode): ?WebToPay_PaymentMethodCountry
+    {
+        return $this->countries[$countryCode] ?? null;
     }
 
     /**
@@ -144,17 +129,16 @@ class WebToPay_PaymentMethodList {
      * amount.
      * Returns itself, if list is already filtered and filter amount matches the given one.
      *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodList
-     *
      * @throws WebToPayException    if this list is already filtered and not for provided amount
      */
-    public function filterForAmount($amount, $currency) {
+    public function filterForAmount(int $amount, string $currency): WebToPay_PaymentMethodList
+    {
         if ($currency !== $this->currency) {
             throw new WebToPayException(
-                'Currencies do not match. Given currency: ' . $currency . ', currency in list: ' . $this->currency
+                'Currencies do not match. Given currency: '
+                . $currency
+                . ', currency in list: '
+                . $this->currency
             );
         }
         if ($this->isFiltered()) {
@@ -171,22 +155,22 @@ class WebToPay_PaymentMethodList {
                     $list->addCountry($country);
                 }
             }
+
             return $list;
         }
     }
 
     /**
      * Loads countries from given XML node
-     *
-     * @param SimpleXMLElement $xmlNode
      */
-    public function fromXmlNode($xmlNode) {
+    public function fromXmlNode(SimpleXMLElement $xmlNode): void
+    {
         foreach ($xmlNode->country as $countryNode) {
-            $titleTranslations = array();
+            $titleTranslations = [];
             foreach ($countryNode->title as $titleNode) {
-                $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
+                $titleTranslations[(string)$titleNode->attributes()->language] = (string)$titleNode;
             }
-            $this->addCountry($this->createCountry((string) $countryNode->attributes()->code, $titleTranslations))
+            $this->addCountry($this->createCountry((string)$countryNode->attributes()->code, $titleTranslations))
                 ->fromXmlNode($countryNode);
         }
     }
@@ -195,11 +179,12 @@ class WebToPay_PaymentMethodList {
      * Method to create new country instances. Overwrite if you have to use some other country subtype.
      *
      * @param string $countryCode
-     * @param array  $titleTranslations
+     * @param array<string, string> $titleTranslations
      *
      * @return WebToPay_PaymentMethodCountry
      */
-    protected function createCountry($countryCode, array $titleTranslations = array()) {
+    protected function createCountry(string $countryCode, array $titleTranslations = []): WebToPay_PaymentMethodCountry
+    {
         return new WebToPay_PaymentMethodCountry($countryCode, $titleTranslations, $this->defaultLanguage);
     }
 }

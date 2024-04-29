@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test for class WebToPay_Util
  */
-class WebToPay_UtilTest extends TestCase {
-
+class WebToPay_UtilTest extends TestCase
+{
     /**
      * @var WebToPay_Util
      */
@@ -15,14 +17,16 @@ class WebToPay_UtilTest extends TestCase {
     /**
      * Sets up this test
      */
-    public function setUp(): void {
+    public function setUp(): void
+    {
         $this->util = new WebToPay_Util();
     }
 
     /**
      * Tests decodeSafeUrlBase64. Must work on non-url-safe base64 too
      */
-    public function testDecodeSafeUrlBase64() {
+    public function testDecodeSafeUrlBase64()
+    {
         $this->assertEquals(
             "\x33\0\1\2\3\4\5\x92\xFF\xAA\0\1\2\3\4\5\x92\xFE\xAA\xEE",
             $this->util->decodeSafeUrlBase64('MwABAgMEBZL_qgABAgMEBZL-qu4=')
@@ -36,7 +40,8 @@ class WebToPay_UtilTest extends TestCase {
     /**
      * Tests encodeSafeUrlBase64
      */
-    public function testEncodeSafeUrlBase64() {
+    public function testEncodeSafeUrlBase64()
+    {
         $this->assertEquals(
             'MwABAgMEBZL_qgABAgMEBZL-qu4=',
             $this->util->encodeSafeUrlBase64("\x33\0\1\2\3\4\5\x92\xFF\xAA\0\1\2\3\4\5\x92\xFE\xAA\xEE")
@@ -46,12 +51,13 @@ class WebToPay_UtilTest extends TestCase {
     /**
      * Tests that encode and decode are compatible
      */
-    public function testEncodeAndDecodeAreCompatible() {
-        $values = array(
+    public function testEncodeAndDecodeAreCompatible()
+    {
+        $values = [
             'Some long string with UTF-8 ąččėę проверка',
             "Some binary symbols \0\1\3\xFF\xE0\xD0\xC0\xB0\xA0\x90\x10\x0A ",
             'Some other symbols %=?/-_)22Wq',
-        );
+        ];
         foreach ($values as $text) {
             $this->assertEquals(
                 $text,
@@ -63,13 +69,14 @@ class WebToPay_UtilTest extends TestCase {
     /**
      * Tests parseHttpQuery. Must work with and without gpc_magic_quotes
      */
-    public function testParseHttpQuery() {
+    public function testParseHttpQuery()
+    {
         $this->assertEquals(
-            array(
+            [
                 'param1' => 'some string',
                 'param2' => 'special symbols !!%(@_-+/=',
                 'param3' => 'slashes \\\'"',
-            ),
+            ],
             $this->util->parseHttpQuery(
                 'param1=some+string&param2=special+symbols+%21%21%25%28%40_-%2B%2F%3D&param3=slashes+%5C%27%22'
             )
@@ -80,10 +87,10 @@ class WebToPay_UtilTest extends TestCase {
     {
         $key = 'encryption_key';
         $dataString = http_build_query(
-            array(
+            [
                 'firstParam' => 'first',
                 'secondParam' => 'second',
-            )
+            ]
         );
         $encryptedData = $this->getEncryptedData($dataString, $key);
 
@@ -96,10 +103,10 @@ class WebToPay_UtilTest extends TestCase {
     public function testDecryptGCMFailed()
     {
         $dataString = http_build_query(
-            array(
+            [
                 'firstParam' => 'first',
                 'secondParam' => 'second',
-            )
+            ]
         );
         $encryptedData = $this->getEncryptedData($dataString, 'encryption_key');
 

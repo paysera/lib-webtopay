@@ -1,57 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Sends answer to SMS payment if it was not provided with response to callback
  */
-class WebToPay_SmsAnswerSender {
+class WebToPay_SmsAnswerSender
+{
+    protected string $password;
 
-    /**
-     * @var string
-     */
-    protected $password;
+    protected WebToPay_WebClient $webClient;
 
-    /**
-     * @var WebToPay_WebClient
-     */
-    protected $webClient;
-
-    /**
-     * @var WebToPay_UrlBuilder $urlBuilder
-     */
-    protected $urlBuilder;
+    protected WebToPay_UrlBuilder $urlBuilder;
 
     /**
      * Constructs object
-     *
-     * @param string             $password
-     * @param WebToPay_WebClient $webClient
-     * @param WebToPay_UrlBuilder $urlBuilder
      */
-    public function __construct(
-        $password,
-        WebToPay_WebClient $webClient,
-        WebToPay_UrlBuilder $urlBuilder
-    ) {
+    public function __construct(string $password, WebToPay_WebClient $webClient, WebToPay_UrlBuilder $urlBuilder)
+    {
         $this->password = $password;
         $this->webClient = $webClient;
         $this->urlBuilder = $urlBuilder;
     }
 
     /**
-     * Sends answer by sms ID get from callback. Answer can be send only if it was not provided
-     * when responding to callback
-     *
-     * @param integer $smsId
-     * @param string  $text
+     * Sends answer by sms ID get from callback. Answer can be sent only if it was not provided
+     * when responding to the callback
      *
      * @throws WebToPayException
+     *
+     * @codeCoverageIgnore We do not support sms-service anymore
      */
-    public function sendAnswer($smsId, $text) {
-        $content = $this->webClient->get($this->urlBuilder->buildForSmsAnswer(), array(
+    public function sendAnswer(int $smsId, string $text): void
+    {
+        $content = $this->webClient->get($this->urlBuilder->buildForSmsAnswer(), [
             'id' => $smsId,
             'msg' => $text,
             'transaction' => md5($this->password . '|' . $smsId),
-        ));
+        ]);
+
         if (strpos($content, 'OK') !== 0) {
             throw new WebToPayException(
                 sprintf('Error: %s', $content),

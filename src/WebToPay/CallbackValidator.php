@@ -1,29 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Parses and validates callbacks
  */
-class WebToPay_CallbackValidator {
+class WebToPay_CallbackValidator
+{
+    protected WebToPay_Sign_SignCheckerInterface $signer;
 
-    /**
-     * @var WebToPay_Sign_SignCheckerInterface
-     */
-    protected $signer;
+    protected WebToPay_Util $util;
 
-    /**
-     * @var WebToPay_Util
-     */
-    protected $util;
+    protected int $projectId;
 
-    /**
-     * @var integer
-     */
-    protected $projectId;
-
-    /**
-     * @var string|null
-     */
-    protected $password;
+    protected ?string $password;
 
     /**
      * Constructs object
@@ -34,10 +24,10 @@ class WebToPay_CallbackValidator {
      * @param string|null $password
      */
     public function __construct(
-        $projectId,
+        int $projectId,
         WebToPay_Sign_SignCheckerInterface $signer,
         WebToPay_Util $util,
-        $password = null
+        ?string $password = null
     ) {
         $this->signer = $signer;
         $this->util = $util;
@@ -49,14 +39,15 @@ class WebToPay_CallbackValidator {
      * Parses callback parameters from query parameters and checks if sign is correct.
      * Request has parameter "data", which is signed and holds all callback parameters
      *
-     * @param array $requestData
+     * @param array<string, string> $requestData
      *
-     * @return array Parsed callback parameters
+     * @return array<string, string> Parsed callback parameters
      *
      * @throws WebToPayException
      * @throws WebToPay_Exception_Callback
      */
-    public function validateAndParseData(array $requestData) {
+    public function validateAndParseData(array $requestData): array
+    {
         if (!isset($requestData['data'])) {
             throw new WebToPay_Exception_Callback('"data" parameter not found');
         }
@@ -99,7 +90,7 @@ class WebToPay_CallbackValidator {
             );
         }
 
-        if (!isset($request['type']) || !in_array($request['type'], array('micro', 'macro'))) {
+        if (!isset($request['type']) || !in_array($request['type'], ['micro', 'macro'], true)) {
             $micro = (
                 isset($request['to'])
                 && isset($request['from'])
@@ -114,14 +105,16 @@ class WebToPay_CallbackValidator {
     /**
      * Checks data to have all the same parameters provided in expected array
      *
-     * @param array $data
-     * @param array $expected
+     * @param array<string, string> $data
+     * @param array<string, string> $expected
      *
      * @throws WebToPayException
      */
-    public function checkExpectedFields(array $data, array $expected) {
+    public function checkExpectedFields(array $data, array $expected): void
+    {
         foreach ($expected as $key => $value) {
-            $passedValue = isset($data[$key]) ? $data[$key] : null;
+            $passedValue = $data[$key] ?? null;
+            // there should be non-strict comparison here
             if ($passedValue != $value) {
                 throw new WebToPayException(
                     sprintf('Field %s is not as expected (expected %s, got %s)', $key, $value, $passedValue)

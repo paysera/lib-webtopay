@@ -1,58 +1,84 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Simple web client
  */
-class WebToPay_WebClient {
-
+class WebToPay_WebClient
+{
     /**
      * Gets page contents by specified URI. Adds query data if provided to the URI
      * Ignores status code of the response and header fields
      *
      * @param string $uri
-     * @param array  $queryData
+     * @param array<string, mixed> $queryData
      *
      * @return string
      *
      * @throws WebToPayException
      */
-    public function get($uri, array $queryData = array()) {
-        if (count($queryData) > 0) {
-            $uri .= strpos($uri, '?') === false ? '?' : '&';
-            $uri .= http_build_query($queryData, '', '&');
-        }
-        $url = parse_url($uri);
-        if ('https' == $url['scheme']) {
-            $host = 'ssl://'.$url['host'];
-            $port = 443;
-        } else {
-            $host = $url['host'];
-            $port = 80;
+    public function get(string $uri, array $queryData = []): string
+    {
+        // Append query data to the URI if provided
+        if (!empty($queryData)) {
+            $uri .= (strpos($uri, '?') === false ? '?' : '&')
+                . http_build_query($queryData, '', '&');
         }
 
-        $fp = fsockopen($host, $port, $errno, $errstr, 30);
+        // Parse URL
+        $url = parse_url($uri);
+        $scheme = $url['scheme'] ?? 'http';
+        $host = $url['host'] ?? '';
+        $port = $scheme === 'https' ? 443 : 80;
+        $path = $url['path'] ?? '/';
+        $query = isset($url['query']) ? '?' . $url['query'] : '';
+
+        // Open socket connection
+        $fp = $this->openSocket($host, $port, $errno, $errstr, 30);
         if (!$fp) {
             throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
         }
 
-        if(isset($url['query'])) {
-            $data = $url['path'].'?'.$url['query'];
-        } else {
-            $data = $url['path'];
-        }
-
-        $out = "GET " . $data . " HTTP/1.0\r\n";
-        $out .= "Host: ".$url['host']."\r\n";
+        // Construct HTTP request
+        $out = "GET {$path}{$query} HTTP/1.1\r\n";
+        $out .= "Host: {$host}\r\n";
         $out .= "Connection: Close\r\n\r\n";
 
-        $content = '';
+        // Send request and read response
+        $content = $this->getContentFromSocket($fp, $out);
 
-        fwrite($fp, $out);
-        while (!feof($fp)) $content .= fgets($fp, 8192);
-        fclose($fp);
-
-        list($header, $content) = explode("\r\n\r\n", $content, 2);
+        // Separate header and content
+        [$header, $content] = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
+    }
+
+    /**
+     * @param string $host
+     * @param int $port
+     * @param int $errno
+     * @param string $errstr
+     * @param float $timeout
+     * @return false|resource
+     */
+    protected function openSocket(string $host, int $port, &$errno, &$errstr, float $timeout = 30)
+    {
+        return fsockopen($host, $port, $errno, $errstr, $timeout);
+    }
+
+    /**
+     * @param resource $fp
+     * @param string $out
+     *
+     * @return string
+     */
+    protected function getContentFromSocket($fp, string $out): string
+    {
+        fwrite($fp, $out);
+        $content = (string) stream_get_contents($fp);
+        fclose($fp);
+
+        return $content;
     }
 }

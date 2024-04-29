@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test for class WebToPay_Sign_SS2SignChecker
  */
-class WebToPay_Sign_SS2SignCheckerTest extends TestCase {
-
+class WebToPay_Sign_SS2SignCheckerTest extends TestCase
+{
     /**
      * Randomly generated private and public keys pair
      *
@@ -66,27 +68,30 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
     /**
      * Sets up this test
      */
-    public function setUp(): void {
-        $this->util = $this->createMock('WebToPay_Util', array('decodeSafeUrlBase64'));
+    public function setUp(): void
+    {
+        $this->util = $this->createMock('WebToPay_Util', ['decodeSafeUrlBase64']);
         $this->signChecker = new WebToPay_Sign_SS2SignChecker(self::$publicKey, $this->util);
     }
 
     /**
      * Should throw exception if not all required parameters are passed
      */
-    public function testCheckSignWithoutInformation() {
+    public function testCheckSignWithoutInformation()
+    {
         $this->expectException(WebToPay_Exception_Callback::class);
-        $this->signChecker->checkSign(array(
+        $this->signChecker->checkSign([
             'projectid' => '123',
             'ss1' => 'asd',
             'ss2' => 'zxc',
-        ));
+        ]);
     }
 
     /**
      * Tests checkSign
      */
-    public function testCheckSign() {
+    public function testCheckSign()
+    {
         $ss2 = null;
         $privateKey = openssl_pkey_get_private(self::$privateKey);
         openssl_sign('encodedData', $ss2, $privateKey);
@@ -97,27 +102,28 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
             ->with('encoded-ss2')
             ->will($this->returnValue($ss2));
 
-        $this->assertTrue($this->signChecker->checkSign(array(
+        $this->assertTrue($this->signChecker->checkSign([
             'data' => 'encodedData',
             'ss1' => 'bad-ss1',
             'ss2' => 'encoded-ss2',
-        )));
+        ]));
     }
 
     /**
      * Tests checkSign with incorrect ss2
      */
-    public function testCheckSignWithBadSignature() {
+    public function testCheckSignWithBadSignature()
+    {
         $this->util
             ->expects($this->once())
             ->method('decodeSafeUrlBase64')
             ->with('encoded-ss2')
             ->will($this->returnValue('bad-ss2'));
 
-        $this->assertFalse($this->signChecker->checkSign(array(
+        $this->assertFalse($this->signChecker->checkSign([
             'data' => 'encodedData',
             'ss1' => 'bad-ss1',
             'ss2' => 'encoded-ss2',
-        )));
+        ]));
     }
 }
