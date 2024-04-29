@@ -8,11 +8,6 @@ class Functional_PaymentMethodListProviderTest extends TestCase
 {
     protected WebToPay_PaymentMethodListProvider $paymentMethodListProvider;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
-
     /**
      * @throws WebToPayException
      */

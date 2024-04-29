@@ -334,9 +334,11 @@ class WebToPay
     }
 
     /**
+     * @param array<string, mixed> $data
+     *
      * @throws WebToPayException
      */
-    protected static function checkRequiredParameters(array $data)
+    protected static function checkRequiredParameters(array $data): void
     {
         if (!isset($data['sign_password']) || !isset($data['projectid'])) {
             throw new WebToPayException('sign_password or projectid is not provided');

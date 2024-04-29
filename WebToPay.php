@@ -338,9 +338,11 @@ class WebToPay
     }
 
     /**
+     * @param array<string, mixed> $data
+     *
      * @throws WebToPayException
      */
-    protected static function checkRequiredParameters(array $data)
+    protected static function checkRequiredParameters(array $data): void
     {
         if (!isset($data['sign_password']) || !isset($data['projectid'])) {
             throw new WebToPayException('sign_password or projectid is not provided');
@@ -1096,11 +1098,11 @@ class WebToPay_RequestBuilder
             }
 
             if (!empty($data[$name])) {
-                if ($maxlen && strlen((string) $data[$name]) > $maxlen) {
+                if (strlen((string) $data[$name]) > $maxlen) {
                     throw new WebToPay_Exception_Validation(sprintf(
                         "'%s' value is too long (%d), %d characters allowed.",
                         $name,
-                        strlen($data[$name]),
+                        strlen((string) $data[$name]),
                         $maxlen
                     ), WebToPayException::E_MAXLEN, $name);
                 }
@@ -1192,10 +1194,10 @@ class WebToPay_WebClient
      * @param int $port
      * @param int $errno
      * @param string $errstr
-     * @param float|null $timeout
+     * @param float $timeout
      * @return false|resource
      */
-    protected function openSocket(string $host, int $port, &$errno, &$errstr, ?float $timeout = null)
+    protected function openSocket(string $host, int $port, &$errno, &$errstr, float $timeout = 30)
     {
         return fsockopen($host, $port, $errno, $errstr, $timeout);
     }

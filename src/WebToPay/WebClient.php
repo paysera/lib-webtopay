@@ -59,10 +59,10 @@ class WebToPay_WebClient
      * @param int $port
      * @param int $errno
      * @param string $errstr
-     * @param float|null $timeout
+     * @param float $timeout
      * @return false|resource
      */
-    protected function openSocket(string $host, int $port, &$errno, &$errstr, ?float $timeout = null)
+    protected function openSocket(string $host, int $port, &$errno, &$errstr, float $timeout = 30)
     {
         return fsockopen($host, $port, $errno, $errstr, $timeout);
     }

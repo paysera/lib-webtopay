@@ -144,11 +144,11 @@ class WebToPay_RequestBuilder
             }
 
             if (!empty($data[$name])) {
-                if ($maxlen && strlen((string) $data[$name]) > $maxlen) {
+                if (strlen((string) $data[$name]) > $maxlen) {
                     throw new WebToPay_Exception_Validation(sprintf(
                         "'%s' value is too long (%d), %d characters allowed.",
                         $name,
-                        strlen($data[$name]),
+                        strlen((string) $data[$name]),
                         $maxlen
                     ), WebToPayException::E_MAXLEN, $name);
                 }

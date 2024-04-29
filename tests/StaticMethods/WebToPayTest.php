@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use Mockery\MockInterface;
-if (!class_exists(StaticMethods_BaseTest::class)) {
-    include(dirname(__FILE__) . '/BaseTest.php');
+if (!class_exists(AbstractTestCase::class)) {
+    include(dirname(__FILE__) . '/AbstractTestCase.php');
 }
 
-class StaticMethods_WebToPayTest extends StaticMethods_BaseTest
+class StaticMethods_WebToPayCase extends AbstractTestCase
 {
     /**
      * @var WebToPay_Factory|MockInterface

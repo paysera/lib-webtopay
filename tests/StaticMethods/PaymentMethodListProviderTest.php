@@ -1,20 +1,21 @@
 <?php
 
 declare(strict_types=1);
+//if (!class_exists(AbstractTestCase::class)) {
+//    include(dirname(__FILE__) . '/AbstractTestCase.php');
+//}
 
-class StaticMethods_PaymentMethodListProviderTest extends StaticMethods_BaseTest
+class StaticMethods_PaymentMethodListProviderCase extends AbstractTestCase
 {
     /**
      * Tests getCallbackValidator
      *
-     * @throws ReflectionException
      * @throws WebToPayException
-     * @throws WebToPay_Exception_Configuration
      */
     public function testCheckingLibXmlExtension()
     {
-        $m = Mockery::mock('alias:' . WebToPay_Functions::class);
-        $m->shouldReceive('function_exists')
+        $functionsMock = Mockery::mock('alias:' . WebToPay_Functions::class);
+        $functionsMock->shouldReceive('function_exists')
             ->with('simplexml_load_string')
             ->andReturn(false);
 

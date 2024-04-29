@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-class StaticMethods_BaseTest extends TestCase
+abstract class AbstractTestCase extends TestCase
 {
     protected function tearDown(): void
     {
