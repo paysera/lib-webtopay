@@ -38,7 +38,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '1.6';
+    public const VERSION = '3.0.0';
 
     /**
      * Server URL where all requests should go.
@@ -77,9 +77,8 @@ class WebToPay
      */
     public static function buildRequest(array $data): array
     {
-        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
-            throw new WebToPayException('sign_password or projectid is not provided');
-        }
+        self::checkRequiredParameters($data);
+
         $password = $data['sign_password'];
         $projectId = $data['projectid'];
         unset($data['sign_password']);
@@ -104,9 +103,8 @@ class WebToPay
      */
     public static function redirectToPayment(array $data, bool $exit = false): void
     {
-        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
-            throw new WebToPayException('sign_password or projectid is not provided');
-        }
+        self::checkRequiredParameters($data);
+
         $password = $data['sign_password'];
         $projectId = $data['projectid'];
         unset($data['sign_password']);
@@ -116,7 +114,7 @@ class WebToPay
         $url = $factory->getRequestBuilder()
             ->buildRequestUrlFromData($data);
 
-        if (headers_sent()) {
+        if (WebToPay_Functions::headers_sent()) {
             echo '<script type="text/javascript">window.location = "' . addslashes($url) . '";</script>';
         } else {
             header("Location: $url", true);
@@ -127,7 +125,9 @@ class WebToPay
             htmlentities($url, ENT_QUOTES, 'UTF-8')
         );
         if ($exit) {
+            // @codeCoverageIgnoreStart
             exit();
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -195,6 +195,7 @@ class WebToPay
      *
      * @throws WebToPayException
      * @deprecated use validateAndParseData() and check status code yourself
+     * @codeCoverageIgnore because of deprecation
      */
     public static function checkResponse(array $query, array $userData = [])
     {
@@ -249,6 +250,8 @@ class WebToPay
      *
      * @throws WebToPayException
      * @throws WebToPay_Exception_Validation
+     *
+     * @codeCoverageIgnore We do not support sms-service anymore
      */
     public static function smsAnswer(array $userData): void
     {
@@ -305,6 +308,8 @@ class WebToPay
      * @param string $type
      * @param string $msg
      * @param string $logfile
+     *
+     * @codeCoverageIgnore because of the method is used only in deprecated methods
      */
     protected static function log(string $type, string $msg, string $logfile): void
     {
@@ -329,6 +334,16 @@ class WebToPay
         if (filesize($logfile) > 1024 * 1024 * pi()) {
             copy($logfile, $logfile.'.old');
             unlink($logfile);
+        }
+    }
+
+    /**
+     * @throws WebToPayException
+     */
+    protected static function checkRequiredParameters(array $data)
+    {
+        if (!isset($data['sign_password']) || !isset($data['projectid'])) {
+            throw new WebToPayException('sign_password or projectid is not provided');
         }
     }
 }
@@ -394,25 +409,20 @@ class WebToPayException extends Exception
      */
     public const E_DEPRECATED_USAGE = 11;
 
-    /**
-     * @var string|bool
-     */
-    protected $fieldName = false;
+    protected ?string $fieldName = null;
 
     /**
      * Sets field which failed
      */
-    public function setField(string $fieldName): void
+    public function setField(?string $fieldName): void
     {
         $this->fieldName = $fieldName;
     }
 
     /**
      * Gets field which failed
-     *
-     * @return string|bool
      */
-    public function getField()
+    public function getField(): ?string
     {
         return $this->fieldName;
     }
@@ -488,9 +498,9 @@ class WebToPay_PaymentMethod
         $this->currency = $currency;
         $this->logoList = $logoList;
         $this->titleTranslations = $titleTranslations;
-        $this->defaultLanguage = $defaultLanguage;
-        $this->isIban = $isIban;
-        $this->baseCurrency = $baseCurrency;
+        $this->setDefaultLanguage($defaultLanguage);
+        $this->setIsIban($isIban);
+        $this->setBaseCurrency($baseCurrency);
     }
 
     /**
@@ -591,7 +601,7 @@ class WebToPay_PaymentMethod
      */
     public function setIsIban(bool $isIban): void
     {
-        $this->isIban = $isIban == 1;
+        $this->isIban = $isIban;
     }
 
     /**
@@ -605,7 +615,7 @@ class WebToPay_PaymentMethod
     /**
      * Setter of BaseCurrency
      */
-    public function setBaseCurrency(string $baseCurrency): void
+    public function setBaseCurrency(?string $baseCurrency): void
     {
         $this->baseCurrency = $baseCurrency;
     }
@@ -634,7 +644,7 @@ class WebToPay_Util
      */
     public function decodeSafeUrlBase64(string $encodedText): string
     {
-        return base64_decode(strtr($encodedText, '-_', '+/'), true);
+        return (string) base64_decode(strtr($encodedText, '-_', '+/'), true);
     }
 
     /**
@@ -682,26 +692,6 @@ class WebToPay_Util
 
         return $params;
     }
-
-    /**
-     * Strips slashes recursively, so this method can be used on arrays with more than one level
-     *
-     * @param mixed $data
-     *
-     * @return array<string, mixed>|string
-     */
-    protected function stripSlashesRecursively($data)
-    {
-        if (is_array($data)) {
-            $result = [];
-            foreach ($data as $key => $value) {
-                $result[stripslashes($key)] = $this->stripSlashesRecursively($value);
-            }
-            return $result;
-        } else {
-            return stripslashes($data);
-        }
-    }
 }
 
 
@@ -737,6 +727,26 @@ class WebToPay_Exception_Callback extends WebToPayException
  */
 class WebToPay_Exception_Configuration extends WebToPayException
 {
+}
+
+
+/**
+ * The class is used for manipulating with behavior of functions in the global namespace.
+ * It is used for testing purposes. No payload.
+ *
+ * @codeCoverageIgnore
+ */
+class WebToPay_Functions
+{
+    public static function function_exists(string $functionName): bool
+    {
+        return \function_exists($functionName);
+    }
+
+    public static function headers_sent(): bool
+    {
+        return \headers_sent();
+    }
 }
 
 
@@ -949,6 +959,29 @@ class WebToPay_PaymentMethodCountry
  */
 class WebToPay_RequestBuilder
 {
+    private const REQUEST_SPECS = [
+        ['orderid', 40, true, ''],
+        ['accepturl', 255, true, ''],
+        ['cancelurl', 255, true, ''],
+        ['callbackurl', 255, true, ''],
+        ['lang', 3, false, '/^[a-z]{3}$/i'],
+        ['amount', 11, false, '/^\d+$/'],
+        ['currency', 3, false, '/^[a-z]{3}$/i'],
+        ['payment', 20, false, ''],
+        ['country', 2, false, '/^[a-z_]{2}$/i'],
+        ['paytext', 255, false, ''],
+        ['p_firstname', 255, false, ''],
+        ['p_lastname', 255, false, ''],
+        ['p_email', 255, false, ''],
+        ['p_street', 255, false, ''],
+        ['p_city', 255, false, ''],
+        ['p_state', 255, false, ''],
+        ['p_zip', 20, false, ''],
+        ['p_countrycode', 2, false, '/^[a-z]{2}$/i'],
+        ['test', 1, false, '/^[01]$/'],
+        ['time_limit', 19, false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'],
+    ];
+
     protected string $projectPassword;
 
     protected WebToPay_Util $util;
@@ -986,7 +1019,7 @@ class WebToPay_RequestBuilder
      */
     public function buildRequest(array $data): array
     {
-        $this->validateRequest($data, self::getRequestSpec());
+        $this->validateRequest($data);
         $data['version'] = WebToPay::VERSION;
         $data['projectid'] = $this->projectId;
         unset($data['repeat_request']);
@@ -1003,10 +1036,9 @@ class WebToPay_RequestBuilder
      */
     public function buildRequestUrlFromData(array $data): string
     {
-        $language = $data['lang'] ?? null;
         $request = $this->buildRequest($data);
 
-        return $this->urlBuilder->buildForRequest($request, $language);
+        return $this->urlBuilder->buildForRequest($request);
     }
 
     /**
@@ -1015,13 +1047,13 @@ class WebToPay_RequestBuilder
      * This method checks all given data and generates correct request data
      * array or raises WebToPayException on failure.
      *
-     * @param string $orderId order id of repeated request
+     * @param int $orderId order id of repeated request
      *
      * @return array<string, mixed>
      *
      * @throws WebToPayException
      */
-    public function buildRepeatRequest(string $orderId): array
+    public function buildRepeatRequest(int $orderId): array
     {
         $data['orderid'] = $orderId;
         $data['version'] = WebToPay::VERSION;
@@ -1036,7 +1068,7 @@ class WebToPay_RequestBuilder
      *
      * @throws WebToPayException
      */
-    public function buildRepeatRequestUrlFromOrderId(string $orderId): string
+    public function buildRepeatRequestUrlFromOrderId(int $orderId): string
     {
         $request = $this->buildRepeatRequest($orderId);
 
@@ -1047,16 +1079,15 @@ class WebToPay_RequestBuilder
      * Checks data to be valid by passed specification
      *
      * @param array<string, mixed> $data
-     * @param array<string, mixed> $specs
      *
      * @throws WebToPay_Exception_Validation
      */
-    protected function validateRequest(array $data, array $specs): void
+    protected function validateRequest(array $data): void
     {
-        foreach ($specs as $spec) {
+        foreach (self::REQUEST_SPECS as $spec) {
             [$name, $maxlen, $required, $regexp] = $spec;
 
-            if ($required && !isset($data[$name])) {
+            if ($required && empty($data[$name])) {
                 throw new WebToPay_Exception_Validation(
                     sprintf("'%s' is required but missing.", $name),
                     WebToPayException::E_MISSING,
@@ -1101,43 +1132,6 @@ class WebToPay_RequestBuilder
             'sign' => md5($data . $this->projectPassword),
         ];
     }
-
-    /**
-     * Returns specification of fields for request.
-     *
-     * Array structure:
-     *   name      – request item name
-     *   maxlen    – max allowed value for item
-     *   required  – is this item is required
-     *   regexp    – regexp to test item value
-     *
-     * @return array<array<string|bool|int>>
-     */
-    protected static function getRequestSpec(): array
-    {
-        return [
-            ['orderid', 40, true, ''],
-            ['accepturl', 255, true, ''],
-            ['cancelurl', 255, true, ''],
-            ['callbackurl', 255, true, ''],
-            ['lang', 3, false, '/^[a-z]{3}$/i'],
-            ['amount', 11, false, '/^\d+$/'],
-            ['currency', 3, false, '/^[a-z]{3}$/i'],
-            ['payment', 20, false, ''],
-            ['country', 2, false, '/^[a-z_]{2}$/i'],
-            ['paytext', 255, false, ''],
-            ['p_firstname', 255, false, ''],
-            ['p_lastname', 255, false, ''],
-            ['p_email', 255, false, ''],
-            ['p_street', 255, false, ''],
-            ['p_city', 255, false, ''],
-            ['p_state', 255, false, ''],
-            ['p_zip', 20, false, ''],
-            ['p_countrycode', 2, false, '/^[a-z]{2}$/i'],
-            ['test', 1, false, '/^[01]$/'],
-            ['time_limit', 19, false, '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'],
-        ];
-    }
 }
 
 
@@ -1174,7 +1168,7 @@ class WebToPay_WebClient
         $query = isset($url['query']) ? '?' . $url['query'] : '';
 
         // Open socket connection
-        $fp = fsockopen($host, $port, $errno, $errstr, 30);
+        $fp = $this->openSocket($host, $port, $errno, $errstr, 30);
         if (!$fp) {
             throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
         }
@@ -1185,14 +1179,40 @@ class WebToPay_WebClient
         $out .= "Connection: Close\r\n\r\n";
 
         // Send request and read response
-        fwrite($fp, $out);
-        $content = (string) stream_get_contents($fp);
-        fclose($fp);
+        $content = $this->getContentFromSocket($fp, $out);
 
         // Separate header and content
         [$header, $content] = explode("\r\n\r\n", $content, 2);
 
         return trim($content);
+    }
+
+    /**
+     * @param string $host
+     * @param int $port
+     * @param int $errno
+     * @param string $errstr
+     * @param float|null $timeout
+     * @return false|resource
+     */
+    protected function openSocket(string $host, int $port, &$errno, &$errstr, ?float $timeout = null)
+    {
+        return fsockopen($host, $port, $errno, $errstr, $timeout);
+    }
+
+    /**
+     * @param resource $fp
+     * @param string $out
+     *
+     * @return string
+     */
+    protected function getContentFromSocket($fp, string $out): string
+    {
+        fwrite($fp, $out);
+        $content = (string) stream_get_contents($fp);
+        fclose($fp);
+
+        return $content;
     }
 }
 
@@ -1223,6 +1243,8 @@ class WebToPay_SmsAnswerSender
      * when responding to the callback
      *
      * @throws WebToPayException
+     *
+     * @codeCoverageIgnore We do not support sms-service anymore
      */
     public function sendAnswer(int $smsId, string $text): void
     {
@@ -1558,7 +1580,7 @@ class WebToPay_PaymentMethodListProvider
         $this->webClient = $webClient;
         $this->urlBuilder = $urlBuilder;
 
-        if (!function_exists('simplexml_load_string')) {
+        if (!WebToPay_Functions::function_exists('simplexml_load_string')) {
             throw new WebToPayException('You have to install libxml to use payment methods API');
         }
     }
@@ -1673,6 +1695,7 @@ class WebToPay_Factory
     /**
      * Creates or gets callback validator instance
      *
+     * @throws WebToPayException
      * @throws WebToPay_Exception_Configuration
      */
     public function getCallbackValidator(): WebToPay_CallbackValidator
@@ -1720,7 +1743,7 @@ class WebToPay_Factory
 
     public function getUrlBuilder(): WebToPay_UrlBuilder
     {
-        if ($this->urlBuilder === null) {
+        if ($this->urlBuilder === null || $this->urlBuilder->getEnvironment() !== $this->environment) {
             $this->urlBuilder = new WebToPay_UrlBuilder(
                 $this->configuration,
                 $this->environment
@@ -1754,6 +1777,7 @@ class WebToPay_Factory
     /**
      * Creates or gets payment list provider instance
      *
+     * @throws WebToPayException
      * @throws WebToPay_Exception_Configuration
      */
     public function getPaymentMethodListProvider(): WebToPay_PaymentMethodListProvider
@@ -1781,7 +1805,7 @@ class WebToPay_Factory
     protected function getSigner(): WebToPay_Sign_SignCheckerInterface
     {
         if ($this->signer === null) {
-            if (function_exists('openssl_pkey_get_public')) {
+            if (WebToPay_Functions::function_exists('openssl_pkey_get_public')) {
                 $webClient = $this->getWebClient();
                 $publicKey = $webClient->get($this->getUrlBuilder()->buildForPublicKey());
                 if (!$publicKey) {
@@ -1803,8 +1827,6 @@ class WebToPay_Factory
 
     /**
      * Creates or gets web client instance
-     *
-     * @throws WebToPay_Exception_Configuration
      */
     protected function getWebClient(): WebToPay_WebClient
     {
@@ -1863,15 +1885,19 @@ class WebToPay_UrlBuilder
         $this->environmentSettings = $this->configuration['routes'][$this->environment];
     }
 
+    public function getEnvironment(): string
+    {
+        return $this->environment;
+    }
+
     /**
      * Builds a complete request URL based on the provided parameters
      *
      * @param array<string, mixed> $request
-     * @param string|null $language
      *
      * @return string
      */
-    public function buildForRequest(array $request, ?string $language = null): string
+    public function buildForRequest(array $request): string
     {
         return $this->createUrlFromRequestAndLanguage($request);
     }
@@ -1888,6 +1914,8 @@ class WebToPay_UrlBuilder
 
     /**
      * Builds a complete URL for Sms Answer
+     *
+     * @codeCoverageIgnore We do not support sms-service anymore
      */
     public function buildForSmsAnswer(): string
     {
@@ -2125,7 +2153,15 @@ class WebToPay_PaymentMethodGroup
             }
 
             if (isset($paymentTypeNode->is_iban)) {
-                $isIban = (bool)$paymentTypeNode->is_iban;
+                /*
+                 * There are ONLY two ways to fetch value from a node of the SimpleXMLElement class:
+                 * - use the `current` function: current($paymentTypeNode->is_iban);
+                 * - implicitly use the `__toString()` magic method casting the node to a string.
+                 * We chose the 2nd one
+                 *
+                 * FYI: the expression `(bool) $paymentTypeNode->is_iban` ALWAYS returns `true`
+                 */
+                $isIban = (string) $paymentTypeNode->is_iban === "1";
             }
             if (isset($paymentTypeNode->base_currency)) {
                 $baseCurrency = (string)$paymentTypeNode->base_currency;

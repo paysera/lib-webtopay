@@ -29,7 +29,7 @@
         "ext-xdebug": "*"
     },
     "scripts": {
-        "phpunit": "php -dpcov.enabled=1 ./vendor/phpunit/phpunit/phpunit tests --coverage-html=coverage"
+        "phpunit": "php ./vendor/phpunit/phpunit/phpunit tests"
     },
     "config": {
         "allow-plugins": {

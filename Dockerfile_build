@@ -1,0 +1,13 @@
+FROM php:7.4-fpm-buster
+
+RUN groupmod -g 1000 www-data && usermod -u 1000 -g 1000 www-data
+
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/download/2.1.2/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions
+RUN install-php-extensions \
+      xdebug \
+	  @composer
+
+USER 1000
+WORKDIR /var/www
