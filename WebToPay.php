@@ -1150,37 +1150,38 @@ class WebToPay_WebClient
      * @param array<string, mixed> $queryData
      *
      * @return string
-     *
      * @throws WebToPayException
      */
     public function get(string $uri, array $queryData = []): string
     {
-        // Append query data to the URI if provided
-        if (!empty($queryData)) {
-            $uri .= (strpos($uri, '?') === false ? '?' : '&')
-                . http_build_query($queryData, '', '&');
+        if (count($queryData) > 0) {
+            $uri .= strpos($uri, '?') === false ? '?' : '&';
+            $uri .= http_build_query($queryData, '', '&');
+        }
+        $url = parse_url($uri);
+        if ('https' === ($url['scheme'] ?? '')) {
+            $host = 'ssl://' . ($url['host'] ?? '');
+            $port = 443;
+        } else {
+            $host = $url['host'] ?? '';
+            $port = 80;
         }
 
-        // Parse URL
-        $url = parse_url($uri);
-        $scheme = $url['scheme'] ?? 'http';
-        $host = $url['host'] ?? '';
-        $port = $scheme === 'https' ? 443 : 80;
-        $path = $url['path'] ?? '/';
-        $query = isset($url['query']) ? '?' . $url['query'] : '';
-
-        // Open socket connection
         $fp = $this->openSocket($host, $port, $errno, $errstr, 30);
         if (!$fp) {
             throw new WebToPayException(sprintf('Cannot connect to %s', $uri), WebToPayException::E_INVALID);
         }
 
-        // Construct HTTP request
-        $out = "GET {$path}{$query} HTTP/1.1\r\n";
-        $out .= "Host: {$host}\r\n";
+        if(isset($url['query'])) {
+            $data = ($url['path'] ?? '') . '?' . $url['query'];
+        } else {
+            $data = ($url['path'] ?? '');
+        }
+
+        $out = "GET " . $data . " HTTP/1.0\r\n";
+        $out .= "Host: " . ($url['host'] ?? '') . "\r\n";
         $out .= "Connection: Close\r\n\r\n";
 
-        // Send request and read response
         $content = $this->getContentFromSocket($fp, $out);
 
         // Separate header and content
