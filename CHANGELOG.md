@@ -1,6 +1,6 @@
 Version history
 ===============
-Version 2.0.1   - 2023-10-19
+Version 3.0.0   - 2024-04-30
 
     * increased minimal PHP version to 7.4
     * the code was brought up to date with the latest PHP versions and standards
