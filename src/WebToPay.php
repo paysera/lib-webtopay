@@ -53,6 +53,8 @@ class WebToPay
 
     /**
      * SMS answer url.
+     *
+     * @deprecated We do not support sms-service anymore
      */
     public const SMS_ANSWER_URL = 'https://bank.paysera.com/psms/respond/';
 
@@ -172,53 +174,6 @@ class WebToPay
     }
 
     /**
-     * Parses response from WebToPay server and validates signs.
-     *
-     * This function accepts both micro and macro responses.
-     *
-     * First parameter usualy should be $_GET array.
-     *
-     * Description about response can be found here:
-     * makro: https://developers.paysera.com/en/checkout/integrations/integration-specification
-     * mikro: https://developers.paysera.com/en/sms-keywords/current#sms_keywords_specification
-     *
-     * If response is not correct, WebToPayException will be raised.
-     *
-     * @param array<string, string> $query Response array
-     * @param array<string, string|int> $userData
-     *
-     * @return array<string, string>
-     *
-     * @throws WebToPayException
-     * @deprecated use validateAndParseData() and check status code yourself
-     * @codeCoverageIgnore because of deprecation
-     */
-    public static function checkResponse(array $query, array $userData = [])
-    {
-        $projectId = isset($userData['projectid']) ? (int) $userData['projectid'] : null;
-        $password = isset($userData['sign_password']) ? (string) $userData['sign_password'] : null;
-        $logFile = isset($userData['log']) ? (string) $userData['log'] : null;
-
-        try {
-            $data = self::validateAndParseData($query, $projectId, $password);
-            if ($data['type'] == 'macro' && $data['status'] != 1) {
-                throw new WebToPayException('Expected status code 1', WebToPayException::E_DEPRECATED_USAGE);
-            }
-
-            if ($logFile) {
-                self::log('OK', http_build_query($data, '', '&'), $logFile);
-            }
-            return $data;
-
-        } catch (WebToPayException $exception) {
-            if ($logFile && $exception->getCode() != WebToPayException::E_DEPRECATED_USAGE) {
-                self::log('ERR', $exception . "\nQuery: " . http_build_query($query, '', '&'), $logFile);
-            }
-            throw $exception;
-        }
-    }
-
-    /**
      * Parses request (query) data and validates its signature.
      *
      * @param array<string, string> $query usually $_GET
@@ -247,7 +202,8 @@ class WebToPay
      * @throws WebToPayException
      * @throws WebToPay_Exception_Validation
      *
-     * @codeCoverageIgnore We do not support sms-service anymore
+     * @deprecated We do not support sms-service anymore
+     * @codeCoverageIgnore because of deprecation
      */
     public static function smsAnswer(array $userData): void
     {
@@ -305,6 +261,7 @@ class WebToPay
      * @param string $msg
      * @param string $logfile
      *
+     * @deprecated We do not support sms-service anymore
      * @codeCoverageIgnore because of the method is used only in deprecated methods
      */
     protected static function log(string $type, string $msg, string $logfile): void
