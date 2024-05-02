@@ -1,74 +1,68 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Payment method configuration for some country
  */
-class WebToPay_PaymentMethodCountry {
-    /**
-     * @var string
-     */
-    protected $countryCode;
+class WebToPay_PaymentMethodCountry
+{
+    protected string $countryCode;
 
     /**
      * Holds available payment types for this country
      *
      * @var WebToPay_PaymentMethodGroup[]
      */
-    protected $groups;
+    protected array $groups;
 
     /**
      * Default language for titles
-     *
-     * @var string
      */
-    protected $defaultLanguage;
+    protected string $defaultLanguage;
 
     /**
      * Translations array for this country. Holds associative array of country title by language codes.
      *
-     * @var array
+     * @var array<string, string>
      */
-    protected $titleTranslations;
+    protected array $titleTranslations;
 
     /**
      * Constructs object
      *
      * @param string $countryCode
-     * @param array  $titleTranslations
+     * @param array<string, string> $titleTranslations
      * @param string $defaultLanguage
      */
-    public function __construct($countryCode, $titleTranslations, $defaultLanguage = 'lt') {
+    public function __construct(string $countryCode, array $titleTranslations, string $defaultLanguage = 'lt')
+    {
         $this->countryCode = $countryCode;
         $this->defaultLanguage = $defaultLanguage;
         $this->titleTranslations = $titleTranslations;
-        $this->groups = array();
+        $this->groups = [];
     }
 
     /**
      * Sets default language for titles.
      * Returns itself for fluent interface
-     *
-     * @param string $language
-     *
-     * @return WebToPay_PaymentMethodCountry
      */
-    public function setDefaultLanguage($language) {
+    public function setDefaultLanguage(string $language): WebToPay_PaymentMethodCountry
+    {
         $this->defaultLanguage = $language;
         foreach ($this->groups as $group) {
             $group->setDefaultLanguage($language);
         }
+
         return $this;
     }
 
     /**
      * Gets title of the group. Tries to get title in specified language. If it is not found or if language is not
      * specified, uses default language, given to constructor.
-     *
-     * @param string [Optional] $languageCode
-     *
-     * @return string
      */
-    public function getTitle($languageCode = null) {
+    public function getTitle(?string $languageCode = null): string
+    {
         if ($languageCode !== null && isset($this->titleTranslations[$languageCode])) {
             return $this->titleTranslations[$languageCode];
         } elseif (isset($this->titleTranslations[$this->defaultLanguage])) {
@@ -80,19 +74,17 @@ class WebToPay_PaymentMethodCountry {
 
     /**
      * Gets default language for titles
-     *
-     * @return string
      */
-    public function getDefaultLanguage() {
+    public function getDefaultLanguage(): string
+    {
         return $this->defaultLanguage;
     }
 
     /**
      * Gets country code
-     *
-     * @return string
      */
-    public function getCode() {
+    public function getCode(): string
+    {
         return $this->countryCode;
     }
 
@@ -100,24 +92,18 @@ class WebToPay_PaymentMethodCountry {
      * Adds new group to payment methods for this country.
      * If some other group was registered earlier with same key, overwrites it.
      * Returns given group
-     *
-     * @param WebToPay_PaymentMethodGroup $group
-     *
-     * @return WebToPay_PaymentMethodGroup
      */
-    public function addGroup(WebToPay_PaymentMethodGroup $group) {
+    public function addGroup(WebToPay_PaymentMethodGroup $group): WebToPay_PaymentMethodGroup
+    {
         return $this->groups[$group->getKey()] = $group;
     }
 
     /**
      * Gets group object with specified group key. If no group with such key is found, returns null.
-     *
-     * @param string $groupKey
-     *
-     * @return null|WebToPay_PaymentMethodGroup
      */
-    public function getGroup($groupKey) {
-        return isset($this->groups[$groupKey]) ? $this->groups[$groupKey] : null;
+    public function getGroup(string $groupKey): ?WebToPay_PaymentMethodGroup
+    {
+        return $this->groups[$groupKey] ?? null;
     }
 
     /**
@@ -125,7 +111,8 @@ class WebToPay_PaymentMethodCountry {
      *
      * @return WebToPay_PaymentMethodGroup[]
      */
-    public function getGroups() {
+    public function getGroups(): array
+    {
         return $this->groups;
     }
 
@@ -134,23 +121,21 @@ class WebToPay_PaymentMethodCountry {
      *
      * @return WebToPay_PaymentMethod[]
      */
-    public function getPaymentMethods() {
-        $paymentMethods = array();
+    public function getPaymentMethods(): array
+    {
+        $paymentMethods = [];
         foreach ($this->groups as $group) {
             $paymentMethods = array_merge($paymentMethods, $group->getPaymentMethods());
         }
+
         return $paymentMethods;
     }
 
     /**
      * Returns new country instance with only those payment methods, which are available for provided amount.
-     *
-     * @param integer $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodCountry
      */
-    public function filterForAmount($amount, $currency) {
+    public function filterForAmount(int $amount, string $currency): WebToPay_PaymentMethodCountry
+    {
         $country = new WebToPay_PaymentMethodCountry($this->countryCode, $this->titleTranslations, $this->defaultLanguage);
         foreach ($this->getGroups() as $group) {
             $group = $group->filterForAmount($amount, $currency);
@@ -158,45 +143,47 @@ class WebToPay_PaymentMethodCountry {
                 $country->addGroup($group);
             }
         }
+
         return $country;
     }
 
     /**
      * Returns new country instance with only those payment methods, which are returns or not iban number after payment
-     *
-     * @param boolean $isIban
-     *
-     * @return WebToPay_PaymentMethodCountry
      */
-    public function filterForIban($isIban = true) {
-        $country = new WebToPay_PaymentMethodCountry($this->countryCode, $this->titleTranslations, $this->defaultLanguage);
+    public function filterForIban(bool $isIban = true): WebToPay_PaymentMethodCountry
+    {
+        $country = new WebToPay_PaymentMethodCountry(
+            $this->countryCode,
+            $this->titleTranslations,
+            $this->defaultLanguage
+        );
+
         foreach ($this->getGroups() as $group) {
             $group = $group->filterForIban($isIban);
             if (!$group->isEmpty()) {
                 $country->addGroup($group);
             }
         }
+
         return $country;
     }
 
     /**
      * Returns whether this country has no groups
-     *
-     * @return boolean
      */
-    public function isEmpty() {
+    public function isEmpty(): bool
+    {
         return count($this->groups) === 0;
     }
 
     /**
      * Loads groups from given XML node
-     *
-     * @param SimpleXMLElement $countryNode
      */
-    public function fromXmlNode($countryNode) {
+    public function fromXmlNode(SimpleXMLElement $countryNode): void
+    {
         foreach ($countryNode->payment_group as $groupNode) {
             $key = (string) $groupNode->attributes()->key;
-            $titleTranslations = array();
+            $titleTranslations = [];
             foreach ($groupNode->title as $titleNode) {
                 $titleTranslations[(string) $titleNode->attributes()->language] = (string) $titleNode;
             }
@@ -208,11 +195,12 @@ class WebToPay_PaymentMethodCountry {
      * Method to create new group instances. Overwrite if you have to use some other group subtype.
      *
      * @param string $groupKey
-     * @param array  $translations
+     * @param array<string, string> $translations
      *
      * @return WebToPay_PaymentMethodGroup
      */
-    protected function createGroup($groupKey, array $translations = array()) {
+    protected function createGroup(string $groupKey, array $translations = []): WebToPay_PaymentMethodGroup
+    {
         return new WebToPay_PaymentMethodGroup($groupKey, $translations, $this->defaultLanguage);
     }
 }

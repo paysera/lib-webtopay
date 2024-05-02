@@ -17,8 +17,6 @@ Example:
 <?php
 
 require_once('WebToPay.php');
-
-// Your code goes here
 ```
 Alternatively, you can use files in the "src" folder.
 Either set-up autoloader or include file "includes.php" in "src" directory.
@@ -27,26 +25,31 @@ Example:
 <?php
 
 require_once('libwebtopay/src/includes.php');
-
 // Your code goes here
 ```
 Another way to install library is using composer:
 ```
+// to install the latest version
+"composer require webtopay/libwebtopay
+
+// to install the oldest supported version (in some projects)
 "composer require webtopay/libwebtopay "^1.6"
+
+// to install version with new interface
+"composer require webtopay/libwebtopay "^2.0"
 ```
+
+And then:
+```php
+<?php
+
+use WebToPay;
+```
+
+Pay attention that the ^3.0 version has the same interface as the ^2.0 but newest one is brought up to 
+PHP 7.4 standards  and code style like `strict_types`, type hints etc
 
 Testing
 =======
 
-    $ phpunit
-
-Demo
-===============
-
-demo_shop is a simple example how you can integrate library to your project.
-It also shows how to get payment methods available for your project and specific amount.
-
-Demo needs write permissions to folder /var to function properly.
-If you want to test demo online, also change parameters in includes/config.php file to your project's.
-If you are testing offline, demos will still work, but paysera.com will be unable to send callback to your site - 
-you can login to your account and copy-and-paste the callback link in your browser in that case.
+    $ bash runt_tests.sh

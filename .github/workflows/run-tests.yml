@@ -1,0 +1,35 @@
+name: Run tests
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [8.3, 8.2, 8.1, 8.0, 7.4]
+        dependency-version: [prefer-lowest, prefer-stable]
+        os: [ubuntu-latest]
+
+    name: P${{ matrix.php }} - ${{ matrix.dependency-version }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t lib_webtopay_ci --build-arg PHP_VER=${{ matrix.php }} .
+
+      - name: Run tests in Docker container
+        run: |
+          docker run --rm \
+            -u root \
+            -v $GITHUB_WORKSPACE:/var/www \
+            lib_webtopay_ci \
+            /bin/bash -c "mkdir -p /var/www/vendor && composer install --no-cache --no-interaction --no-progress --ignore-platform-reqs && composer run phpunit"
+
+
