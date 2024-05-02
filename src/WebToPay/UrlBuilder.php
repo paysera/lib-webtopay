@@ -64,7 +64,7 @@ class WebToPay_UrlBuilder
     /**
      * Builds a complete URL for Sms Answer
      *
-     * @codeCoverageIgnore We do not support sms-service anymore
+     * @codeCoverageIgnore
      */
     public function buildForSmsAnswer(): string
     {
