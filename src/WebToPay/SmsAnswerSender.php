@@ -29,7 +29,7 @@ class WebToPay_SmsAnswerSender
      *
      * @throws WebToPayException
      *
-     * @codeCoverageIgnore We do not support sms-service anymore
+     * @codeCoverageIgnore
      */
     public function sendAnswer(int $smsId, string $text): void
     {

@@ -54,7 +54,7 @@ class WebToPay
     /**
      * SMS answer url.
      *
-     * @deprecated We do not support sms-service anymore
+     * @deprecated
      */
     public const SMS_ANSWER_URL = 'https://bank.paysera.com/psms/respond/';
 
@@ -202,8 +202,8 @@ class WebToPay
      * @throws WebToPayException
      * @throws WebToPay_Exception_Validation
      *
-     * @deprecated We do not support sms-service anymore
-     * @codeCoverageIgnore because of deprecation
+     * @deprecated
+     * @codeCoverageIgnore
      */
     public static function smsAnswer(array $userData): void
     {
@@ -261,8 +261,8 @@ class WebToPay
      * @param string $msg
      * @param string $logfile
      *
-     * @deprecated We do not support sms-service anymore
-     * @codeCoverageIgnore because of the method is used only in deprecated methods
+     * @deprecated
+     * @codeCoverageIgnore
      */
     protected static function log(string $type, string $msg, string $logfile): void
     {

@@ -22,17 +22,6 @@ class StaticMethods_WebToPayCase extends AbstractTestCase
         $this->factoryMock = Mockery::mock('overload:' . WebToPay_Factory::class);
     }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $container = Mockery::getContainer();
-        if ($container !== null) {
-            $this->addToAssertionCount($container->mockery_getExpectationCount());
-        }
-        Mockery::close();
-    }
-
     /**
      * @throws WebToPayException
      */

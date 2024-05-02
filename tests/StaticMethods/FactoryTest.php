@@ -27,17 +27,6 @@ class StaticMethods_FactoryCase extends AbstractTestCase
         ]);
     }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $container = Mockery::getContainer();
-        if ($container !== null) {
-            $this->addToAssertionCount($container->mockery_getExpectationCount());
-        }
-        Mockery::close();
-    }
-
     /**
      * Tests getCallbackValidator
      *
