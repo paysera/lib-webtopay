@@ -48,7 +48,7 @@ class WebToPay_PaymentMethodListProvider
      *
      * @throws WebToPayException
      */
-    public function getPaymentMethodList(float $amount, string $currency): WebToPay_PaymentMethodList
+    public function getPaymentMethodList(?float $amount, ?string $currency): WebToPay_PaymentMethodList
     {
         if (!isset($this->methodListCache[$currency])) {
             $xmlAsString = $this->webClient->get(
