@@ -22,7 +22,7 @@ declare(strict_types=1);
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.6
+ * @version    3.0.1
  * @link       http://www.webtopay.com/
  */
 
@@ -34,7 +34,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.0.0';
+    public const VERSION = '3.0.1';
 
     /**
      * Server URL where all requests should go.
