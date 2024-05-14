@@ -37,13 +37,34 @@ class WebToPay_UrlBuilderTest extends TestCase
         );
     }
 
-    public function testBuildForPaymentsMethodList()
+    public function getDataForTestingBuildForPaymentsMethodList(): iterable
     {
-        $url = $this->urlBuilder->buildForPaymentsMethodList(1, '1.00', 'EUR');
+        yield 'amount is not null; currency is not null' => [
+            'amount' => '1.00',
+            'currency' => 'EUR',
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:1.00',
+        ];
 
-        $this->assertEquals(
-            'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:1.00',
-            $url
-        );
+        yield 'amount is null; currency is not null' => [
+            'amount' => null,
+            'currency' => 'EUR',
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:',
+        ];
+
+        yield 'amount is not null; currency is null' => [
+            'amount' => '1.00',
+            'currency' => null,
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:/amount:1.00',
+        ];
+    }
+
+    /**
+     * @dataProvider getDataForTestingBuildForPaymentsMethodList
+     */
+    public function testBuildForPaymentsMethodList(?string $amount, ?string $currency, string $expectedUrl)
+    {
+        $url = $this->urlBuilder->buildForPaymentsMethodList(1, $amount, $currency);
+
+        $this->assertEquals($expectedUrl, $url);
     }
 }
