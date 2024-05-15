@@ -141,16 +141,28 @@ class StaticMethods_WebToPayCase extends AbstractTestCase
         WebToPay::validateAndParseData($request, 123, 'password');
     }
 
+    public function getDataForTestingGetPaymentMethodList(): iterable
+    {
+        yield 'amount is null' => [
+            'amount' => null,
+            'currency' => 'EUR',
+        ];
+
+        yield 'currency is null' => [
+            'amount' => 1000,
+            'currency' => null,
+        ];
+    }
+
     /**
+     * @dataProvider getDataForTestingGetPaymentMethodList
+     *
      * @throws WebToPayException
      * @throws WebToPay_Exception_Callback
      * @throws WebToPay_Exception_Configuration
      */
-    public function testGetPaymentMethodList(): void
+    public function testGetPaymentMethodList(?int $amount, ?string $currency): void
     {
-        $amount = 1000;
-        $currency = 'EUR';
-
         $paymentMethodListProviderMock = $this->createMock(WebToPay_PaymentMethodListProvider::class);
         $paymentMethodListProviderMock->expects($this->once())
             ->method('getPaymentMethodList')

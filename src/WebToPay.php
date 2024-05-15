@@ -22,7 +22,7 @@ declare(strict_types=1);
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    1.6
+ * @version    3.0.1
  * @link       http://www.webtopay.com/
  */
 
@@ -34,7 +34,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.0.0';
+    public const VERSION = '3.0.1';
 
     /**
      * Server URL where all requests should go.
@@ -236,18 +236,13 @@ class WebToPay
     /**
      * Gets available payment methods for project. Gets methods min and max amounts in specified currency.
      *
-     * @param integer $projectId
-     * @param float   $amount
-     * @param string  $currency
-     *
-     * @return WebToPay_PaymentMethodList
-     *
      * @throws WebToPayException
+     * @throws WebToPay_Exception_Configuration
      */
     public static function getPaymentMethodList(
         int $projectId,
-        float $amount,
-        string $currency = 'EUR'
+        ?float $amount,
+        ?string $currency = 'EUR'
     ): WebToPay_PaymentMethodList {
         $factory = new WebToPay_Factory(['projectId' => $projectId]);
 
@@ -256,10 +251,6 @@ class WebToPay
 
     /**
      * Logs to file. Just skips logging if file is not writeable
-     *
-     * @param string $type
-     * @param string $msg
-     * @param string $logfile
      *
      * @deprecated
      * @codeCoverageIgnore
