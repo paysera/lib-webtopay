@@ -88,11 +88,6 @@ class WebToPay_Factory
         return $this;
     }
 
-    public function getConfiguration(): WebToPay_Config
-    {
-        return $this->configuration;
-    }
-
     /**
      * Creates or gets callback validator instance
      *
