@@ -67,6 +67,7 @@ class WebToPay_Config
     protected string $environment = self::PRODUCTION;
 
     protected ?int $projectId = null;
+
     protected ?string $password = null;
 
     /**
