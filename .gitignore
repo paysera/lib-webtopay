@@ -4,3 +4,4 @@
 coverage
 .bash_history
 .php-cs-fixer.cache
+/src/.env

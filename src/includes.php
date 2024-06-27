@@ -3,6 +3,8 @@
 declare(strict_types=1);
 // @codeCoverageIgnoreStart
 if (!class_exists('WebToPay')) {
+    include(dirname(__FILE__) . '/WebToPay/Config/Routes.php');
+    include(dirname(__FILE__) . '/WebToPay/Config/Config.php');
     include(dirname(__FILE__) . '/WebToPay.php');
     include(dirname(__FILE__) . '/WebToPayException.php');
     include(dirname(__FILE__) . '/WebToPay/Exception/Callback.php');
