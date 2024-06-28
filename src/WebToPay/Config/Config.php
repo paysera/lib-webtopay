@@ -41,7 +41,7 @@ class WebToPay_Config
 
     protected const DEFAULT_VALUES = [
         self::PARAM_PROJECT_ID => null,
-        self::PARAM_PASSWORD => '',
+        self::PARAM_PASSWORD => null,
         self::PARAM_PAY_URL => 'https://bank.paysera.com/pay/',
         self::PARAM_PAYSERA_PAY_URL => 'https://bank.paysera.com/pay/',
         self::PARAM_XML_URL => 'https://www.paysera.com/new/api/paymentMethods/',
