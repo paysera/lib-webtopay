@@ -7,35 +7,40 @@ declare(strict_types=1);
  */
 class WebToPay_Factory
 {
+    /**
+     * @deprecated since 3.0.2
+     */
     public const ENV_PRODUCTION = 'production';
+    /**
+     * @deprecated since 3.0.2
+     */
     public const ENV_SANDBOX = 'sandbox';
 
     /**
      * @var array<string, mixed>
+     *
+     * @deprecated since 3.0.2
      */
     protected static array $defaultConfiguration = [
         'routes' => [
             self::ENV_PRODUCTION => [
-                'publicKey'           => 'https://www.paysera.com/download/public.key',
-                'payment'             => 'https://bank.paysera.com/pay/',
-                'paymentMethodList'   => 'https://www.paysera.com/new/api/paymentMethods/',
-                'smsAnswer'           => 'https://bank.paysera.com/psms/respond/',
+                'publicKey' => 'https://www.paysera.com/download/public.key',
+                'payment' => 'https://bank.paysera.com/pay/',
+                'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
+                'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
             ],
             self::ENV_SANDBOX => [
-                'publicKey'         => 'https://sandbox.paysera.com/download/public.key',
-                'payment'           => 'https://sandbox.paysera.com/pay/',
+                'publicKey' => 'https://sandbox.paysera.com/download/public.key',
+                'payment' => 'https://sandbox.paysera.com/pay/',
                 'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
-                'smsAnswer'         => 'https://sandbox.paysera.com/psms/respond/',
+                'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
             ],
         ],
     ];
 
     protected string $environment;
 
-    /**
-     * @var array<string, mixed>
-     */
-    protected array $configuration;
+    protected WebToPay_Config $configuration;
 
     protected ?WebToPay_WebClient $webClient = null;
 
@@ -63,8 +68,8 @@ class WebToPay_Factory
      */
     public function __construct(array $configuration = [])
     {
-        $this->configuration = array_merge(self::$defaultConfiguration, $configuration);
-        $this->environment = self::ENV_PRODUCTION;
+        $this->environment = WebToPay_Config::PRODUCTION;
+        $this->configuration = new WebToPay_Config($this->environment, $configuration);
     }
 
     /**
@@ -73,10 +78,12 @@ class WebToPay_Factory
     public function useSandbox(bool $enableSandbox): self
     {
         if ($enableSandbox) {
-            $this->environment = self::ENV_SANDBOX;
+            $this->environment = WebToPay_Config::SANDBOX;
         } else {
-            $this->environment = self::ENV_PRODUCTION;
+            $this->environment = WebToPay_Config::PRODUCTION;
         }
+
+        $this->configuration->switchEnvironment($this->environment);
 
         return $this;
     }
@@ -90,15 +97,15 @@ class WebToPay_Factory
     public function getCallbackValidator(): WebToPay_CallbackValidator
     {
         if ($this->callbackValidator === null) {
-            if (!isset($this->configuration['projectId'])) {
+            if ($this->configuration->getProjectId() === null) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
 
             $this->callbackValidator = new WebToPay_CallbackValidator(
-                (int) $this->configuration['projectId'],
+                $this->configuration->getProjectId(),
                 $this->getSigner(),
                 $this->getUtil(),
-                $this->configuration['password'] ?? null
+                $this->configuration->getPassword()
             );
         }
 
@@ -113,15 +120,15 @@ class WebToPay_Factory
     public function getRequestBuilder(): WebToPay_RequestBuilder
     {
         if ($this->requestBuilder === null) {
-            if (!isset($this->configuration['password'])) {
+            if ($this->configuration->getPassword() === null) {
                 throw new WebToPay_Exception_Configuration('You have to provide project password to sign request');
             }
-            if (!isset($this->configuration['projectId'])) {
+            if ($this->configuration->getProjectId() === null) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             $this->requestBuilder = new WebToPay_RequestBuilder(
-                (int) $this->configuration['projectId'],
-                $this->configuration['password'],
+                $this->configuration->getProjectId(),
+                $this->configuration->getPassword(),
                 $this->getUtil(),
                 $this->getUrlBuilder()
             );
@@ -150,11 +157,11 @@ class WebToPay_Factory
     public function getSmsAnswerSender(): WebToPay_SmsAnswerSender
     {
         if ($this->smsAnswerSender === null) {
-            if (!isset($this->configuration['password'])) {
+            if ($this->configuration->getPassword() === null) {
                 throw new WebToPay_Exception_Configuration('You have to provide project password');
             }
             $this->smsAnswerSender = new WebToPay_SmsAnswerSender(
-                $this->configuration['password'],
+                $this->configuration->getPassword(),
                 $this->getWebClient(),
                 $this->getUrlBuilder()
             );
@@ -172,11 +179,11 @@ class WebToPay_Factory
     public function getPaymentMethodListProvider(): WebToPay_PaymentMethodListProvider
     {
         if ($this->paymentMethodListProvider === null) {
-            if (!isset($this->configuration['projectId'])) {
+            if ($this->configuration->getProjectId() === null) {
                 throw new WebToPay_Exception_Configuration('You have to provide project ID');
             }
             $this->paymentMethodListProvider = new WebToPay_PaymentMethodListProvider(
-                (int) $this->configuration['projectId'],
+                $this->configuration->getProjectId(),
                 $this->getWebClient(),
                 $this->getUrlBuilder()
             );
@@ -202,12 +209,12 @@ class WebToPay_Factory
                 }
                 $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
             } else {
-                if (!isset($this->configuration['password'])) {
+                if ($this->configuration->getPassword() === null) {
                     throw new WebToPay_Exception_Configuration(
                         'You have to provide project password if OpenSSL is unavailable'
                     );
                 }
-                $this->signer = new WebToPay_Sign_SS1SignChecker($this->configuration['password']);
+                $this->signer = new WebToPay_Sign_SS1SignChecker($this->configuration->getPassword());
             }
         }
 

@@ -51,7 +51,7 @@ class WebToPayTest extends TestCase
     public function testGetPaymentUrl()
     {
         $url = WebToPay::getPaymentUrl('LIT');
-        $this->assertEquals($url, WebToPay::PAY_URL);
+        $this->assertEquals($url, 'https://bank.paysera.com/pay/');
         $url = WebToPay::getPaymentUrl('ENG');
         $this->assertEquals($url, 'https://bank.paysera.com/pay/');
     }

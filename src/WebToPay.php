@@ -34,20 +34,29 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.0.1';
+    public const VERSION = '3.1.0';
 
     /**
      * Server URL where all requests should go.
+     *
+     * @deprecated since 3.0.2
+     * @see WebToPay_Config::getPayUrl
      */
     public const PAY_URL = 'https://bank.paysera.com/pay/';
 
     /**
      * Server URL where all non-lithuanian language requests should go.
+     *
+     * @deprecated since 3.0.2
+     * @see WebToPay_Config::getPayseraPayUrl
      */
     public const PAYSERA_PAY_URL = 'https://bank.paysera.com/pay/';
 
     /**
      * Server URL where we can get XML with payment method data.
+     *
+     * @deprecated since 3.0.2
+     * @see WebToPay_Config::getXmlUrl
      */
     public const XML_URL = 'https://www.paysera.com/new/api/paymentMethods/';
 
@@ -82,7 +91,12 @@ class WebToPay
         unset($data['sign_password']);
         unset($data['projectid']);
 
-        $factory = new WebToPay_Factory(['projectId' => $projectId, 'password' => $password]);
+        $factory = new WebToPay_Factory(
+            [
+                WebToPay_Config::PARAM_PROJECT_ID => (int)$projectId,
+                WebToPay_Config::PARAM_PASSWORD => $password,
+            ]
+        );
         $requestBuilder = $factory->getRequestBuilder();
 
         return $requestBuilder->buildRequest($data);
@@ -94,8 +108,8 @@ class WebToPay
      * Possible array keys are described here:
      * https://developers.paysera.com/en/checkout/integrations/integration-specification
      *
-     * @param  array<string, mixed> $data Information about current payment request.
-     * @param  boolean $exit if true, exits after sending Location header; default false
+     * @param array<string, mixed> $data Information about current payment request.
+     * @param boolean $exit if true, exits after sending Location header; default false
      *
      * @throws WebToPayException on data validation error
      */
@@ -108,7 +122,12 @@ class WebToPay
         unset($data['sign_password']);
         unset($data['projectid']);
 
-        $factory = new WebToPay_Factory(['projectId' => $projectId, 'password' => $password]);
+        $factory = new WebToPay_Factory(
+            [
+                WebToPay_Config::PARAM_PROJECT_ID => (int)$projectId,
+                WebToPay_Config::PARAM_PASSWORD => $password,
+            ]
+        );
         $url = $factory->getRequestBuilder()
             ->buildRequestUrlFromData($data);
 
@@ -139,7 +158,7 @@ class WebToPay
      * keys are described here:
      * https://developers.paysera.com/en/checkout/integrations/integration-specification
      *
-     * @param  array<string, mixed> $data Information about current payment request
+     * @param array<string, mixed> $data Information about current payment request
      *
      * @return array<string, mixed>
      *
@@ -154,7 +173,12 @@ class WebToPay
         $projectId = $data['projectid'];
         $orderId = $data['orderid'];
 
-        $factory = new WebToPay_Factory(['projectId' => $projectId, 'password' => $password]);
+        $factory = new WebToPay_Factory(
+            [
+                WebToPay_Config::PARAM_PROJECT_ID => (int)$projectId,
+                WebToPay_Config::PARAM_PASSWORD => $password,
+            ]
+        );
         $requestBuilder = $factory->getRequestBuilder();
 
         return $requestBuilder->buildRepeatRequest($orderId);
@@ -168,9 +192,11 @@ class WebToPay
      */
     public static function getPaymentUrl(string $language = 'LIT'): string
     {
+        $config = new WebToPay_Config();
+
         return (in_array($language, ['lt', 'lit', 'LIT'], true))
-            ? self::PAY_URL
-            : self::PAYSERA_PAY_URL;
+            ? $config->getPayUrl()
+            : $config->getPayseraPayUrl();
     }
 
     /**
@@ -188,7 +214,12 @@ class WebToPay
      */
     public static function validateAndParseData(array $query, ?int $projectId, ?string $password): array
     {
-        $factory = new WebToPay_Factory(['projectId' => $projectId, 'password' => $password]);
+        $factory = new WebToPay_Factory(
+            [
+                WebToPay_Config::PARAM_PROJECT_ID => $projectId,
+                WebToPay_Config::PARAM_PASSWORD => $password,
+            ]
+        );
         $validator = $factory->getCallbackValidator();
 
         return $validator->validateAndParseData($query);
@@ -217,8 +248,7 @@ class WebToPay
         $logFile = $userData['log'] ?? null;
 
         try {
-
-            $factory = new WebToPay_Factory(['password' => $password]);
+            $factory = new WebToPay_Factory([WebToPay_Config::PARAM_PASSWORD => $password]);
             $factory->getSmsAnswerSender()->sendAnswer($smsId, $text);
 
             if ($logFile) {
@@ -244,7 +274,7 @@ class WebToPay
         ?float $amount,
         ?string $currency = 'EUR'
     ): WebToPay_PaymentMethodList {
-        $factory = new WebToPay_Factory(['projectId' => $projectId]);
+        $factory = new WebToPay_Factory([WebToPay_Config::PARAM_PROJECT_ID => $projectId]);
 
         return $factory->getPaymentMethodListProvider()->getPaymentMethodList($amount, $currency);
     }
@@ -270,13 +300,13 @@ class WebToPay
             $msg,
         ];
 
-        $logline = implode(' ', $logline)."\n";
+        $logline = implode(' ', $logline) . "\n";
         fwrite($fp, $logline);
         fclose($fp);
 
         // clear big log file
         if (filesize($logfile) > 1024 * 1024 * pi()) {
-            copy($logfile, $logfile.'.old');
+            copy($logfile, $logfile . '.old');
             unlink($logfile);
         }
     }
