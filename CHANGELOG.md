@@ -1,5 +1,10 @@
 Version history
 ===============
+Version 3.0.2   - 2024-07-17
+
+    * Nullable payment methods filter `amount` should be treated as absent on `null`
+    * Nullable payment method filter `currency` did not work with `null` value anyway so it does not accept it anymore
+
 Version 3.0.0   - 2024-04-30
 
     * increased minimal PHP version to 7.4

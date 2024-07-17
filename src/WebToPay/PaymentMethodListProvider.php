@@ -48,11 +48,11 @@ class WebToPay_PaymentMethodListProvider
      *
      * @throws WebToPayException
      */
-    public function getPaymentMethodList(?float $amount, ?string $currency): WebToPay_PaymentMethodList
+    public function getPaymentMethodList(?float $amount, string $currency): WebToPay_PaymentMethodList
     {
         if (!isset($this->methodListCache[$currency])) {
             $xmlAsString = $this->webClient->get(
-                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, (string) $amount, $currency)
+                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, $amount, $currency)
             );
             $useInternalErrors = libxml_use_internal_errors(false);
             $rootNode = simplexml_load_string($xmlAsString);

@@ -148,9 +148,9 @@ class StaticMethods_WebToPayCase extends AbstractTestCase
             'currency' => 'EUR',
         ];
 
-        yield 'currency is null' => [
+        yield 'amount is not null' => [
             'amount' => 1000,
-            'currency' => null,
+            'currency' => 'EUR',
         ];
     }
 
@@ -161,7 +161,7 @@ class StaticMethods_WebToPayCase extends AbstractTestCase
      * @throws WebToPay_Exception_Callback
      * @throws WebToPay_Exception_Configuration
      */
-    public function testGetPaymentMethodList(?int $amount, ?string $currency): void
+    public function testGetPaymentMethodList(?int $amount, string $currency): void
     {
         $paymentMethodListProviderMock = $this->createMock(WebToPay_PaymentMethodListProvider::class);
         $paymentMethodListProviderMock->expects($this->once())
