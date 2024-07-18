@@ -40,28 +40,28 @@ class WebToPay_UrlBuilderTest extends TestCase
     public function getDataForTestingBuildForPaymentsMethodList(): iterable
     {
         yield 'amount is not null; currency is not null' => [
-            'amount' => '1.00',
+            'amount' => 1.1,
             'currency' => 'EUR',
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:1.00',
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:1.1',
         ];
 
         yield 'amount is null; currency is not null' => [
             'amount' => null,
             'currency' => 'EUR',
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:',
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR',
         ];
 
         yield 'amount is not null; currency is null' => [
-            'amount' => '1.00',
+            'amount' => 1.0,
             'currency' => null,
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:/amount:1.00',
+            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:/amount:1',
         ];
     }
 
     /**
      * @dataProvider getDataForTestingBuildForPaymentsMethodList
      */
-    public function testBuildForPaymentsMethodList(?string $amount, ?string $currency, string $expectedUrl)
+    public function testBuildForPaymentsMethodList(?float $amount, ?string $currency, string $expectedUrl)
     {
         $url = $this->urlBuilder->buildForPaymentsMethodList(1, $amount, $currency);
 

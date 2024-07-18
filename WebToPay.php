@@ -1545,7 +1545,7 @@ class WebToPay_PaymentMethodListProvider
     {
         if (!isset($this->methodListCache[$currency])) {
             $xmlAsString = $this->webClient->get(
-                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, (string) $amount, $currency)
+                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, $amount, $currency)
             );
             $useInternalErrors = libxml_use_internal_errors(false);
             $rootNode = simplexml_load_string($xmlAsString);
@@ -1856,11 +1856,21 @@ class WebToPay_UrlBuilder
     /**
      * Builds a complete URL for payment list API
      */
-    public function buildForPaymentsMethodList(int $projectId, ?string $amount, ?string $currency): string
+    public function buildForPaymentsMethodList(int $projectId, ?float $amount, ?string $currency): string
     {
         $route = $this->environmentSettings['paymentMethodList'];
 
-        return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
+        $filters = ['currency' => $currency];
+        if ($amount !== null) {
+            $filters['amount'] = $amount;
+        }
+
+        $queryParts = [];
+        foreach ($filters as $key => $value) {
+            $queryParts[] = sprintf('/%s:%s', $key, $value);
+        }
+
+        return $route . $projectId . implode('', $queryParts);
     }
 
     /**
