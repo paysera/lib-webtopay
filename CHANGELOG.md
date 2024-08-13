@@ -1,5 +1,9 @@
 Version history
 ===============
+Version 3.0.2   - 2024-07-18
+
+    * payment method list provider with amount=null will not filter by amount(=0) anymore
+
 Version 3.0.0   - 2024-04-30
 
     * increased minimal PHP version to 7.4

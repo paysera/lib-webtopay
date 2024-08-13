@@ -52,7 +52,7 @@ class WebToPay_PaymentMethodListProvider
     {
         if (!isset($this->methodListCache[$currency])) {
             $xmlAsString = $this->webClient->get(
-                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, (string) $amount, $currency)
+                $this->urlBuilder->buildForPaymentsMethodList($this->projectId, $amount, $currency)
             );
             $useInternalErrors = libxml_use_internal_errors(false);
             $rootNode = simplexml_load_string($xmlAsString);
