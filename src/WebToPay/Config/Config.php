@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Initializes configurations for WebToPay and WebToPay_Factory
  *
- * @since 3.0.2
+ * @since 3.1.0
  */
 class WebToPay_Config
 {
@@ -62,9 +62,11 @@ class WebToPay_Config
         ],
     ];
 
-    protected array $customParams = [];
+    private WebToPay_EnvReader $envReader;
 
     protected string $environment = self::PRODUCTION;
+
+    protected array $customParams = [];
 
     protected ?int $projectId = null;
 
@@ -87,14 +89,25 @@ class WebToPay_Config
 
     protected WebToPay_Routes $routes;
 
-    public function __construct(
-        string $environment = self::PRODUCTION,
-        array  $customParams = []
-    ) {
-        $this->environment = $environment;
-        $this->customParams = $customParams;
+    public function __construct(WebToPay_EnvReader $envReader)
+    {
+        $this->envReader = $envReader;
 
         $this->initConfig();
+    }
+
+    public function setEnvironment(string $environment): WebToPay_Config
+    {
+        $this->environment = $environment;
+
+        return $this;
+    }
+
+    public function setCustomParams(array $customParams): WebToPay_Config
+    {
+        $this->customParams = $customParams;
+
+        return $this;
     }
 
     public function getProjectId(): ?int
@@ -144,11 +157,11 @@ class WebToPay_Config
 
     protected function initRoutes(): void
     {
-        $this->routes = new WebToPay_Routes(
-            $this->environment,
-            static::DEFAULT_ROUTES[$this->environment] ?? [],
-            $this->customParams[static::PARAM_ROUTES] ?? []
-        );
+        $this->routes = (new WebToPay_Routes($this->envReader))
+            ->setEnvPrefix($this->environment)
+            ->setDefaults(static::DEFAULT_ROUTES[$this->environment] ?? [])
+            ->setCustomRoutes($this->customParams[static::PARAM_ROUTES] ?? [])
+        ;
     }
 
     protected function initProperty(string $targetProperty, ?string $envName): void
@@ -179,17 +192,8 @@ class WebToPay_Config
         return false;
     }
 
-    /**
-     * @throws Exception
-     */
     protected function initEnvVar(string $varName, string $targetProperty): void
     {
-        $envValue = getenv($varName);
-
-        if (empty($envValue)) {
-            $envValue = static::DEFAULT_VALUES[$targetProperty];
-        }
-
-        $this->{$targetProperty} = $envValue;
+        $this->{$targetProperty} = $this->envReader->getAsString($varName, static::DEFAULT_VALUES[$targetProperty]);
     }
 }

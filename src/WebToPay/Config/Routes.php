@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Representation of routes configurations for WebToPay_Factory
  *
- * @since 3.0.2
+ * @since 3.1.0
  */
 class WebToPay_Routes
 {
@@ -39,7 +39,7 @@ class WebToPay_Routes
         self::ROUTE_SMS_ANSWER => '',
     ];
 
-    protected ?string $envPrefix = null;
+    protected string $envPrefix = WebToPay_Config::PRODUCTION;
 
     protected array $defaults = [];
 
@@ -47,22 +47,44 @@ class WebToPay_Routes
 
     protected string $publicKey;
 
+
     protected string $payment;
 
     protected string $paymentMethodList;
 
     protected string $smsAnswer;
 
+    private WebToPay_EnvReader $envReader;
+
     /**
      * @throws Exception
      */
-    public function __construct(string $envPrefix, array $defaults = [], array $customRoutes = [])
+    public function __construct(WebToPay_EnvReader $envReader)
     {
-        $this->envPrefix = $envPrefix;
-        $this->defaults = $defaults;
-        $this->customRoutes = $customRoutes;
+        $this->envReader = $envReader;
 
         $this->initConfig();
+    }
+
+    public function setEnvPrefix(string $envPrefix): self
+    {
+        $this->envPrefix = $envPrefix;
+
+        return $this;
+    }
+
+    public function setDefaults(array $defaults): self
+    {
+        $this->defaults = $defaults;
+
+        return $this;
+    }
+
+    public function setCustomRoutes(array $customRoutes): self
+    {
+        $this->customRoutes = $customRoutes;
+
+        return $this;
     }
 
     public function getPublicKey(): string
@@ -85,15 +107,8 @@ class WebToPay_Routes
         return $this->smsAnswer;
     }
 
-    /**
-     * @throws Exception
-     */
     protected function initConfig(): void
     {
-        if ($this->envPrefix === null) {
-            throw new WebToPay_Exception_Configuration('Environment must be set');
-        }
-
         $envKeyTemplate = strtoupper($this->envPrefix) . '_%s';
 
         foreach (static::ROUTES_TO_ENV_VARS_MAP as $targetProperty => $varName) {
@@ -132,12 +147,7 @@ class WebToPay_Routes
     protected function initEnvVar(string $varName, string $targetProperty, string $envKeyTemplate): void
     {
         $envVar = sprintf($envKeyTemplate, $varName);
-        $envValue = getenv($envVar);
 
-        if (empty($envValue)) {
-            $envValue = $this->defaults[$targetProperty] ?? static::ENV_VALS_DEFAULTS[$targetProperty];
-        }
-
-        $this->{$targetProperty} = $envValue;
+        $this->{$targetProperty} = $this->envReader->getAsString($envVar, static::ENV_VALS_DEFAULTS[$targetProperty]);
     }
 }

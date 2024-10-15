@@ -26,13 +26,17 @@ class WebToPay_ConfigTest extends TestCase
             $dotenv->usePutenv();
             $dotenv->load($envFilePath);
         }
-        $config = new WebToPay_Config($env, $customConfig);
+        $config = (new WebToPay_Config(new WebToPay_EnvReader()))
+            ->setEnvironment($env)
+            ->setCustomParams($customConfig)
+        ;
 
         $this->assertConfig($expected, $config);
     }
 
     public function configDataProvider(): iterable
     {
+        $envReader = new WebToPay_EnvReader();
         $expectedDefaultRoutes = [
             'publicKey' => 'https://sandbox.paysera.com/download/public.key',
             'payment' => 'https://sandbox.paysera.com/pay/',
@@ -40,7 +44,10 @@ class WebToPay_ConfigTest extends TestCase
             'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
         ];
         $env = 'sandbox';
-        $routes = new WebToPay_Routes($env, $expectedDefaultRoutes);
+        $routes = (new WebToPay_Routes($envReader))
+            ->setEnvPrefix($env)
+            ->setDefaults($expectedDefaultRoutes)
+        ;
         $customConfig = [];
         $expectedConfig = [
             'getProjectId' => null,
@@ -60,7 +67,10 @@ class WebToPay_ConfigTest extends TestCase
 
         $envFile = dirname(__FILE__) . '/.base.env';
 
-        $routes = new WebToPay_Routes($env, $expectedDefaultRoutes);
+        $routes = (new WebToPay_Routes($envReader))
+            ->setEnvPrefix($env)
+            ->setDefaults($expectedDefaultRoutes)
+        ;
 
         Closure::bind(
             function () use ($env, $customConfig) {
@@ -91,7 +101,10 @@ class WebToPay_ConfigTest extends TestCase
 
         $envFile = dirname(__FILE__) . '/.non-full.env';
 
-        $routes = new WebToPay_Routes($env, $expectedDefaultRoutes);
+        $routes = (new WebToPay_Routes($envReader))
+            ->setEnvPrefix($env)
+            ->setDefaults($expectedDefaultRoutes)
+        ;
 
         Closure::bind(
             function () use ($env, $customConfig) {
@@ -138,11 +151,10 @@ class WebToPay_ConfigTest extends TestCase
             'getPayUrl' => $customConfig['payUrl'],
             'getPayseraPayUrl' => $customConfig['payseraPayUrl'],
             'getXmlUrl' => $customConfig['xmlUrl'],
-            'getRoutes' => new WebToPay_Routes(
-                $env,
-                $expectedDefaultRoutes,
-                $customConfig['routes'],
-            ),
+            'getRoutes' => (new WebToPay_Routes($envReader))
+                ->setEnvPrefix($env)
+                ->setDefaults($expectedDefaultRoutes)
+                ->setCustomRoutes($customConfig['routes']),
         ];
 
         yield 'custom config' => [
@@ -155,12 +167,15 @@ class WebToPay_ConfigTest extends TestCase
 
     public function testSwitchEnvironment(): void
     {
+        $envReader = new WebToPay_EnvReader();
         $dotenv = new Dotenv();
         $dotenv->usePutenv();
         $dotenv->load(dirname(__FILE__) . '/.switch-envs.env');
 
         $env = 'production';
-        $config = new WebToPay_Config($env);
+        $config = (new WebToPay_Config($envReader))
+            ->setEnvironment($env)
+        ;
 
         $expected = [
             'getProjectId' => null,
@@ -168,15 +183,16 @@ class WebToPay_ConfigTest extends TestCase
             'getPayUrl' => 'https://test.paysera.net/pay/',
             'getPayseraPayUrl' => 'https://test.paysera.net/paysera_pay/',
             'getXmlUrl' => 'https://test.paysera.net/xml/',
-            'getRoutes' => new WebToPay_Routes(
-                $env,
-                [
-                    'publicKey' => 'https://www.paysera.com/download/public.key',
-                    'payment' => 'https://bank.paysera.com/pay/',
-                    'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
-                    'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
-                ],
-            ),
+            'getRoutes' => (new WebToPay_Routes($envReader))
+                ->setEnvPrefix($env)
+                ->setDefaults(
+                    [
+                        'publicKey' => 'https://www.paysera.com/download/public.key',
+                        'payment' => 'https://bank.paysera.com/pay/',
+                        'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
+                        'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
+                    ]
+                ),
         ];
 
         $this->assertConfig($expected, $config);
@@ -190,15 +206,16 @@ class WebToPay_ConfigTest extends TestCase
             'getPayUrl' => 'https://test.paysera.net/pay/',
             'getPayseraPayUrl' => 'https://test.paysera.net/paysera_pay/',
             'getXmlUrl' => 'https://test.paysera.net/xml/',
-            'getRoutes' => new WebToPay_Routes(
-                $env,
-                [
-                    'publicKey' => 'https://sandbox.paysera.com/download/public.key',
-                    'payment' => 'https://sandbox.paysera.com/pay/',
-                    'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
-                    'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
-                ],
-            ),
+            'getRoutes' => (new WebToPay_Routes($envReader))
+                ->setEnvPrefix($env)
+                ->setDefaults(
+                    [
+                        'publicKey' => 'https://sandbox.paysera.com/download/public.key',
+                        'payment' => 'https://sandbox.paysera.com/pay/',
+                        'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+                        'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
+                    ]
+                ),
         ];
 
         $this->assertConfig($expected, $config);

@@ -24,17 +24,18 @@ class WebToPay_RoutesTest extends TestCase
         array   $customRoutes,
         array   $expected
     ): void {
+        $envReader = new WebToPay_EnvReader();
         if ($envFilePath !== null) {
             $dotenv = new Dotenv();
             $dotenv->usePutenv();
             $dotenv->load($envFilePath);
         }
 
-        $routesConfig = new WebToPay_Routes(
-            $env,
-            $defaults,
-            $customRoutes
-        );
+        $routesConfig = (new WebToPay_Routes($envReader))
+            ->setEnvPrefix($env)
+            ->setDefaults($defaults)
+            ->setCustomRoutes($customRoutes)
+        ;
 
         foreach ($expected as $method => $expectedReturnValue) {
             $this->assertEquals($expectedReturnValue, $routesConfig->{$method}());

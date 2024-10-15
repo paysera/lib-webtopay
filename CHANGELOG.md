@@ -1,8 +1,8 @@
 Version history
 ===============
-Version 3.0.2   - 2024-06-27
+Version 3.1.0   - 2024-06-27
 
-    * addded possibility to define Paysera routes in environment variables
+    * added possibility to define Paysera routes in environment variables
 
 Version 3.0.0   - 2024-04-30
 
