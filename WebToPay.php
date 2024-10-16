@@ -196,7 +196,7 @@ class WebToPay
      */
     public static function getPaymentUrl(string $language = 'LIT'): string
     {
-        $config = new WebToPay_Config();
+        $config = new WebToPay_Config(new WebToPay_EnvReader());
 
         return (in_array($language, ['lt', 'lit', 'LIT'], true))
             ? $config->getPayUrl()
@@ -1301,7 +1301,7 @@ class WebToPay_UrlBuilder
     /**
      * @var array<string, string>
      */
-    protected WebToPay_Routes $environmentSettings;
+    protected WebToPay_Routes $routes;
 
     /**
      * @param WebToPay_Config $configuration
@@ -1311,7 +1311,7 @@ class WebToPay_UrlBuilder
     {
         $this->configuration = $configuration;
         $this->environment = $environment;
-        $this->environmentSettings = $this->configuration->getRoutes();
+        $this->routes = $this->configuration->getRoutes();
     }
 
     public function getEnvironment(): string
@@ -1336,7 +1336,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPaymentsMethodList(int $projectId, ?string $amount, ?string $currency): string
     {
-        $route = $this->environmentSettings->getPaymentMethodList();
+        $route = $this->routes->getPaymentMethodListRoute();
 
         return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
     }
@@ -1348,7 +1348,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForSmsAnswer(): string
     {
-        return $this->environmentSettings->getSmsAnswer();
+        return $this->routes->getSmsAnswerRoute();
     }
 
     /**
@@ -1356,7 +1356,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPublicKey(): string
     {
-        return $this->environmentSettings->getPublicKey();
+        return $this->routes->getPublicKeyRoute();
     }
 
     /**
@@ -1380,7 +1380,7 @@ class WebToPay_UrlBuilder
      */
     public function getPaymentUrl(): string
     {
-        return $this->environmentSettings->getPayment();
+        return $this->routes->getPaymentRoute();
     }
 }
 
@@ -1452,7 +1452,11 @@ class WebToPay_Factory
     public function __construct(array $configuration = [])
     {
         $this->environment = WebToPay_Config::PRODUCTION;
-        $this->configuration = new WebToPay_Config($this->environment, $configuration);
+        $this->configuration = new WebToPay_Config(
+            new WebToPay_EnvReader(),
+            $this->environment,
+            $configuration
+        );
     }
 
     /**
@@ -1904,9 +1908,36 @@ class WebToPay_PaymentMethodCountry
 
 
 /**
+ * A helper tool for reading environment variables
+ *
+ * @since 3.1.0
+ */
+class WebToPay_EnvReader
+{
+    /**
+     * @param string $key
+     * @param string|null $default
+     * @return string|null
+     */
+    public function getAsString(string $key, string $default = null): ?string
+    {
+        if (!empty($_ENV[$key])) {
+            return (string)$_ENV[$key];
+        }
+
+        $value = (string)getenv($key);
+
+        return !empty($value)
+            ? $value
+            : $default;
+    }
+}
+
+
+/**
  * Initializes configurations for WebToPay and WebToPay_Factory
  *
- * @since 3.0.2
+ * @since 3.1.0
  */
 class WebToPay_Config
 {
@@ -1963,9 +1994,11 @@ class WebToPay_Config
         ],
     ];
 
-    protected array $customParams = [];
+    private WebToPay_EnvReader $envReader;
 
     protected string $environment = self::PRODUCTION;
+
+    protected array $customParams = [];
 
     protected ?int $projectId = null;
 
@@ -1989,9 +2022,11 @@ class WebToPay_Config
     protected WebToPay_Routes $routes;
 
     public function __construct(
+        WebToPay_EnvReader $envReader,
         string $environment = self::PRODUCTION,
         array  $customParams = []
     ) {
+        $this->envReader = $envReader;
         $this->environment = $environment;
         $this->customParams = $customParams;
 
@@ -2046,9 +2081,10 @@ class WebToPay_Config
     protected function initRoutes(): void
     {
         $this->routes = new WebToPay_Routes(
+            $this->envReader,
             $this->environment,
             static::DEFAULT_ROUTES[$this->environment] ?? [],
-            $this->customParams[static::PARAM_ROUTES] ?? []
+            $this->customParams[static::PARAM_ROUTES] ?? [],
         );
     }
 
@@ -2080,18 +2116,9 @@ class WebToPay_Config
         return false;
     }
 
-    /**
-     * @throws Exception
-     */
     protected function initEnvVar(string $varName, string $targetProperty): void
     {
-        $envValue = getenv($varName);
-
-        if (empty($envValue)) {
-            $envValue = static::DEFAULT_VALUES[$targetProperty];
-        }
-
-        $this->{$targetProperty} = $envValue;
+        $this->{$targetProperty} = $this->envReader->getAsString($varName, static::DEFAULT_VALUES[$targetProperty]);
     }
 }
 
@@ -2099,7 +2126,7 @@ class WebToPay_Config
 /**
  * Representation of routes configurations for WebToPay_Factory
  *
- * @since 3.0.2
+ * @since 3.1.0
  */
 class WebToPay_Routes
 {
@@ -2126,14 +2153,14 @@ class WebToPay_Routes
         self::ROUTE_SMS_ANSWER => self::ENV_VAR_SMS_ANSWER,
     ];
 
-    protected const ENV_VALS_DEFAULTS = [
+    protected const ENV_VARS_DEFAULTS = [
         self::ROUTE_PUBLIC_KEY => '',
         self::ROUTE_PAYMENT => '',
         self::ROUTE_PAYMENT_METHOD_LIST => '',
         self::ROUTE_SMS_ANSWER => '',
     ];
 
-    protected ?string $envPrefix = null;
+    protected string $envPrefix = WebToPay_Config::PRODUCTION;
 
     protected array $defaults = [];
 
@@ -2141,17 +2168,25 @@ class WebToPay_Routes
 
     protected string $publicKey;
 
+
     protected string $payment;
 
     protected string $paymentMethodList;
 
     protected string $smsAnswer;
 
+    private WebToPay_EnvReader $envReader;
+
     /**
      * @throws Exception
      */
-    public function __construct(string $envPrefix, array $defaults = [], array $customRoutes = [])
-    {
+    public function __construct(
+        WebToPay_EnvReader $envReader,
+        string $envPrefix,
+        array $defaults = [],
+        array $customRoutes = []
+    ) {
+        $this->envReader = $envReader;
         $this->envPrefix = $envPrefix;
         $this->defaults = $defaults;
         $this->customRoutes = $customRoutes;
@@ -2159,35 +2194,28 @@ class WebToPay_Routes
         $this->initConfig();
     }
 
-    public function getPublicKey(): string
+    public function getPublicKeyRoute(): string
     {
         return $this->publicKey;
     }
 
-    public function getPayment(): string
+    public function getPaymentRoute(): string
     {
         return $this->payment;
     }
 
-    public function getPaymentMethodList(): string
+    public function getPaymentMethodListRoute(): string
     {
         return $this->paymentMethodList;
     }
 
-    public function getSmsAnswer(): string
+    public function getSmsAnswerRoute(): string
     {
         return $this->smsAnswer;
     }
 
-    /**
-     * @throws Exception
-     */
     protected function initConfig(): void
     {
-        if ($this->envPrefix === null) {
-            throw new WebToPay_Exception_Configuration('Environment must be set');
-        }
-
         $envKeyTemplate = strtoupper($this->envPrefix) . '_%s';
 
         foreach (static::ROUTES_TO_ENV_VARS_MAP as $targetProperty => $varName) {
@@ -2226,13 +2254,11 @@ class WebToPay_Routes
     protected function initEnvVar(string $varName, string $targetProperty, string $envKeyTemplate): void
     {
         $envVar = sprintf($envKeyTemplate, $varName);
-        $envValue = getenv($envVar);
 
-        if (empty($envValue)) {
-            $envValue = $this->defaults[$targetProperty] ?? static::ENV_VALS_DEFAULTS[$targetProperty];
-        }
-
-        $this->{$targetProperty} = $envValue;
+        $this->{$targetProperty} = $this->envReader->getAsString(
+            $envVar,
+            $this->defaults[$targetProperty] ?? static::ENV_VARS_DEFAULTS[$targetProperty]
+        );
     }
 }
 

@@ -192,7 +192,7 @@ class WebToPay
      */
     public static function getPaymentUrl(string $language = 'LIT'): string
     {
-        $config = new WebToPay_Config();
+        $config = new WebToPay_Config(new WebToPay_EnvReader());
 
         return (in_array($language, ['lt', 'lit', 'LIT'], true))
             ? $config->getPayUrl()

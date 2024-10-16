@@ -18,7 +18,7 @@ class WebToPay_UrlBuilder
     /**
      * @var array<string, string>
      */
-    protected WebToPay_Routes $environmentSettings;
+    protected WebToPay_Routes $routes;
 
     /**
      * @param WebToPay_Config $configuration
@@ -28,7 +28,7 @@ class WebToPay_UrlBuilder
     {
         $this->configuration = $configuration;
         $this->environment = $environment;
-        $this->environmentSettings = $this->configuration->getRoutes();
+        $this->routes = $this->configuration->getRoutes();
     }
 
     public function getEnvironment(): string
@@ -53,7 +53,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPaymentsMethodList(int $projectId, ?string $amount, ?string $currency): string
     {
-        $route = $this->environmentSettings->getPaymentMethodList();
+        $route = $this->routes->getPaymentMethodListRoute();
 
         return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
     }
@@ -65,7 +65,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForSmsAnswer(): string
     {
-        return $this->environmentSettings->getSmsAnswer();
+        return $this->routes->getSmsAnswerRoute();
     }
 
     /**
@@ -73,7 +73,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPublicKey(): string
     {
-        return $this->environmentSettings->getPublicKey();
+        return $this->routes->getPublicKeyRoute();
     }
 
     /**
@@ -97,6 +97,6 @@ class WebToPay_UrlBuilder
      */
     public function getPaymentUrl(): string
     {
-        return $this->environmentSettings->getPayment();
+        return $this->routes->getPaymentRoute();
     }
 }

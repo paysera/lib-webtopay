@@ -69,10 +69,11 @@ class WebToPay_Factory
     public function __construct(array $configuration = [])
     {
         $this->environment = WebToPay_Config::PRODUCTION;
-        $this->configuration = (new WebToPay_Config(new WebToPay_EnvReader()))
-            ->setEnvironment($this->environment)
-            ->setCustomParams($configuration)
-        ;
+        $this->configuration = new WebToPay_Config(
+            new WebToPay_EnvReader(),
+            $this->environment,
+            $configuration
+        );
     }
 
     /**

@@ -32,7 +32,7 @@ class WebToPay_Routes
         self::ROUTE_SMS_ANSWER => self::ENV_VAR_SMS_ANSWER,
     ];
 
-    protected const ENV_VALS_DEFAULTS = [
+    protected const ENV_VARS_DEFAULTS = [
         self::ROUTE_PUBLIC_KEY => '',
         self::ROUTE_PAYMENT => '',
         self::ROUTE_PAYMENT_METHOD_LIST => '',
@@ -59,50 +59,36 @@ class WebToPay_Routes
     /**
      * @throws Exception
      */
-    public function __construct(WebToPay_EnvReader $envReader)
-    {
+    public function __construct(
+        WebToPay_EnvReader $envReader,
+        string $envPrefix,
+        array $defaults = [],
+        array $customRoutes = []
+    ) {
         $this->envReader = $envReader;
+        $this->envPrefix = $envPrefix;
+        $this->defaults = $defaults;
+        $this->customRoutes = $customRoutes;
 
         $this->initConfig();
     }
 
-    public function setEnvPrefix(string $envPrefix): self
-    {
-        $this->envPrefix = $envPrefix;
-
-        return $this;
-    }
-
-    public function setDefaults(array $defaults): self
-    {
-        $this->defaults = $defaults;
-
-        return $this;
-    }
-
-    public function setCustomRoutes(array $customRoutes): self
-    {
-        $this->customRoutes = $customRoutes;
-
-        return $this;
-    }
-
-    public function getPublicKey(): string
+    public function getPublicKeyRoute(): string
     {
         return $this->publicKey;
     }
 
-    public function getPayment(): string
+    public function getPaymentRoute(): string
     {
         return $this->payment;
     }
 
-    public function getPaymentMethodList(): string
+    public function getPaymentMethodListRoute(): string
     {
         return $this->paymentMethodList;
     }
 
-    public function getSmsAnswer(): string
+    public function getSmsAnswerRoute(): string
     {
         return $this->smsAnswer;
     }
@@ -148,6 +134,9 @@ class WebToPay_Routes
     {
         $envVar = sprintf($envKeyTemplate, $varName);
 
-        $this->{$targetProperty} = $this->envReader->getAsString($envVar, static::ENV_VALS_DEFAULTS[$targetProperty]);
+        $this->{$targetProperty} = $this->envReader->getAsString(
+            $envVar,
+            $this->defaults[$targetProperty] ?? static::ENV_VARS_DEFAULTS[$targetProperty]
+        );
     }
 }

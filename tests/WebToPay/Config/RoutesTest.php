@@ -31,11 +31,12 @@ class WebToPay_RoutesTest extends TestCase
             $dotenv->load($envFilePath);
         }
 
-        $routesConfig = (new WebToPay_Routes($envReader))
-            ->setEnvPrefix($env)
-            ->setDefaults($defaults)
-            ->setCustomRoutes($customRoutes)
-        ;
+        $routesConfig = new WebToPay_Routes(
+            $envReader,
+            $env,
+            $defaults,
+            $customRoutes,
+        );
 
         foreach ($expected as $method => $expectedReturnValue) {
             $this->assertEquals($expectedReturnValue, $routesConfig->{$method}());
@@ -46,18 +47,18 @@ class WebToPay_RoutesTest extends TestCase
     {
         $envFile = null;
         $expected = [
-            'getPublicKey' => 'https://public-key-test.paysera.net/',
-            'getPayment' => 'https://payment.paysera.net/',
-            'getPaymentMethodList' => 'https://payment-method-list.paysera.net/',
-            'getSmsAnswer' => 'https://sms-answer.paysera.net/',
+            'getPublicKeyRoute' => 'https://public-key-test.paysera.net/',
+            'getPaymentRoute' => 'https://payment.paysera.net/',
+            'getPaymentMethodListRoute' => 'https://payment-method-list.paysera.net/',
+            'getSmsAnswerRoute' => 'https://sms-answer.paysera.net/',
         ];
 
         $env = 'test';
         $defaults = [
-            'publicKey' => $expected['getPublicKey'],
-            'payment' => $expected['getPayment'],
-            'paymentMethodList' => $expected['getPaymentMethodList'],
-            'smsAnswer' => $expected['getSmsAnswer'],
+            'publicKey' => $expected['getPublicKeyRoute'],
+            'payment' => $expected['getPaymentRoute'],
+            'paymentMethodList' => $expected['getPaymentMethodListRoute'],
+            'smsAnswer' => $expected['getSmsAnswerRoute'],
         ];
         $customRoutes = [];
 
@@ -70,17 +71,17 @@ class WebToPay_RoutesTest extends TestCase
         ];
 
         $expected = [
-            'getPublicKey' => 'https://custom-public-key-test.paysera.net/',
-            'getPayment' => 'https://custom-payment.paysera.net/',
-            'getPaymentMethodList' => 'https://custom-payment-method-list.paysera.net/',
-            'getSmsAnswer' => 'https://custom-sms-answer.paysera.net/',
+            'getPublicKeyRoute' => 'https://custom-public-key-test.paysera.net/',
+            'getPaymentRoute' => 'https://custom-payment.paysera.net/',
+            'getPaymentMethodListRoute' => 'https://custom-payment-method-list.paysera.net/',
+            'getSmsAnswerRoute' => 'https://custom-sms-answer.paysera.net/',
         ];
 
         $customRoutes = [
-            'publicKey' => $expected['getPublicKey'],
-            'payment' => $expected['getPayment'],
-            'paymentMethodList' => $expected['getPaymentMethodList'],
-            'smsAnswer' => $expected['getSmsAnswer'],
+            'publicKey' => $expected['getPublicKeyRoute'],
+            'payment' => $expected['getPaymentRoute'],
+            'paymentMethodList' => $expected['getPaymentMethodListRoute'],
+            'smsAnswer' => $expected['getSmsAnswerRoute'],
         ];
 
         yield 'only custom vars' => [
@@ -92,10 +93,10 @@ class WebToPay_RoutesTest extends TestCase
         ];
 
         $expected = [
-            'getPublicKey' => 'https://public-key-test.paysera.net/',
-            'getPayment' => 'https://payment.paysera.net/',
-            'getPaymentMethodList' => 'https://payment-method-list.paysera.net/',
-            'getSmsAnswer' => 'https://sms-answer.paysera.net/',
+            'getPublicKeyRoute' => 'https://public-key-test.paysera.net/',
+            'getPaymentRoute' => 'https://payment.paysera.net/',
+            'getPaymentMethodListRoute' => 'https://payment-method-list.paysera.net/',
+            'getSmsAnswerRoute' => 'https://sms-answer.paysera.net/',
         ];
         $customRoutes = [];
 
@@ -110,17 +111,17 @@ class WebToPay_RoutesTest extends TestCase
         ];
 
         $expected = [
-            'getPublicKey' => 'https://custom-public-key-test.paysera.net/',
-            'getPayment' => 'https://custom-payment.paysera.net/',
-            'getPaymentMethodList' => 'https://custom-payment-method-list.paysera.net/',
-            'getSmsAnswer' => 'https://custom-sms-answer.paysera.net/',
+            'getPublicKeyRoute' => 'https://custom-public-key-test.paysera.net/',
+            'getPaymentRoute' => 'https://custom-payment.paysera.net/',
+            'getPaymentMethodListRoute' => 'https://custom-payment-method-list.paysera.net/',
+            'getSmsAnswerRoute' => 'https://custom-sms-answer.paysera.net/',
         ];
 
         $customRoutes = [
-            'publicKey' => $expected['getPublicKey'],
-            'payment' => $expected['getPayment'],
-            'paymentMethodList' => $expected['getPaymentMethodList'],
-            'smsAnswer' => $expected['getSmsAnswer'],
+            'publicKey' => $expected['getPublicKeyRoute'],
+            'payment' => $expected['getPaymentRoute'],
+            'paymentMethodList' => $expected['getPaymentMethodListRoute'],
+            'smsAnswer' => $expected['getSmsAnswerRoute'],
         ];
 
         yield 'customs on isset env vars' => [
@@ -132,16 +133,16 @@ class WebToPay_RoutesTest extends TestCase
         ];
 
         $expected = [
-            'getPublicKey' => 'https://public-key-test.paysera.net/',
-            'getPayment' => 'https://payment.paysera.net/',
-            'getPaymentMethodList' => 'https://default-payment-method-list.paysera.net/',
-            'getSmsAnswer' => 'https://default-sms-answer.paysera.net/',
+            'getPublicKeyRoute' => 'https://public-key-test.paysera.net/',
+            'getPaymentRoute' => 'https://payment.paysera.net/',
+            'getPaymentMethodListRoute' => 'https://default-payment-method-list.paysera.net/',
+            'getSmsAnswerRoute' => 'https://default-sms-answer.paysera.net/',
         ];
         $customRoutes = [];
 
         $defaults = [
-            'paymentMethodList' => $expected['getPaymentMethodList'],
-            'smsAnswer' => $expected['getSmsAnswer'],
+            'paymentMethodList' => $expected['getPaymentMethodListRoute'],
+            'smsAnswer' => $expected['getSmsAnswerRoute'],
         ];
 
         $envFile = dirname(__FILE__) . '/.non-full-routes-test.env';
@@ -154,9 +155,9 @@ class WebToPay_RoutesTest extends TestCase
             $expected,
         ];
 
-        $expected['getSmsAnswer'] = 'https://custom-sms-answer.paysera.net/';
+        $expected['getSmsAnswerRoute'] = 'https://custom-sms-answer.paysera.net/';
         $customRoutes = [
-            'smsAnswer' => $expected['getSmsAnswer'],
+            'smsAnswer' => $expected['getSmsAnswerRoute'],
         ];
 
         yield 'customs, env and defaults' => [
