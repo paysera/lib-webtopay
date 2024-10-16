@@ -16,8 +16,7 @@
         "php": ">=7.4",
         "ext-simplexml": "*",
         "ext-openssl": "*",
-        "ext-libxml": "*",
-        "symfony/dotenv": "^5"
+        "ext-libxml": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.6",
@@ -27,7 +26,8 @@
         "phpstan/phpstan-mockery": "^1.1",
         "phpstan/phpstan-phpunit": "^1.3",
         "mockery/mockery": "^1.6",
-        "ext-xdebug": "*"
+        "ext-xdebug": "*",
+        "symfony/dotenv": "^5"
     },
     "scripts": {
         "phpunit": "php ./vendor/phpunit/phpunit/phpunit tests"
