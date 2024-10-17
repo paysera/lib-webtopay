@@ -6,54 +6,60 @@ use PHPUnit\Framework\TestCase;
 
 class WebToPay_EnvReaderTest extends TestCase
 {
+    private const TEST_VAR_1 = 'testVar1';
+    private const TEST_VAR_1_VALUE = 'testValue1';
+    private const TEST_VAR_2 = 'testVar2';
+    private const TEST_VAR_2_VALUE = 'testValue2';
+    private const TEST_VAR_3 = 'testVar3';
+    private const TEST_VAR_3_VALUE = 'testDefaultValue';
+    private const TEST_NULL_VAR = 'nullVar';
+
+    private WebToPay_EnvReader $envReader;
+
+    protected function setUp(): void
+    {
+        $this->envReader = new WebToPay_EnvReader();
+
+        $_ENV[self::TEST_VAR_1] = self::TEST_VAR_1_VALUE;
+        putenv(self::TEST_VAR_2 . '=' . self::TEST_VAR_2_VALUE);
+    }
+
     /**
      * @dataProvider getAsArrayData
      */
-    public function testGetAsString(string $key, ?string $expected, ?string $actual): void
+    public function testGetAsString(string $key, ?string $expected, ?string $default = null): void
     {
-        $this->assertEquals($expected, $actual);
+        $this->assertEquals($expected, $this->envReader->getAsString($key, $default));
     }
 
     public function getAsArrayData(): iterable
     {
-        $envReader = new WebToPay_EnvReader();
-
-        $key = 'testVar';
-        unset($_ENV[$key]);
-        putenv($key . '=');
-
-        yield 'not exists' => [
-            $key,
-            null,
-            $envReader->getAsString($key),
-        ];
-
-        $expected = 'defaultValue';
-
-        yield 'with default' => [
-            $key,
-            $expected,
-            $envReader->getAsString($key, $expected),
-        ];
-
-        $expected = 'testValue1';
-
-        $_ENV[$key] = $expected;
 
         yield 'read from $_ENV' => [
-            $key,
-            $expected,
-            $envReader->getAsString($key),
+            self::TEST_VAR_1,
+            self::TEST_VAR_1_VALUE,
         ];
-
-        unset($_ENV[$key]);
-
-        putenv(sprintf('%s=%s', $key, $expected));
 
         yield 'read from getenv()' => [
-            $key,
-            $expected,
-            $envReader->getAsString($key),
+            self::TEST_VAR_2,
+            self::TEST_VAR_2_VALUE,
         ];
+
+        yield 'with default' => [
+            self::TEST_VAR_3,
+            self::TEST_VAR_3_VALUE,
+            self::TEST_VAR_3_VALUE,
+        ];
+
+        yield 'not exists' => [
+            self::TEST_NULL_VAR,
+            null,
+        ];
+    }
+
+    public function tearDown(): void
+    {
+        unset($_ENV[self::TEST_VAR_1]);
+        putenv(self::TEST_VAR_2 . '=');
     }
 }
