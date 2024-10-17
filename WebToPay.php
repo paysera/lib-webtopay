@@ -1406,13 +1406,13 @@ class WebToPay_Factory
      */
     protected static array $defaultConfiguration = [
         'routes' => [
-            self::ENV_PRODUCTION => [
+            'production' => [
                 'publicKey' => 'https://www.paysera.com/download/public.key',
                 'payment' => 'https://bank.paysera.com/pay/',
                 'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
                 'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
             ],
-            self::ENV_SANDBOX => [
+            'sandbox' => [
                 'publicKey' => 'https://sandbox.paysera.com/download/public.key',
                 'payment' => 'https://sandbox.paysera.com/pay/',
                 'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
