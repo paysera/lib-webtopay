@@ -52,4 +52,4 @@ PHP 7.4 standards  and code style like `strict_types`, type hints etc
 Testing
 =======
 
-    $ bash runt_tests.sh
+    $ bash run_tests.sh

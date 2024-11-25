@@ -1,0 +1,6 @@
+parameters:
+    level: 0
+    ignoreErrors:
+        - '#Fetching deprecated class constant .*#'
+    paths:
+        - src/

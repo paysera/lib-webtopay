@@ -18,12 +18,12 @@ class StaticMethods_FactoryCase extends AbstractTestCase
     public function setUp(): void
     {
         $this->factory = new WebToPay_Factory([
-            'projectId' => '123',
+            'projectId' => 123,
             'password' => 'abc',
         ]);
 
         $this->factoryWithoutPasswordInConfiguration = new WebToPay_Factory([
-            'projectId' => '123',
+            'projectId' => 123,
         ]);
     }
 
@@ -73,7 +73,7 @@ class StaticMethods_FactoryCase extends AbstractTestCase
             ->willReturn('');
 
         $factoryMock = $this->getMockBuilder(WebToPay_Factory::class)
-            ->setConstructorArgs([['projectId' => '123', 'password' => 'abc']])
+            ->setConstructorArgs([['projectId' => 123, 'password' => 'abc']])
             ->onlyMethods(['getWebClient'])
             ->getMock();
         $factoryMock->expects($this->once())

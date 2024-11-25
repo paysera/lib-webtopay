@@ -11,27 +11,24 @@ class WebToPay_UrlBuilder
 {
     public const PLACEHOLDER_KEY = '[domain]';
 
-    /**
-     * @var array<string, mixed>
-     */
-    protected array $configuration;
+    protected WebToPay_Config $configuration;
 
     protected string $environment;
 
     /**
      * @var array<string, string>
      */
-    protected array $environmentSettings;
+    protected WebToPay_Routes $routes;
 
     /**
-     * @param array<string, mixed> $configuration
+     * @param WebToPay_Config $configuration
      * @param string $environment
      */
-    public function __construct(array $configuration, string $environment)
+    public function __construct(WebToPay_Config $configuration, string $environment)
     {
         $this->configuration = $configuration;
         $this->environment = $environment;
-        $this->environmentSettings = $this->configuration['routes'][$this->environment];
+        $this->routes = $this->configuration->getRoutes();
     }
 
     public function getEnvironment(): string
@@ -56,7 +53,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPaymentsMethodList(int $projectId, ?string $amount, ?string $currency): string
     {
-        $route = $this->environmentSettings['paymentMethodList'];
+        $route = $this->routes->getPaymentMethodListRoute();
 
         return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
     }
@@ -68,7 +65,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForSmsAnswer(): string
     {
-        return $this->environmentSettings['smsAnswer'];
+        return $this->routes->getSmsAnswerRoute();
     }
 
     /**
@@ -76,7 +73,7 @@ class WebToPay_UrlBuilder
      */
     public function buildForPublicKey(): string
     {
-        return $this->environmentSettings['publicKey'];
+        return $this->routes->getPublicKeyRoute();
     }
 
     /**
@@ -100,6 +97,6 @@ class WebToPay_UrlBuilder
      */
     public function getPaymentUrl(): string
     {
-        return $this->environmentSettings['payment'];
+        return $this->routes->getPaymentRoute();
     }
 }

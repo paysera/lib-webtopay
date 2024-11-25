@@ -21,11 +21,11 @@ class WebToPay_FactoryTest extends TestCase
     public function setUp(): void
     {
         $this->factory = new WebToPay_Factory([
-            'projectId' => '123',
+            'projectId' => 123,
             'password' => 'abc',
         ]);
         $this->factoryWithoutPasswordInConfiguration = new WebToPay_Factory([
-            'projectId' => '123',
+            'projectId' => 123,
         ]);
         $this->factoryWithoutProjectIdInConfiguration = new WebToPay_Factory([
             'password' => 'abc',
