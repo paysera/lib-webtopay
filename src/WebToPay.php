@@ -34,7 +34,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.1.0';
+    public const VERSION = '3.1.1';
 
     /**
      * Server URL where all requests should go.

@@ -56,7 +56,12 @@ class WebToPay_CallbackValidator
 
         if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
             if (!$this->signer->checkSign($requestData)) {
-                throw new WebToPay_Exception_Callback('Invalid sign parameters, check $_GET length limit');
+                throw new WebToPay_Exception_Callback(
+                    sprintf(
+                        'Invalid sign parameters, check $_GET length limit. Sign checker: %s',
+                        get_class($this->signer)
+                    )
+                );
             }
 
             $queryString = $this->util->decodeSafeUrlBase64($data);

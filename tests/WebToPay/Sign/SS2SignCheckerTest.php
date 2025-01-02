@@ -114,6 +114,9 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
      */
     public function testCheckSignWithBadSignature()
     {
+        $this->expectException(WebToPay_Exception_Callback::class);
+        $this->expectExceptionMessageMatches('/OpenSLL SS2 sign check error: .*/');
+
         $this->util
             ->expects($this->once())
             ->method('decodeSafeUrlBase64')
