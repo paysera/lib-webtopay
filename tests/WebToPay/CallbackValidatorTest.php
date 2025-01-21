@@ -73,7 +73,12 @@ class WebToPay_CallbackValidatorTest extends TestCase
             ->willReturn(false);
 
         $this->expectException(WebToPay_Exception_Callback::class);
-        $this->expectExceptionMessage('Invalid sign parameters, check $_GET length limit');
+        $this->expectExceptionMessage(
+            sprintf(
+                'Invalid sign parameters, check $_GET length limit. Sign checker: %s',
+                get_class($this->signer)
+            )
+        );
         $this->validator->validateAndParseData($request);
     }
 

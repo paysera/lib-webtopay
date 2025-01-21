@@ -1,5 +1,9 @@
 Version history
 ===============
+Version 3.1.1   - 2024-01-02
+
+    * provide detailed error messages for request verification with OpenSSL sign
+
 Version 3.1.0   - 2024-06-27
 
     * added possibility to define Paysera routes in environment variables

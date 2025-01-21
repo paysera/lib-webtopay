@@ -38,6 +38,13 @@ class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
         $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
         $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
 
+        if ($ok !== 1) {
+            $error = openssl_error_string();
+            if ($error !== false) {
+                throw new WebToPay_Exception_Callback('OpenSLL SS2 sign check error: ' . $error);
+            }
+        }
+
         return $ok === 1;
     }
 }
