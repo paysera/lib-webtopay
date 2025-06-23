@@ -134,6 +134,15 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
                 'data' => [
                     'data' => 'encodedData',
                     'ss3' => 'encoded-ss3',
+                    'ss2' => 'bad-ss2',
+                ],
+                'hashAlgo' => OPENSSL_ALGO_SHA256,
+            ],
+            [
+                'dataKey' => 'ss3',
+                'data' => [
+                    'data' => 'encodedData',
+                    'ss3' => 'encoded-ss3',
                 ],
                 'hashAlgo' => OPENSSL_ALGO_SHA256,
             ],
