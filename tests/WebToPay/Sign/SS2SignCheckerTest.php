@@ -89,24 +89,55 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
 
     /**
      * Tests checkSign
+     *
+     * @dataProvider checkSignDataProvider
      */
-    public function testCheckSign()
+    public function testCheckSign(string $dataKey, array $data, int $hashAlgo)
     {
-        $ss2 = null;
+        $ssValue = null;
         $privateKey = openssl_pkey_get_private(self::$privateKey);
-        openssl_sign('encodedData', $ss2, $privateKey);
+        openssl_sign('encodedData', $ssValue, $privateKey, $hashAlgo);
 
         $this->util
             ->expects($this->once())
             ->method('decodeSafeUrlBase64')
-            ->with('encoded-ss2')
-            ->will($this->returnValue($ss2));
+            ->with($data[$dataKey])
+            ->will($this->returnValue($ssValue));
 
-        $this->assertTrue($this->signChecker->checkSign([
-            'data' => 'encodedData',
-            'ss1' => 'bad-ss1',
-            'ss2' => 'encoded-ss2',
-        ]));
+        $this->assertTrue($this->signChecker->checkSign($data));
+    }
+
+    public static function checkSignDataProvider(): iterable
+    {
+        return [
+            [
+                'dataKey' => 'ss2',
+                'data' => [
+                    'data' => 'encodedData',
+                    'ss1' => 'bad-ss1',
+                    'ss2' => 'encoded-ss2',
+                ],
+                'hashAlgo' => OPENSSL_ALGO_SHA1,
+            ],
+            [
+                'dataKey' => 'ss3',
+                'data' => [
+                    'data' => 'encodedData',
+                    'ss1' => 'bad-ss1',
+                    'ss2' => 'bad-ss2',
+                    'ss3' => 'encoded-ss3',
+                ],
+                'hashAlgo' => OPENSSL_ALGO_SHA256,
+            ],
+            [
+                'dataKey' => 'ss3',
+                'data' => [
+                    'data' => 'encodedData',
+                    'ss3' => 'encoded-ss3',
+                ],
+                'hashAlgo' => OPENSSL_ALGO_SHA256,
+            ],
+        ];
     }
 
     /**

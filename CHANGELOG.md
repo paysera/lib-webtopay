@@ -1,5 +1,9 @@
 Version history
 ===============
+Version 3.1.2   - 2024-01-02
+
+    * added support for SS3 SHA256 signature verification
+
 Version 3.1.1   - 2024-01-02
 
     * provide detailed error messages for request verification with OpenSSL sign
