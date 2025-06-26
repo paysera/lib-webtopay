@@ -3,6 +3,7 @@ Version history
 Version 3.1.2   - 2024-01-02
 
     * added support for SS3 SHA256 signature verification
+    * BC break: SS2SignChecker class has been renamed to WebToPay_Sign_SSOpenSslSignChecker
 
 Version 3.1.1   - 2024-01-02
 

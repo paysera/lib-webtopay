@@ -57,6 +57,13 @@ class WebToPay_CallbackValidatorTest extends TestCase
                 'ss2' => 'zxcvb',
             ],
         ];
+
+        yield 'ss3' => [
+            'request' => [
+                'data' => 'abcdef',
+                'ss3' => 'zxcvb',
+            ],
+        ];
     }
 
     /**

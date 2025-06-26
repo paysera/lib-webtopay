@@ -839,7 +839,7 @@ class WebToPay_Factory
                 if (!$publicKey) {
                     throw new WebToPayException('Cannot download public key from WebToPay website');
                 }
-                $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
+                $this->signer = new WebToPay_Sign_SSOpenSslSignChecker($publicKey, $this->getUtil());
             } else {
                 if ($this->configuration->getPassword() === null) {
                     throw new WebToPay_Exception_Configuration(
@@ -1551,7 +1551,7 @@ class WebToPay_CallbackValidator
 
         $data = $requestData['data'];
 
-        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+        if (isset($requestData['ss1']) || isset($requestData['ss2']) || isset($requestData['ss3'])) {
             if (!$this->signer->checkSign($requestData)) {
                 throw new WebToPay_Exception_Callback(
                     sprintf(
@@ -2333,7 +2333,7 @@ class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface
 /**
  * Checks SS2 signature. Depends on SSL functions
  */
-class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
+class WebToPay_Sign_SSOpenSslSignChecker implements WebToPay_Sign_SignCheckerInterface
 {
     public const SIGN_TYPE_TO_HASH_ALGO_MAP = [
         'ss2' => OPENSSL_ALGO_SHA1,

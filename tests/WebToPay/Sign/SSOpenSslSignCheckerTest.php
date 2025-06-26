@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Test for class WebToPay_Sign_SS2SignChecker
  */
-class WebToPay_Sign_SS2SignCheckerTest extends TestCase
+class WebToPay_Sign_SSOpenSslSignCheckerTest extends TestCase
 {
     /**
      * Randomly generated private and public keys pair
@@ -71,7 +71,7 @@ WH/7s1IG3gHc08EcYjgZVeZrFKatRYXs8frLsnQPBeuZmQBFxBFUd8L+5vOZo7AP
     public function setUp(): void
     {
         $this->util = $this->createMock('WebToPay_Util', ['decodeSafeUrlBase64']);
-        $this->signChecker = new WebToPay_Sign_SS2SignChecker(self::$publicKey, $this->util);
+        $this->signChecker = new WebToPay_Sign_SSOpenSslSignChecker(self::$publicKey, $this->util);
     }
 
     /**

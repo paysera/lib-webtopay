@@ -54,7 +54,7 @@ class WebToPay_CallbackValidator
 
         $data = $requestData['data'];
 
-        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+        if (isset($requestData['ss1']) || isset($requestData['ss2']) || isset($requestData['ss3'])) {
             if (!$this->signer->checkSign($requestData)) {
                 throw new WebToPay_Exception_Callback(
                     sprintf(

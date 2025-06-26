@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Checks SS2 signature. Depends on SSL functions
  */
-class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
+class WebToPay_Sign_SSOpenSslSignChecker implements WebToPay_Sign_SignCheckerInterface
 {
     public const SIGN_TYPE_TO_HASH_ALGO_MAP = [
         'ss2' => OPENSSL_ALGO_SHA1,

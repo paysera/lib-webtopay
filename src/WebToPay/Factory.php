@@ -211,7 +211,7 @@ class WebToPay_Factory
                 if (!$publicKey) {
                     throw new WebToPayException('Cannot download public key from WebToPay website');
                 }
-                $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
+                $this->signer = new WebToPay_Sign_SSOpenSslSignChecker($publicKey, $this->getUtil());
             } else {
                 if ($this->configuration->getPassword() === null) {
                     throw new WebToPay_Exception_Configuration(
