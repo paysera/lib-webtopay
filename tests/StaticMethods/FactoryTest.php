@@ -49,7 +49,7 @@ class StaticMethods_FactoryCase extends AbstractTestCase
         $reflectionProperty->setAccessible(true);
 
         $this->assertInstanceOf(
-            WebToPay_Sign_SS2SignChecker::class,
+            WebToPay_Sign_SSOpenSslSignChecker::class,
             $reflectionProperty->getValue($validator)
         );
     }

@@ -839,7 +839,7 @@ class WebToPay_Factory
                 if (!$publicKey) {
                     throw new WebToPayException('Cannot download public key from WebToPay website');
                 }
-                $this->signer = new WebToPay_Sign_SS2SignChecker($publicKey, $this->getUtil());
+                $this->signer = new WebToPay_Sign_SSOpenSslSignChecker($publicKey, $this->getUtil());
             } else {
                 if ($this->configuration->getPassword() === null) {
                     throw new WebToPay_Exception_Configuration(
@@ -1551,7 +1551,7 @@ class WebToPay_CallbackValidator
 
         $data = $requestData['data'];
 
-        if (isset($requestData['ss1']) || isset($requestData['ss2'])) {
+        if (isset($requestData['ss1']) || isset($requestData['ss2']) || isset($requestData['ss3'])) {
             if (!$this->signer->checkSign($requestData)) {
                 throw new WebToPay_Exception_Callback(
                     sprintf(
@@ -2333,8 +2333,12 @@ class WebToPay_Sign_SS1SignChecker implements WebToPay_Sign_SignCheckerInterface
 /**
  * Checks SS2 signature. Depends on SSL functions
  */
-class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
+class WebToPay_Sign_SSOpenSslSignChecker implements WebToPay_Sign_SignCheckerInterface
 {
+    public const SIGN_TYPE_TO_HASH_ALGO_MAP = [
+        'ss2' => OPENSSL_ALGO_SHA1,
+        'ss3' => OPENSSL_ALGO_SHA256,
+    ];
     protected string $publicKey;
 
     protected WebToPay_Util $util;
@@ -2359,17 +2363,27 @@ class WebToPay_Sign_SS2SignChecker implements WebToPay_Sign_SignCheckerInterface
      */
     public function checkSign(array $request): bool
     {
-        if (!isset($request['data']) || !isset($request['ss2'])) {
+        $signTypeKeysAvailable = array_intersect(
+            array_keys(self::SIGN_TYPE_TO_HASH_ALGO_MAP),
+            array_keys($request)
+        );
+        if (!isset($request['data']) || count($signTypeKeysAvailable) === 0) {
             throw new WebToPay_Exception_Callback('Not enough parameters in callback. Possible version mismatch');
         }
 
-        $ss2 = $this->util->decodeSafeUrlBase64($request['ss2']);
-        $ok = openssl_verify($request['data'], $ss2, $this->publicKey);
+        $signTypeKey = end($signTypeKeysAvailable);
+        $ssValue = $this->util->decodeSafeUrlBase64($request[$signTypeKey]);
+        $ok = openssl_verify(
+            $request['data'],
+            $ssValue,
+            $this->publicKey,
+            self::SIGN_TYPE_TO_HASH_ALGO_MAP[$signTypeKey]
+        );
 
         if ($ok !== 1) {
             $error = openssl_error_string();
             if ($error !== false) {
-                throw new WebToPay_Exception_Callback('OpenSLL SS2 sign check error: ' . $error);
+                throw new WebToPay_Exception_Callback('OpenSLL ' . strtoupper($signTypeKey) . ' sign check error: ' . $error);
             }
         }
 
