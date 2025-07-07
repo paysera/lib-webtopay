@@ -9,26 +9,27 @@ class Functional_PaymentMethodListProviderTest extends TestCase
     protected WebToPay_PaymentMethodListProvider $paymentMethodListProvider;
 
     /**
+     * @dataProvider getPaymentMethodListDataProvider
+     *
      * @throws WebToPayException
      */
-    public function testGetPaymentMethodList(): void
+    public function testGetPaymentMethodList(string $dataUrl, ?float $amount): void
     {
         $projectId = 123;
-        $amount = 100;
         $currency = 'EUR';
         $xmlAsString = file_get_contents(__DIR__ . '/data/payment-methods.xml');
 
         $webClient = $this->createMock(WebToPay_WebClient::class);
         $webClient->expects($this->once())
             ->method('get')
-            ->with('https://sandbox.paysera.com/new/api/paymentMethods/?projectid=123&amount=100&currency=EUR')
+            ->with($dataUrl)
             ->willReturn($xmlAsString);
 
         $urlBuilder = $this->createMock(WebToPay_UrlBuilder::class);
         $urlBuilder->expects($this->once())
             ->method('buildForPaymentsMethodList')
             ->with($projectId, (string) $amount, $currency)
-            ->willReturn('https://sandbox.paysera.com/new/api/paymentMethods/?projectid=123&amount=100&currency=EUR');
+            ->willReturn($dataUrl);
 
         $paymentMethodListProvider = new WebToPay_PaymentMethodListProvider($projectId, $webClient, $urlBuilder);
         $paymentMethodList = $paymentMethodListProvider->getPaymentMethodList($amount, $currency);
@@ -93,6 +94,16 @@ class Functional_PaymentMethodListProviderTest extends TestCase
         $paymentMethod = $paymentMethodGroup->getPaymentMethod('wallet');
         $this->assertNotNull($paymentMethod);
         $this->assertEquals('wallet', $paymentMethod->getKey());
+    }
+
+    public static function getPaymentMethodListDataProvider(): iterable
+    {
+        $dataUrl = 'https://sandbox.paysera.com/new/api/paymentMethods/?projectid=123&currency=EU';
+
+        return [
+            [$dataUrl . '&amount=100', 100],
+            [$dataUrl, null],
+        ];
     }
 
     public function testExceptionExpectationDueEmptyRootNode(): void

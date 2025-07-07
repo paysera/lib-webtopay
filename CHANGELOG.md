@@ -1,6 +1,9 @@
 Version history
 ===============
-Version 3.1.2   - 2024-01-02
+Version 3.1.3 - 2025-07-07
+    * Fix 3.x regression in UrlBuilder::buildForPaymentsMethodList when amount is null. Parameter must not be passed
+
+Version 3.1.2   - 2025-07-01
 
     * added support for SS3 SHA256 signature verification
     * BC break: WebToPay_Sign_SS2SignChecker class has been renamed to WebToPay_Sign_SSOpenSslSignChecker

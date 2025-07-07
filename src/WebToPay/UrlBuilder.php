@@ -54,8 +54,13 @@ class WebToPay_UrlBuilder
     public function buildForPaymentsMethodList(int $projectId, ?string $amount, ?string $currency): string
     {
         $route = $this->routes->getPaymentMethodListRoute();
+        $url =  $route . $projectId . '/currency:' . $currency;
 
-        return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
+        if ($amount !== null && $amount !== '') {
+            $url .= '/amount:' . $amount;
+        }
+
+        return $url;
     }
 
     /**

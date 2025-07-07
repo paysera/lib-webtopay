@@ -2461,7 +2461,13 @@ class WebToPay_UrlBuilder
     {
         $route = $this->routes->getPaymentMethodListRoute();
 
-        return $route . $projectId . '/currency:' . $currency . '/amount:' . $amount;
+        $url =  $route . $projectId . '/currency:' . $currency;
+
+        if ($amount !== null && $amount !== '') {
+            $url .= '/amount:' . $amount;
+        }
+
+        return $url;
     }
 
     /**
