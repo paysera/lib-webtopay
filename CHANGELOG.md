@@ -1,5 +1,8 @@
 Version history
 ===============
+Version 3.1.4 - 2025-07-31
+    * Fix lib-webtopay class VERSION constant mismatching composer package version
+
 Version 3.1.3 - 2025-07-07
     * Fix 3.x regression in UrlBuilder::buildForPaymentsMethodList when amount is null. Parameter must not be passed
 
