@@ -22,7 +22,7 @@ declare(strict_types=1);
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    3.1.4
+ * @version    3.1.5
  * @link       http://www.webtopay.com/
  */
 
@@ -34,7 +34,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.1.4';
+    public const VERSION = '3.1.5';
 
     /**
      * Server URL where all requests should go.
@@ -58,7 +58,7 @@ class WebToPay
      * @deprecated since 3.0.2
      * @see WebToPay_Config::getXmlUrl
      */
-    public const XML_URL = 'https://www.paysera.com/new/api/paymentMethods/';
+    public const XML_URL = 'https://www.paysera.com/payment-methods/';
 
     /**
      * SMS answer url.

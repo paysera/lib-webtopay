@@ -44,20 +44,20 @@ class WebToPay_Config
         self::PARAM_PASSWORD => null,
         self::PARAM_PAY_URL => 'https://bank.paysera.com/pay/',
         self::PARAM_PAYSERA_PAY_URL => 'https://bank.paysera.com/pay/',
-        self::PARAM_XML_URL => 'https://www.paysera.com/new/api/paymentMethods/',
+        self::PARAM_XML_URL => 'https://www.paysera.com/payment-methods/',
     ];
 
     protected const DEFAULT_ROUTES = [
         self::PRODUCTION => [
             WebToPay_Routes::ROUTE_PUBLIC_KEY => 'https://www.paysera.com/download/public.key',
             WebToPay_Routes::ROUTE_PAYMENT => 'https://bank.paysera.com/pay/',
-            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://www.paysera.com/new/api/paymentMethods/',
+            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://www.paysera.com/payment-methods/',
             WebToPay_Routes::ROUTE_SMS_ANSWER => 'https://bank.paysera.com/psms/respond/',
         ],
         self::SANDBOX => [
             WebToPay_Routes::ROUTE_PUBLIC_KEY => 'https://sandbox.paysera.com/download/public.key',
             WebToPay_Routes::ROUTE_PAYMENT => 'https://sandbox.paysera.com/pay/',
-            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://sandbox.paysera.com/payment-methods/',
             WebToPay_Routes::ROUTE_SMS_ANSWER => 'https://sandbox.paysera.com/psms/respond/',
         ],
     ];

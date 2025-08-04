@@ -26,7 +26,7 @@ declare(strict_types=1);
  * @package    WebToPay
  * @author     EVP International
  * @license    http://www.gnu.org/licenses/lgpl.html
- * @version    3.1.4
+ * @version    3.1.5
  * @link       http://www.webtopay.com/
  */
 
@@ -38,7 +38,7 @@ class WebToPay
     /**
      * WebToPay Library version.
      */
-    public const VERSION = '3.1.4';
+    public const VERSION = '3.1.5';
 
     /**
      * Server URL where all requests should go.
@@ -62,7 +62,7 @@ class WebToPay
      * @deprecated since 3.0.2
      * @see WebToPay_Config::getXmlUrl
      */
-    public const XML_URL = 'https://www.paysera.com/new/api/paymentMethods/';
+    public const XML_URL = 'https://www.paysera.com/payment-methods/';
 
     /**
      * SMS answer url.
@@ -935,20 +935,20 @@ class WebToPay_Config
         self::PARAM_PASSWORD => null,
         self::PARAM_PAY_URL => 'https://bank.paysera.com/pay/',
         self::PARAM_PAYSERA_PAY_URL => 'https://bank.paysera.com/pay/',
-        self::PARAM_XML_URL => 'https://www.paysera.com/new/api/paymentMethods/',
+        self::PARAM_XML_URL => 'https://www.paysera.com/payment-methods/',
     ];
 
     protected const DEFAULT_ROUTES = [
         self::PRODUCTION => [
             WebToPay_Routes::ROUTE_PUBLIC_KEY => 'https://www.paysera.com/download/public.key',
             WebToPay_Routes::ROUTE_PAYMENT => 'https://bank.paysera.com/pay/',
-            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://www.paysera.com/new/api/paymentMethods/',
+            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://www.paysera.com/payment-methods/',
             WebToPay_Routes::ROUTE_SMS_ANSWER => 'https://bank.paysera.com/psms/respond/',
         ],
         self::SANDBOX => [
             WebToPay_Routes::ROUTE_PUBLIC_KEY => 'https://sandbox.paysera.com/download/public.key',
             WebToPay_Routes::ROUTE_PAYMENT => 'https://sandbox.paysera.com/pay/',
-            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+            WebToPay_Routes::ROUTE_PAYMENT_METHOD_LIST => 'https://sandbox.paysera.com/payment-methods/',
             WebToPay_Routes::ROUTE_SMS_ANSWER => 'https://sandbox.paysera.com/psms/respond/',
         ],
     ];
@@ -1508,13 +1508,13 @@ class WebToPay_Factory
             self::ENV_PRODUCTION => [
                 'publicKey' => 'https://www.paysera.com/download/public.key',
                 'payment' => 'https://bank.paysera.com/pay/',
-                'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
+                'paymentMethodList' => 'https://www.paysera.com/payment-methods/',
                 'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
             ],
             self::ENV_SANDBOX => [
                 'publicKey' => 'https://sandbox.paysera.com/download/public.key',
                 'payment' => 'https://sandbox.paysera.com/pay/',
-                'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+                'paymentMethodList' => 'https://sandbox.paysera.com/payment-methods/',
                 'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
             ],
         ],

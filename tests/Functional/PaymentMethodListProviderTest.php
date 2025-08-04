@@ -98,7 +98,7 @@ class Functional_PaymentMethodListProviderTest extends TestCase
 
     public static function getPaymentMethodListDataProvider(): iterable
     {
-        $dataUrl = 'https://sandbox.paysera.com/new/api/paymentMethods/?projectid=123&currency=EU';
+        $dataUrl = 'https://sandbox.paysera.com/payment-methods/?projectid=123&currency=EU';
 
         return [
             [$dataUrl . '&amount=100', 100],

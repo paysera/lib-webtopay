@@ -42,25 +42,25 @@ class WebToPay_UrlBuilderTest extends TestCase
         yield 'amount is not null; currency is not null' => [
             'amount' => '1.00',
             'currency' => 'EUR',
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR/amount:1.00',
+            'expectedUrl' => 'https://sandbox.paysera.com/payment-methods/1/currency:EUR/amount:1.00',
         ];
 
         yield 'amount is null; currency is not null' => [
             'amount' => null,
             'currency' => 'EUR',
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR',
+            'expectedUrl' => 'https://sandbox.paysera.com/payment-methods/1/currency:EUR',
         ];
 
         yield 'amount is empty; currency is not null' => [
             'amount' => '',
             'currency' => 'EUR',
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:EUR',
+            'expectedUrl' => 'https://sandbox.paysera.com/payment-methods/1/currency:EUR',
         ];
 
         yield 'amount is not null; currency is null' => [
             'amount' => '1.00',
             'currency' => null,
-            'expectedUrl' => 'https://sandbox.paysera.com/new/api/paymentMethods/1/currency:/amount:1.00',
+            'expectedUrl' => 'https://sandbox.paysera.com/payment-methods/1/currency:/amount:1.00',
         ];
     }
 

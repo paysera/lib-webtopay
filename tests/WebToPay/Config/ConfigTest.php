@@ -41,7 +41,7 @@ class WebToPay_ConfigTest extends TestCase
         $expectedDefaultRoutes = [
             'publicKey' => 'https://sandbox.paysera.com/download/public.key',
             'payment' => 'https://sandbox.paysera.com/pay/',
-            'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+            'paymentMethodList' => 'https://sandbox.paysera.com/payment-methods/',
             'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
         ];
         $env = 'sandbox';
@@ -52,7 +52,7 @@ class WebToPay_ConfigTest extends TestCase
             'getPassword' => null,
             'getPayUrl' => 'https://bank.paysera.com/pay/',
             'getPayseraPayUrl' => 'https://bank.paysera.com/pay/',
-            'getXmlUrl' => 'https://www.paysera.com/new/api/paymentMethods/',
+            'getXmlUrl' => 'https://www.paysera.com/payment-methods/',
             'getRoutes' => $routes,
         ];
 
@@ -181,7 +181,7 @@ class WebToPay_ConfigTest extends TestCase
                 [
                     'publicKey' => 'https://www.paysera.com/download/public.key',
                     'payment' => 'https://bank.paysera.com/pay/',
-                    'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
+                    'paymentMethodList' => 'https://www.paysera.com/payment-methods/',
                     'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
                 ]
             ),
@@ -204,7 +204,7 @@ class WebToPay_ConfigTest extends TestCase
                 [
                     'publicKey' => 'https://sandbox.paysera.com/download/public.key',
                     'payment' => 'https://sandbox.paysera.com/pay/',
-                    'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+                    'paymentMethodList' => 'https://sandbox.paysera.com/payment-methods/',
                     'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
                 ]
             ),

@@ -26,13 +26,13 @@ class WebToPay_Factory
             self::ENV_PRODUCTION => [
                 'publicKey' => 'https://www.paysera.com/download/public.key',
                 'payment' => 'https://bank.paysera.com/pay/',
-                'paymentMethodList' => 'https://www.paysera.com/new/api/paymentMethods/',
+                'paymentMethodList' => 'https://www.paysera.com/payment-methods/',
                 'smsAnswer' => 'https://bank.paysera.com/psms/respond/',
             ],
             self::ENV_SANDBOX => [
                 'publicKey' => 'https://sandbox.paysera.com/download/public.key',
                 'payment' => 'https://sandbox.paysera.com/pay/',
-                'paymentMethodList' => 'https://sandbox.paysera.com/new/api/paymentMethods/',
+                'paymentMethodList' => 'https://sandbox.paysera.com/payment-methods/',
                 'smsAnswer' => 'https://sandbox.paysera.com/psms/respond/',
             ],
         ],
