@@ -1,5 +1,8 @@
 Version history
 ===============
+Version 3.1.5 - 2025-08-04
+    * Update payment methods endpoint url
+
 Version 3.1.4 - 2025-07-31
     * Fix lib-webtopay class VERSION constant mismatching composer package version
 
