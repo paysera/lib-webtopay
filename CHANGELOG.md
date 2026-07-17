@@ -1,5 +1,8 @@
 Version history
 ===============
+Version 3.1.6 - 2026-07-14
+    * Throw a catchable WebToPayException when the HTTP response has no header separator, instead of a fatal TypeError on PHP 8
+
 Version 3.1.5 - 2025-08-04
     * Update payment methods endpoint url
 

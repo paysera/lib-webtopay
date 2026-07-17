@@ -72,4 +72,29 @@ class WebToPay_WebClientTest extends TestCase
             $this->webClientMock->get($uri, ['param1' => 'value1', 'param2' => 'value2'])
         );
     }
+
+    public function getResponsesWithoutHeaderSeparator(): iterable
+    {
+        yield 'empty response' => ['content' => ''];
+        yield 'truncated headers' => ['content' => "HTTP/1.1 200 OK\r\nContent-Type: text/xml"];
+    }
+
+    /**
+     * @dataProvider getResponsesWithoutHeaderSeparator
+     */
+    public function testGet_ThrowsOnResponseWithoutHeaderSeparator(string $content)
+    {
+        $this->webClientMock->expects($this->once())
+            ->method('openSocket')
+            ->willReturn('socket');
+
+        $this->webClientMock->expects($this->once())
+            ->method('getContentFromSocket')
+            ->willReturn($content);
+
+        $this->expectException(WebToPayException::class);
+        $this->expectExceptionCode(WebToPayException::E_INVALID);
+        $this->expectExceptionMessage('Cannot read response from https://example.com');
+        $this->webClientMock->get('https://example.com');
+    }
 }

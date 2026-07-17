@@ -50,7 +50,15 @@ class WebToPay_WebClient
         $content = $this->getContentFromSocket($fp, $out);
 
         // Separate header and content
-        [$header, $content] = explode("\r\n\r\n", $content, 2);
+        $parts = explode("\r\n\r\n", $content, 2);
+        if (count($parts) < 2) {
+            throw new WebToPayException(
+                sprintf('Cannot read response from %s', $uri),
+                WebToPayException::E_INVALID
+            );
+        }
+
+        [$header, $content] = $parts;
 
         return trim($content);
     }
