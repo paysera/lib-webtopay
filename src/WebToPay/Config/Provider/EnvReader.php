@@ -14,7 +14,7 @@ class WebToPay_EnvReader
      * @param string|null $default
      * @return string|null
      */
-    public function getAsString(string $key, string $default = null): ?string
+    public function getAsString(string $key, ?string $default = null): ?string
     {
         if (!empty($_ENV[$key])) {
             return (string)$_ENV[$key];
