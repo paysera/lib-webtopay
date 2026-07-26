@@ -1,0 +1,13 @@
+# Remove files for archives generated using `git archive`
+build/ export-ignore
+demo_shop/ export-ignore
+tests/ export-ignore
+
+.gitattributes export-ignore
+.gitignore export-ignore
+.hgignore export-ignore
+build.sh export-ignore
+CHANGELOG.md export-ignore
+phpunit.xml export-ignore
+/WebToPay.php export-ignore
+src/includes.php export-ignore
